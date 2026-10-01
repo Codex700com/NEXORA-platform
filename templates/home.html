@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.nx-home{font-family:Inter,system-ui,sans-serif;padding-bottom:95px}
+.nx-head{display:flex;justify-content:space-between;align-items:center;padding:8px 1px 20px}
+.nx-brand{display:flex;align-items:center;gap:11px}
+.nx-mark{width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#18d66b,#063b20);display:grid;place-items:center;color:#031008;font-weight:900;font-size:20px;box-shadow:0 8px 24px rgba(24,214,107,.18)}
+.nx-brand b{font-size:23px;letter-spacing:1.5px}
+.nx-brand small{display:block;color:#6fa584;font-size:9px;letter-spacing:1.7px;margin-top:3px}
+.nx-user{width:43px;height:43px;border:1px solid #175d35;border-radius:14px;background:#07140b;color:#39ff88;display:grid;place-items:center;text-decoration:none;font-size:19px}
+.nx-balance{padding:22px;border-radius:24px;background:linear-gradient(145deg,#0b2414,#041008);border:1px solid #176b3c;box-shadow:0 15px 35px rgba(0,0,0,.4)}
+.nx-label{font-size:10px;color:#76a88a;letter-spacing:1.5px;text-transform:uppercase}
+.nx-money{font-size:30px;font-weight:850;margin:8px 0 5px;letter-spacing:.3px}
+.nx-sub{font-size:11px;color:#759582}
+.nx-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
+.nx-action{padding:13px;border-radius:15px;text-align:center;text-decoration:none;font-weight:800;font-size:12px}
+.nx-action.primary{background:#18d66b;color:#031008}
+.nx-action.secondary{border:1px solid #195b35;color:#39ff88;background:#07140b}
+.nx-title{display:flex;justify-content:space-between;align-items:center;margin:24px 1px 11px}
+.nx-title h2{font-size:17px;margin:0}.nx-title span{font-size:10px;color:#668a73}
+.nx-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nx-box{min-height:94px;padding:15px;border-radius:19px;background:#07130b;border:1px solid #123d25;text-decoration:none;color:inherit}
+.nx-box i{font-style:normal;color:#39ff88;font-size:19px}
+.nx-box b{display:block;font-size:15px;margin-top:9px}
+.nx-box small{display:block;color:#6f8e7a;font-size:10px;margin-top:3px}
+.nx-row{display:block;padding:17px;border-radius:19px;background:linear-gradient(145deg,#08180e,#050b07);border:1px solid #154b2c;text-decoration:none;color:inherit;margin-bottom:10px}
+.nx-row b{font-size:15px}.nx-row p{margin:5px 0 0;color:#718c7a;font-size:10px}
+.nx-arrow{float:right;color:#39ff88;font-size:22px}
+.nx-notice{margin-top:14px;padding:12px 14px;border-radius:15px;border:1px solid #173d28;background:#061009;color:#698373;font-size:10px;line-height:1.5}
+</style>
+
+<div class="nx-home">
+  <div class="nx-head">
+    <div class="nx-brand">
+      <div class="nx-mark">N</div>
+      <div><b>NEXORA</b><small>DIGITAL PLATFORM</small></div>
+    </div>
+    <a class="nx-user" href="/my">◉</a>
+  </div>
+
+  <section class="nx-balance">
+    <div class="nx-label">Available wallet</div>
+    <div class="nx-money">UGX {{ '%.2f'|format(user.wallet) }}</div>
+    <div class="nx-sub">Account balance: UGX {{ '%.2f'|format(user.balance) }}</div>
+    <div class="nx-actions">
+      <a class="nx-action primary" href="/deposit">Add funds</a>
+      <a class="nx-action secondary" href="/withdraw">Withdraw</a>
+    </div>
+  </section>
+
+  <div class="nx-title"><h2>Quick access</h2><span>ACCOUNT</span></div>
+  <div class="nx-grid">
+    <a class="nx-box" href="/invest"><i>◈</i><b>Products</b><small>Browse catalogue</small></a>
+    <a class="nx-box" href="/income"><i>↗</i><b>Income</b><small>View activity</small></a>
+    <a class="nx-box" href="/invite"><i>◎</i><b>Invite</b><small>{{ invite_count }} invited</small></a>
+    <a class="nx-box" href="/my-team"><i>♧</i><b>My team</b><small>{{ team_count }} members</small></a>
+  </div>
+
+  <div class="nx-title"><h2>Platform centre</h2><span>NEXORA</span></div>
+  <a class="nx-row" href="/invest">
+    <span class="nx-arrow">›</span>
+    <b>Digital Product Catalogue</b>
+    <p>Review available products, terms and projected figures.</p>
+  </a>
+  <a class="nx-row" href="/support">
+    <span class="nx-arrow">›</span>
+    <b>Customer Support</b>
+    <p>Contact the NEXORA support centre.</p>
+  </a>
+  <a class="nx-row" href="/manager">
+    <span class="nx-arrow">›</span>
+    <b>Account Manager</b>
+    <p>Open your assigned manager area.</p>
+  </a>
+
+  <div class="nx-notice">
+    NEXORA is an independent platform. Product figures shown on this platform are configured or projected figures and are not guarantees of financial returns.
+  </div>
+</div>
+{% endblock %}

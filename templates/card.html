@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-head"><a class="back-btn" href="/my">←</a><h1>Card</h1><div class="head-spacer"></div></div>
+<section class="section card-save">
+  <h2>Withdrawal details</h2>
+  <p class="muted">These details are used by the Withdraw page as your payout destination.</p>
+  <div class="saved-row"><span>MTN UG</span><b>{{ user.mtn_number or 'Not saved' }}</b></div>
+  <div class="saved-row"><span>Airtel UG</span><b>{{ user.airtel_number or 'Not saved' }}</b></div>
+  <div class="saved-row"><span>USDT TRC20</span><b class="wallet-text">{{ user.usdt_wallet or 'Not saved' }}</b></div>
+  <a class="button primary as-button" href="/account">EDIT CARD DETAILS</a>
+  <a class="button as-button" href="/withdraw">BACK TO WITHDRAW</a>
+</section>
+{% endblock %}

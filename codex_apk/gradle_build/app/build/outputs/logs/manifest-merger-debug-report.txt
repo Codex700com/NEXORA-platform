@@ -1,0 +1,56 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:2:1-24:12
+INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:2:1-24:12
+INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:2:1-24:12
+INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:2:1-24:12
+	package
+		ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:3:5-30
+		INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml
+	android:versionName
+		INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml
+	android:versionCode
+		INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:2:11-69
+uses-permission#android.permission.INTERNET
+ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:5:5-66
+	android:name
+		ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:5:22-64
+application
+ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:7:5-23:19
+INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:7:5-23:19
+	android:extractNativeLibs
+		INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml
+	android:label
+		ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:9:9-33
+	android:allowBackup
+		ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:10:9-36
+	android:theme
+		ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:8:9-40
+activity#com.codex700.ai.MainActivity
+ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:12:9-22:20
+	android:screenOrientation
+		ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:14:13-49
+	android:exported
+		ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:15:13-36
+	android:name
+		ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:13:13-41
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:17:13-20:29
+action#android.intent.action.MAIN
+ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:18:17-68
+	android:name
+		ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:18:25-66
+category#android.intent.category.LAUNCHER
+ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:19:17-76
+	android:name
+		ADDED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:19:27-74
+uses-sdk
+INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml
+INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml

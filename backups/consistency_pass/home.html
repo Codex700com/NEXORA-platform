@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.nx-home{font-family:Inter,system-ui,sans-serif;padding-bottom:90px}
+.nx-top{display:flex;justify-content:space-between;align-items:center;padding:8px 2px 22px}
+.nx-logo{display:flex;align-items:center;gap:11px}
+.nx-logo-mark{width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#0b2414,#18d66b);display:grid;place-items:center;color:#031008;font-weight:900;font-size:20px;box-shadow:0 8px 25px rgba(24,214,107,.18)}
+.nx-logo b{font-size:24px;letter-spacing:1.5px}.nx-logo small{display:block;color:#79d99b;font-size:10px;letter-spacing:2px;margin-top:2px}
+.nx-profile{width:44px;height:44px;border:1px solid #175d35;border-radius:14px;display:grid;place-items:center;background:#07140b;color:#39ff88;font-size:21px}
+.nx-hero{position:relative;overflow:hidden;border-radius:28px;padding:27px 22px;min-height:245px;background:radial-gradient(circle at 85% 15%,rgba(57,255,136,.18),transparent 32%),linear-gradient(145deg,#07130b,#020604 72%);border:1px solid #175d35;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.nx-hero:after{content:"";position:absolute;width:220px;height:220px;border:1px solid rgba(57,255,136,.13);border-radius:50%;right:-75px;bottom:-100px;box-shadow:0 0 0 35px rgba(57,255,136,.035),0 0 0 70px rgba(57,255,136,.025)}
+.nx-kicker{color:#39ff88;font-size:11px;letter-spacing:2px;font-weight:800}
+.nx-hero h1{font-size:32px;line-height:1.08;margin:12px 0 10px;max-width:270px}
+.nx-hero p{color:#9bb5a4;font-size:13px;line-height:1.55;max-width:310px}
+.nx-hero-btn{display:inline-block;margin-top:12px;padding:12px 18px;border-radius:14px;background:#18d66b;color:#031008;text-decoration:none;font-weight:800}
+.nx-section{display:flex;justify-content:space-between;align-items:center;margin:24px 2px 12px}
+.nx-section h2{font-size:18px;margin:0}.nx-section span{font-size:11px;color:#6fa584}
+.nx-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.nx-card{min-height:105px;padding:16px;border-radius:20px;background:linear-gradient(145deg,#08160d,#050b07);border:1px solid #123d25;box-shadow:0 9px 24px rgba(0,0,0,.3)}
+.nx-card strong{display:block;font-size:19px;margin-top:10px}.nx-card small{color:#759582;font-size:11px}.nx-icon{color:#39ff88;font-size:20px}
+.nx-feature{display:block;text-decoration:none;color:inherit;padding:17px;border-radius:22px;background:linear-gradient(120deg,#0b2113,#07100a);border:1px solid #176b3c;margin-bottom:11px}
+.nx-feature b{font-size:17px}.nx-feature p{font-size:11px;color:#829b8a;margin:7px 0 0}.nx-arrow{float:right;color:#39ff88;font-size:22px}
+</style>
+<div class="nx-home">
+  <div class="nx-top">
+    <div class="nx-logo"><div class="nx-logo-mark">N</div><div><b>NEXORA</b><small>SMART DIGITAL PLATFORM</small></div></div>
+    <a class="nx-profile" href="/my">◉</a>
+  </div>
+
+  <section class="nx-hero">
+    <div class="nx-kicker">NEXORA DIGITAL EXPERIENCE</div>
+    <h1>Build your digital portfolio.</h1>
+    <p>Explore the NEXORA platform, manage your account and view available simulated digital products from one dashboard.</p>
+    <a class="nx-hero-btn" href="/invest">Explore products</a>
+  </section>
+
+  <div class="nx-section"><h2>Account overview</h2><span>Dashboard</span></div>
+  <div class="nx-grid">
+    <a class="nx-card" href="/deposit"><span class="nx-icon">＋</span><strong>Deposit</strong><small>Add funds</small></a>
+    <a class="nx-card" href="/withdraw"><span class="nx-icon">↗</span><strong>Withdraw</strong><small>Request funds</small></a>
+    <a class="nx-card" href="/income"><span class="nx-icon">◈</span><strong>Income</strong><small>View activity</small></a>
+    <a class="nx-card" href="/invite"><span class="nx-icon">◎</span><strong>Invite</strong><small>Referral centre</small></a>
+  </div>
+
+  <div class="nx-section"><h2>Featured</h2><span>Explore</span></div>
+  <a class="nx-feature" href="/invest"><span class="nx-arrow">›</span><b>Digital Products</b><p>Browse the redesigned NEXORA product catalogue.</p></a>
+  <a class="nx-feature" href="/my"><span class="nx-arrow">›</span><b>Personal Centre</b><p>Account, transactions and platform activity.</p></a>
+  <a class="nx-feature" href="/support"><span class="nx-arrow">›</span><b>Customer Support</b><p>Get assistance from the support centre.</p></a>
+</div>
+{% endblock %}

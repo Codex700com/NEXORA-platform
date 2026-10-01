@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.codex700.ai.app-mergeDebugResources-1:/values/values.xml",
+            "map": [
+                {
+                    "source": "/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/res/values/styles.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "7",
+                        "endColumns": "12",
+                        "endOffsets": "378"
+                    }
+                }
+            ]
+        }
+    ]
+}

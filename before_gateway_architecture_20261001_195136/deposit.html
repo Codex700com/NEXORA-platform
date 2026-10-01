@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+.deposit-wrap{max-width:520px;margin:20px auto}
+.deposit-modal{background:#071426;border:1px solid #18d66b;border-radius:18px;padding:24px;box-shadow:0 12px 35px rgba(0,0,0,.35)}
+.deposit-title{font-size:22px;font-weight:800;margin-bottom:8px}
+.deposit-sub{opacity:.78;margin-bottom:20px;line-height:1.55}
+.deposit-input{width:100%;box-sizing:border-box;padding:14px;border-radius:12px;border:1px solid #29415f;background:#030b18;color:#fff;font-size:17px;margin-bottom:14px}
+.deposit-btn{width:100%;border:0;border-radius:12px;padding:14px;background:#18d66b;color:white;font-weight:800;font-size:16px;margin-top:8px}
+.method-btn{margin-bottom:10px}
+.error{color:#ff6969;margin-bottom:12px;font-weight:700}
+.success{color:#35d07f;font-weight:800}
+.agent{padding:16px;border-radius:14px;background:#030b18;border:1px solid #29415f;margin:14px 0}
+.agent-number{font-size:21px;font-weight:900;margin-top:5px}
+.countdown{font-size:28px;font-weight:900;text-align:center;margin:18px 0}
+.note{font-size:13px;opacity:.7;line-height:1.5}
+</style>
+
+<div class="deposit-wrap">
+<div class="deposit-modal">
+
+{% if stage=="amount" %}
+
+<div class="deposit-title">NEXORA PAYMENT AGENT 626</div>
+<div class="deposit-sub">Enter the amount you want to deposit. Minimum required deposit: <b>UGX 20,000</b>.</div>
+
+{% if error %}<div class="error">{{error}}</div>{% endif %}
+
+<form method="post">
+<input type="hidden" name="action" value="start">
+<input class="deposit-input" name="amount" type="number" min="20000" step="1" placeholder="Amount (UGX)" required>
+<button class="deposit-btn" type="submit">Continue</button>
+</form>
+
+{% elif stage=="method" %}
+
+<div class="deposit-title">Choose Airtel or MTN</div>
+<div class="deposit-sub">Choose the mobile-money network you will use to make the payment.</div>
+
+{% if error %}<div class="error">{{error}}</div>{% endif %}
+
+<form method="post">
+<input type="hidden" name="action" value="method">
+<button class="deposit-btn method-btn" name="method" value="Airtel" type="submit">Airtel</button>
+<button class="deposit-btn method-btn" name="method" value="MTN" type="submit">MTN</button>
+</form>
+
+{% elif stage=="agent" %}
+
+<div class="deposit-title">Payment instructions</div>
+<div class="deposit-sub">Send the exact amount below to the payment agent.</div>
+
+<div class="agent">
+<div>Send money to</div>
+<div class="agent-number">0757837051</div>
+<div style="margin-top:5px;font-weight:800">Mary Namara</div>
+</div>
+
+<div class="agent">
+<div>Payment method</div>
+<div class="agent-number">{{deposit.payment_method}}</div>
+</div>
+
+<div class="agent">
+<div>Amount</div>
+<div class="agent-number">UGX {{ "{:,.0f}".format(deposit.amount) }}</div>
+</div>
+
+<div id="redirectBox" class="note" style="text-align:center;padding:15px">
+Preparing payment instructions...
+</div>
+
+<div id="agentBox" style="display:none">
+<div class="countdown" id="countdown">30:00</div>
+
+<div class="note">
+You have 30 minutes to complete this payment. You may leave this page to send the money.
+When you return to Deposit before the timer expires, you will be taken back to the payment-proof popup.
+</div>
+
+<button class="deposit-btn" type="button" onclick="location.reload()">I have made the payment</button>
+</div>
+
+<script>
+setTimeout(function(){
+    document.getElementById('redirectBox').style.display='none';
+    document.getElementById('agentBox').style.display='block';
+},800);
+
+const expiry={{ deposit.expires_at|tojson }};
+
+function updateTimer(){
+    const left=Math.max(0,Date.parse(expiry)-Date.now());
+
+    if(left<=0){
+        document.getElementById('countdown').textContent='EXPIRED';
+        setTimeout(function(){ location.href="{{ url_for('deposit') }}"; },700);
+        return;
+    }
+
+    const total=Math.floor(left/1000);
+    const m=Math.floor(total/60);
+    const sec=total%60;
+
+    document.getElementById('countdown').textContent=
+        String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+updateTimer();
+setInterval(updateTimer,1000);
+</script>
+
+{% elif stage=="proof" %}
+
+<div class="deposit-title">Confirm Payment</div>
+<div class="deposit-sub">
+Enter the details of the payment you made.
+</div>
+
+<div class="agent">
+<div>Amount</div>
+<div class="agent-number">UGX {{ "{:,.0f}".format(deposit.amount) }}</div>
+</div>
+
+<div class="agent">
+<div>Payment method</div>
+<div class="agent-number">{{deposit.payment_method}}</div>
+</div>
+
+<div class="agent">
+<div>Payment agent</div>
+<div class="agent-number">0757837051</div>
+<div style="margin-top:5px">Mary Namara</div>
+</div>
+
+<div id="countdown" class="countdown">30:00</div>
+
+{% if error %}<div class="error">{{error}}</div>{% endif %}
+
+<form method="post" id="proofForm">
+<input type="hidden" name="action" value="proof">
+
+<label>Transaction ID</label>
+<input class="deposit-input" name="proof" type="text" placeholder="Enter transaction ID" required>
+
+<label>Number that made the payment</label>
+<input class="deposit-input" name="payer_number" type="tel" placeholder="Enter the number that paid" required>
+
+<button class="deposit-btn" type="submit">Verify Payment</button>
+</form>
+
+<div class="note">
+The 30-minute expiry is controlled by the server. If it expires before submission,
+this deposit attempt closes and the next Deposit starts again from the amount popup.
+</div>
+
+<script>
+const expiry={{ deposit.expires_at|tojson }};
+
+function updateTimer(){
+    const left=Math.max(0,Date.parse(expiry)-Date.now());
+
+    if(left<=0){
+        document.getElementById('countdown').textContent='EXPIRED';
+        document.getElementById('proofForm').style.display='none';
+        setTimeout(function(){ location.href="{{ url_for('deposit') }}"; },700);
+        return;
+    }
+
+    const total=Math.floor(left/1000);
+    const m=Math.floor(total/60);
+    const sec=total%60;
+
+    document.getElementById('countdown').textContent=
+        String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+
+updateTimer();
+setInterval(updateTimer,1000);
+</script>
+
+{% elif stage=="review" %}
+
+<div class="deposit-title success">Payment submitted successfully</div>
+
+<div class="deposit-sub">
+<b>Payment submitted successfully.</b><br>
+<b>Payment request submitted successfully.</b><br>
+Your deposit is now <b>pending admin approval</b>.
+</div>
+
+<div class="agent">
+<div>Status</div>
+<div class="agent-number">PENDING ADMIN APPROVAL</div>
+</div>
+
+<div class="agent">
+<div>Amount</div>
+<div class="agent-number">UGX {{ "{:,.0f}".format(deposit.amount) }}</div>
+</div>
+
+<div class="agent">
+<div>Payment method</div>
+<div class="agent-number">{{deposit.payment_method}}</div>
+</div>
+
+<div class="agent">
+<div>Transaction ID</div>
+<div class="agent-number" style="font-size:17px;word-break:break-all">{{deposit.proof}}</div>
+</div>
+
+<div class="agent">
+<div>Number that paid</div>
+<div class="agent-number">{{deposit.payer_number}}</div>
+</div>
+
+<div class="note">
+Your payment request has been sent to the administrator for verification.
+Your wallet will only be credited after approval.
+</div>
+
+{% endif %}
+
+</div>
+</div>
+
+{% endblock %}

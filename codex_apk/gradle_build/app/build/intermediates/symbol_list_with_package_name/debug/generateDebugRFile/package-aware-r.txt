@@ -1,0 +1,2 @@
+com.codex700.ai
+style AppTheme

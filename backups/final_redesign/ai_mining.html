@@ -1,0 +1,46 @@
+{% extends 'base.html' %}{% block content %}
+<div class="ai-head"><div><div class="title ai-title">NEXORA</div><div class="ai-subtitle">LIVE ROBOTS • AI MINING LAB</div></div><div class="live-pill"><span></span> LIVE</div></div>
+
+<section class="robot-lab">
+  <div class="lab-title"><b>AI ROBOT CONTROL DIMENSION</b><span>● ONLINE</span></div>
+  <div class="robot-stage">
+    <div class="robot robot-a"><div class="robot-head"><i></i><i></i></div><div class="robot-body"></div><div class="robot-arm left"></div><div class="robot-arm right"></div></div>
+    <div class="computer"><div class="screen"><span>AI CORE</span><em>PROCESSING...</em></div><div class="desk"></div></div>
+    <div class="robot robot-b"><div class="robot-head"><i></i><i></i></div><div class="robot-body"></div><div class="robot-arm left"></div><div class="robot-arm right"></div></div>
+    <div class="robot robot-c"><div class="robot-head"><i></i><i></i></div><div class="robot-body"></div><div class="robot-arm left"></div><div class="robot-arm right"></div></div>
+    <div class="tool-crane"></div>
+    <div class="floor-grid"></div>
+  </div>
+  <div class="robot-actions"><span>🤖 MOVING</span><span>🤝 HANDSHAKE</span><span>▣ COMPUTER INPUT</span><span>⛏ MINING</span></div>
+</section>
+
+<section class="live-panel">
+  <div class="section-heading"><span class="pulse-dot"></span><b>AI Machine Network</b><span class="online">ALL SYSTEMS ONLINE</span></div>
+  <p class="muted">Each machine has its own AI operating unit and live activity feed.</p>
+  <div class="mini-robots">{% for code,p in plans.items() %}<div class="mini-robot"><div class="mini-bot">🤖</div><b>{{code}}</b><small>{{p.series}} AI</small><span>● ACTIVE</span></div>{% endfor %}</div>
+</section>
+
+<section class="points-card">
+  <div><div class="muted">Referral AI Points</div><div class="points-value" id="pointsValue">{{points}}</div><small>Earn 10 points when a person you invited makes an approved deposit through your referral link.</small></div>
+  <a class="button" href="/invite">INVITE PEOPLE</a>
+</section>
+
+<section class="mining-tools">
+  <div class="section-heading"><b>Live Mining Tools</b><span class="muted">Promotional credits</span></div>
+  <div class="tool-note">These miners generate <b>in-app promotional credits</b>. They are separate from your withdrawable wallet balance.</div>
+  <div class="tool-grid">
+  {% for t in tool_catalog %}<div class="tool-card"><div class="tool-icon">{% if 'Axe' in t.name %}⛏{% elif 'Nuclear' in t.name %}☢{% elif 'Destroyer' in t.name %}◈{% else %}⚡{% endif %}</div><h3>{{t.name}}</h3><div class="tool-cost">{{t.cost}} points</div><div class="tool-rate">UGX <b>{{'{:,.2f}'.format(t.rate)}}</b> / second</div><div class="tool-capacity">Capacity: UGX {{'{:,.0f}'.format(t.capacity)}}</div><form method="post" action="/ai-mining/buy/{{loop.index0}}"><button class="button">ACTIVATE</button></form></div>{% endfor %}
+  </div>
+</section>
+
+<section class="active-miners"><div class="section-heading"><b>My Live Miners</b><span class="muted">Updates every second</span></div>
+{% for m in tools %}<div class="miner-row" data-rate="{{m.rate}}" data-earned="{{m.earned}}" data-capacity="{{m.capacity}}"><div><b>{{m.tool_name}}</b><small>{{m.points_cost}} points · {{'{:,.2f}'.format(m.rate)}} UGX/sec</small></div><div class="miner-earned">UGX <span>0.00</span></div></div>{% else %}<div class="muted">No mining tools active yet.</div>{% endfor %}
+</section>
+
+<script>
+(function(){
+  const rows=document.querySelectorAll('.miner-row');
+  rows.forEach(row=>{let base=parseFloat(row.dataset.earned||0),rate=parseFloat(row.dataset.rate||0),cap=parseFloat(row.dataset.capacity||0),start=Date.now(); const out=row.querySelector('.miner-earned span'); function tick(){let v=Math.min(cap,base+rate*(Date.now()-start)/1000);out.textContent=v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});} tick(); setInterval(tick,1000);});
+})();
+</script>
+{% endblock %}

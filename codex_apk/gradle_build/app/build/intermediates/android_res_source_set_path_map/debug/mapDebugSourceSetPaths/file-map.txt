@@ -1,0 +1,7 @@
+com.codex700.ai.app-pngs-0 /data/data/com.termux/files/home/codex_apk/gradle_build/app/build/generated/res/pngs/debug
+com.codex700.ai.app-updated_navigation_xml-1 /data/data/com.termux/files/home/codex_apk/gradle_build/app/build/generated/updated_navigation_xml/debug
+com.codex700.ai.app-packageDebugResources-2 /data/data/com.termux/files/home/codex_apk/gradle_build/app/build/intermediates/incremental/debug/packageDebugResources/merged.dir
+com.codex700.ai.app-packageDebugResources-3 /data/data/com.termux/files/home/codex_apk/gradle_build/app/build/intermediates/incremental/debug/packageDebugResources/stripped.dir
+com.codex700.ai.app-debug-4 /data/data/com.termux/files/home/codex_apk/gradle_build/app/build/intermediates/merged_res/debug/mergeDebugResources
+com.codex700.ai.app-debug-5 /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/debug/res
+com.codex700.ai.app-main-6 /data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/res

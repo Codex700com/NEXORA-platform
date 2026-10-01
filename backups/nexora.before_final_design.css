@@ -1,0 +1,345 @@
+*{box-sizing:border-box}html,body{margin:0;background:#000;color:#fff;font-family:Georgia,'Times New Roman',serif}body{min-height:100vh;background-image:radial-gradient(circle,rgba(20,230,100,.42) 1.2px,transparent 1.8px);background-size:18px 18px;animation:dotFlow 12s linear infinite;overflow-x:hidden;touch-action:manipulation;-webkit-text-size-adjust:100%}@keyframes dotFlow{0%{background-position:0 0}25%{background-position:18px -12px}50%{background-position:36px 0}75%{background-position:18px 12px}100%{background-position:0 0}}.page{min-height:100vh;padding:22px 14px 92px}.box{max-width:760px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;margin:6px 8px 28px}.welcome{font-size:26px;color:#39ff88}.phone{font-size:17px;margin-top:10px}.vip{text-align:center}.vip-circle{width:64px;height:64px;border:2px solid #39ff88;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px}.vip-label{color:#39ff88;margin-top:5px}.section,.wallet,.hero,.notice{border:1px solid #11994d;border-radius:22px;background:rgba(0,0,0,.55);box-shadow:0 0 16px rgba(20,230,100,.08);padding:24px;margin:18px 0}.wallet{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center}.muted{color:#aaa}.value{font-size:28px;font-weight:bold;margin-top:12px}.services{display:grid;grid-template-columns:repeat(4,1fr);gap:22px 10px;border:1px solid #11994d;border-radius:22px;padding:28px 12px;background:rgba(0,0,0,.5)}.service{text-decoration:none;color:#fff;text-align:center;font-size:13px}.icon{width:56px;height:56px;margin:0 auto 8px;border-radius:13px;background:#08bde8;display:flex;align-items:center;justify-content:center;font-size:30px}.button,.action{width:100%;padding:14px;border-radius:13px;border:1px solid #39ff88;background:#001a24;color:#39ff88;font:inherit;font-weight:bold;cursor:pointer;margin-top:14px}.button.primary{background:#08bde8;color:#fff}.field{margin:14px 0;border:1px solid #777;border-radius:28px;padding:4px 18px;display:flex;align-items:center;min-height:60px;background:rgba(0,0,0,.35)}input,textarea{width:100%;background:transparent;border:0;outline:0;color:#fff;font:inherit;font-size:17px;padding:12px}textarea{resize:vertical}.title{text-align:center;font-size:36px;font-weight:bold;margin:18px 0 34px}.hero{overflow:hidden;padding:0}.hero img{width:100%;height:270px;object-fit:cover;display:block}.hero-body{padding:18px}.hero h2{color:#39ff88}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.card{border:1px solid #11994d;border-radius:18px;padding:18px;background:rgba(0,0,0,.55)}.table{width:100%;border-collapse:collapse;margin-top:16px}.table th,.table td{border:1px solid #123;padding:11px;text-align:center}.table th{color:#39ff88}.notice{text-align:center;color:#ffd83d}.flash{padding:12px;border-radius:12px;margin-bottom:12px;text-align:center}.flash.success{background:#073d22;color:#70ffad}.flash.error{background:#4b1010;color:#ff8d8d}.linkrow{display:flex;justify-content:space-between;margin:20px 4px}.linkrow a{color:#fff;text-decoration:none}.bottom{position:fixed;left:0;right:0;bottom:0;height:82px;background:#000;border-top:1px solid #123;display:grid;grid-template-columns:repeat(6,1fr);z-index:100}.bottom a{color:#aaa;text-decoration:none;text-align:center;font-size:12px;padding-top:8px}.bottom i{display:block;font-style:normal;font-size:28px;line-height:34px}.bottom .active{color:#39ff88}.row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #123}@media(max-width:480px){.page{padding-left:14px;padding-right:14px}.services{gap:18px 6px}.service{font-size:12px}.icon{width:52px;height:52px}.title{font-size:32px}.hero img{height:220px}.grid{grid-template-columns:1fr}.value{font-size:25px}}
+
+/* NEXORA live mining section */
+.ai-head{display:flex;justify-content:space-between;align-items:center;margin:4px 4px 14px}.ai-title{margin:0;text-align:left;font-size:34px}.ai-subtitle{color:#39ff88;font-size:12px;letter-spacing:1px}.live-pill{border:1px solid #39ff88;border-radius:20px;padding:8px 12px;color:#39ff88;font-weight:bold;font-size:12px;box-shadow:0 0 12px rgba(20,230,100,.25)}.live-pill span,.pulse-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#22ff72;box-shadow:0 0 10px #22ff72;margin-right:5px;animation:livePulse 1.1s infinite}.ai-live-hero{position:relative;overflow:hidden;border:1px solid #39ff88;border-radius:22px;background:#001018;box-shadow:0 0 20px rgba(20,230,100,.2);height:300px}.ai-live-hero img{width:100%;height:100%;object-fit:cover;display:block;animation:sceneDrift 9s ease-in-out infinite alternate}.scanline{position:absolute;left:0;right:0;height:2px;background:rgba(0,220,255,.75);box-shadow:0 0 12px #39ff88;top:8%;animation:scan 3.5s linear infinite}.live-caption{position:absolute;left:16px;right:16px;bottom:14px;padding:13px 15px;border:1px solid #39ff88;border-radius:14px;background:rgba(0,0,0,.72);backdrop-filter:blur(3px)}.live-caption b{display:block;color:#00d8ff;font-size:20px}.live-caption small{display:block;margin-top:4px;color:#fff}.live-panel,.machine-section,.how-ai{border:1px solid #11994d;border-radius:22px;background:rgba(0,0,0,.55);padding:18px;margin:18px 0;box-shadow:0 0 16px rgba(20,230,100,.08)}.section-heading{display:flex;align-items:center;gap:8px;color:#39ff88;font-size:20px;margin-bottom:14px}.section-heading .muted{font-size:13px;font-weight:normal;margin-left:auto}.online{font-size:10px;color:#22ff72;margin-left:auto}.live-feeds{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.live-feed{overflow:hidden;border:1px solid #087fae;border-radius:15px;background:#001018}.feed-image{height:130px;background-image:url('/static/ai_mining_scene.png');background-repeat:no-repeat;background-size:320%;position:relative;animation:feedMove 5s ease-in-out infinite alternate}.excavator-feed{background-position:58% 37%}.robot-feed{background-position:15% 72%;animation-delay:-1.3s}.computer-feed{background-position:3% 88%;animation-delay:-2.1s}.feed-label{padding:9px 8px;font-size:12px;font-weight:bold}.feed-label span{display:block;color:#22ff72;font-size:9px;margin-top:4px}.machine-section .section-heading{margin-bottom:16px}.machine-card{overflow:hidden;padding:0 0 16px}.machine-card h2,.machine-card .muted,.machine-card>div:not(.machine-photo),.machine-card>p,.machine-card>a{margin-left:16px;margin-right:16px}.machine-photo{height:130px;overflow:hidden;border-bottom:1px solid #11994d}.machine-photo img{width:100%;height:100%;object-fit:cover;animation:machineFloat 6s ease-in-out infinite alternate}.machine-card:nth-child(2) .machine-photo img{animation-delay:-1s}.machine-card:nth-child(3) .machine-photo img{animation-delay:-2s}.machine-card:nth-child(4) .machine-photo img{animation-delay:-3s}.how-ai h2{color:#39ff88;margin:0 0 14px}.how-row{display:grid;grid-template-columns:auto 1fr auto 1fr auto 1fr;align-items:center;gap:9px;font-size:12px}.how-row b{border:1px solid #39ff88;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#39ff88}.how-row span{color:#ddd}@keyframes livePulse{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}@keyframes sceneDrift{0%{transform:scale(1.02) translate3d(-1%,0,0)}100%{transform:scale(1.08) translate3d(1%,0,0)}}@keyframes scan{0%{top:4%;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:94%;opacity:0}}@keyframes feedMove{0%{transform:translateX(-2px) scale(1)}100%{transform:translateX(5px) scale(1.06)}}@keyframes machineFloat{0%{transform:scale(1) translateX(-1%)}100%{transform:scale(1.08) translateX(2%)}}@media(max-width:480px){.ai-title{font-size:29px}.ai-live-hero{height:245px}.live-feeds{gap:7px}.feed-image{height:105px}.feed-label{font-size:10px}.how-row{grid-template-columns:auto 1fr;gap:8px}.how-row span{margin-bottom:7px}.how-row b{grid-column:auto}}
+
+/* Animated mining energy waves */
+.ai-live-hero::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 0%,rgba(0,210,255,.08) 42%,rgba(0,230,255,.22) 50%,rgba(0,210,255,.08) 58%,transparent 100%);background-size:220% 100%;animation:waveSweep 4.5s linear infinite;mix-blend-mode:screen}
+.wave-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2}
+.wave-layer i{position:absolute;left:-25%;width:150%;height:90px;border:2px solid rgba(0,210,255,.28);border-left:0;border-right:0;border-radius:50%;filter:drop-shadow(0 0 7px rgba(20,230,100,.45));animation:waveFlow 5s ease-in-out infinite}
+.wave-layer i:nth-child(1){top:12%;animation-delay:0s;opacity:.7}
+.wave-layer i:nth-child(2){top:35%;height:120px;animation-delay:-1.4s;opacity:.45}
+.wave-layer i:nth-child(3){top:58%;height:100px;animation-delay:-2.8s;opacity:.6}
+.wave-layer i:nth-child(4){top:78%;height:75px;animation-delay:-3.7s;opacity:.35}
+@keyframes waveFlow{0%{transform:translateX(-7%) translateY(0) scaleY(.72)}50%{transform:translateX(7%) translateY(9px) scaleY(1.05)}100%{transform:translateX(-7%) translateY(0) scaleY(.72)}}
+@keyframes waveSweep{0%{background-position:200% 0}100%{background-position:-20% 0}}
+
+/* Withdrawal page - matched to the supplied reference */
+.withdraw-page{max-width:760px;margin:auto}.page-head{display:grid;grid-template-columns:64px 1fr 64px;align-items:center;margin:0 -2px 18px;min-height:66px;border-bottom:1px solid #123}.page-head h1{text-align:center;color:#39ff88;font-size:29px;margin:0;font-weight:bold}.back-btn{width:64px;height:64px;border:1px solid #11994d;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#39ff88;text-decoration:none;font-size:39px;line-height:1;box-shadow:0 0 14px rgba(20,230,100,.12)}.head-spacer{width:64px}.balance-card{border:1px solid #11994d;border-radius:22px;background:rgba(0,0,0,.62);padding:30px 20px 28px;text-align:center;box-shadow:0 0 18px rgba(20,230,100,.09);margin:20px 0 28px}.balance-label{color:#aaa;font-size:25px}.balance-number{color:#20e878;font-size:46px;font-weight:bold;margin-top:8px}.withdraw-card{border:1px solid #11994d;border-radius:22px;background:rgba(0,0,0,.62);padding:26px 28px 28px;box-shadow:0 0 18px rgba(20,230,100,.09)}.form-label{font-size:23px;color:#ddd;margin-bottom:16px}.method-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:25px}.method-btn{min-height:58px;border:1px solid #11994d;border-radius:17px;background:transparent;color:#fff;font:inherit;font-size:17px;cursor:pointer}.method-btn.active{background:#08bde8;box-shadow:0 0 15px rgba(20,230,100,.3)}.amount-label{margin-top:4px}.amount-input{border:1px solid #087fae;border-radius:17px;background:rgba(5,13,22,.82);min-height:78px;display:flex;align-items:center;padding:0 18px}.amount-input input{font-size:21px;color:#fff;padding:15px 2px}.amount-input input::placeholder{color:#6c737a}.helper{color:#aaa;font-size:15px;margin-top:8px}.details-warning{margin:24px 0;border:1px solid #7d1724;border-radius:17px;background:rgba(55,0,10,.42);padding:22px}.details-warning strong{display:block;font-size:20px;margin-bottom:8px}.details-warning span{display:block;color:#bbb;line-height:1.5;font-size:15px}.details-warning a{display:inline-block;margin-top:12px;color:#20e878;text-decoration:none;font-size:17px}.destination-label{margin-top:26px}.withdraw-summary{margin-top:26px;border:1px solid #14552f;border-radius:17px;padding:18px 20px;background:rgba(0,0,0,.38)}.withdraw-summary>div{display:flex;justify-content:space-between;gap:14px;padding:8px 0;color:#ddd;font-size:18px}.withdraw-summary b{font-weight:normal;color:#fff}.withdraw-summary .fee{color:#ff3854}.withdraw-summary .receive{font-size:21px;color:#fff;border-top:1px solid #123;padding-top:14px;margin-top:6px}.withdraw-summary .receive b{color:#20e878;font-weight:bold}.withdraw-submit{min-height:58px;font-size:18px}.withdraw-note{border:1px solid #14552f;border-radius:17px;padding:18px;margin:18px 0;color:#aaa}.withdraw-note b{color:#39ff88}.withdraw-note p{margin:8px 0 0;line-height:1.5}.card-save h2{color:#39ff88}.saved-row{display:flex;justify-content:space-between;gap:15px;padding:16px 0;border-bottom:1px solid #123;color:#aaa}.saved-row b{color:#fff;text-align:right;word-break:break-all}.wallet-text{max-width:60%}.as-button{display:block;text-align:center;text-decoration:none;margin-top:14px}
+@media(max-width:480px){.page-head{grid-template-columns:56px 1fr 56px}.back-btn{width:56px;height:56px;font-size:34px}.head-spacer{width:56px}.page-head h1{font-size:28px}.balance-card{padding:28px 15px}.balance-label{font-size:22px}.balance-number{font-size:42px}.withdraw-card{padding:23px 28px}.method-grid{gap:8px}.method-btn{font-size:15px;padding:0 4px}.form-label{font-size:21px}.withdraw-summary>div{font-size:16px}.withdraw-summary .receive{font-size:19px}}
+
+/* NEXORA robot lab and live promotional miners */
+.robot-lab,.points-card,.mining-tools,.active-miners{border:1px solid #11994d;border-radius:22px;background:rgba(0,0,0,.58);padding:18px;margin:18px 0;box-shadow:0 0 20px rgba(20,230,100,.10)}
+.lab-title{display:flex;justify-content:space-between;color:#20e878;margin-bottom:12px}.lab-title span{color:#22ff72;font-size:11px}.robot-stage{height:300px;position:relative;overflow:hidden;border:1px solid #075879;border-radius:18px;background:radial-gradient(circle at 50% 30%,#063047 0,#001019 42%,#000 100%)}
+.floor-grid{position:absolute;inset:55% 0 0;background:linear-gradient(rgba(20,230,100,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(20,230,100,.12) 1px,transparent 1px);background-size:28px 20px;transform:perspective(160px) rotateX(55deg);transform-origin:bottom;opacity:.7}
+.robot{position:absolute;width:54px;height:118px;bottom:48px;z-index:4;animation:robotWalk 4s ease-in-out infinite alternate}.robot-a{left:13%;}.robot-b{right:16%;animation-delay:-1.4s}.robot-c{left:45%;bottom:60px;transform:scale(.8);animation-delay:-2.4s}.robot-head{width:44px;height:38px;margin:auto;border:2px solid #20e878;border-radius:12px;background:#06131b;box-shadow:0 0 14px rgba(0,200,255,.35)}.robot-head i{display:inline-block;width:7px;height:7px;background:#22ff72;border-radius:50%;margin:12px 5px;box-shadow:0 0 8px #22ff72}.robot-body{width:50px;height:52px;margin:4px auto;border:2px solid #11994d;border-radius:10px;background:linear-gradient(90deg,#05121a,#0a2a38,#05121a)}.robot-arm{position:absolute;width:11px;height:50px;border:2px solid #39ff88;border-radius:8px;top:46px;transform-origin:top center}.robot-arm.left{left:-2px;animation:armTap 1.2s ease-in-out infinite alternate}.robot-arm.right{right:-2px;animation:armShake 1s ease-in-out infinite alternate}.computer{position:absolute;left:50%;top:36px;transform:translateX(-50%);z-index:3;animation:computerPulse 2s infinite}.screen{width:120px;height:75px;border:3px solid #39ff88;border-radius:8px;background:#001820;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 0 25px rgba(20,230,100,.25)}.screen span{color:#00e5ff;font-weight:bold}.screen em{font-size:8px;color:#22ff72;margin-top:7px}.desk{width:155px;height:14px;background:#07506a;margin:8px auto;border-radius:5px}.tool-crane{position:absolute;right:5%;top:12px;width:100px;height:3px;background:#087fae;box-shadow:0 0 10px #39ff88}.tool-crane:after{content:'⛏';position:absolute;right:10px;top:4px;font-size:30px;color:#39ff88;animation:toolSwing 2s ease-in-out infinite alternate}.robot-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.robot-actions span{border:1px solid #075879;border-radius:12px;padding:8px 10px;font-size:10px;color:#9befff;background:#00131b}.mini-robots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.mini-robot{border:1px solid #075879;border-radius:14px;padding:10px;text-align:center;background:#001019}.mini-bot{font-size:25px;animation:miniBob 1.6s ease-in-out infinite}.mini-robot small,.mini-robot span{display:block;color:#aaa;font-size:9px;margin-top:4px}.mini-robot span{color:#22ff72}.points-card{display:flex;justify-content:space-between;align-items:center;gap:15px}.points-value{font-size:38px;color:#00d8ff;font-weight:bold;margin:6px 0}.points-card small{color:#aaa;display:block;max-width:500px}.points-card .button{width:auto;white-space:nowrap}.tool-note{border:1px solid #14552f;border-radius:13px;padding:12px;color:#aaa;font-size:12px;margin-bottom:12px}.tool-note b{color:#20e878}.tool-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.tool-card{border:1px solid #075879;border-radius:16px;padding:15px;background:#001018;text-align:center}.tool-icon{font-size:34px;color:#20e878}.tool-card h3{margin:8px 0 5px;color:#fff}.tool-cost{color:#ffd34d;font-size:12px}.tool-rate{color:#70ffad;margin-top:8px}.tool-capacity{color:#aaa;font-size:11px;margin-top:6px}.tool-card .button{margin-top:10px}.miner-row{display:flex;justify-content:space-between;align-items:center;border:1px solid #075879;border-radius:14px;padding:13px;margin-top:10px;background:#001018}.miner-row small{display:block;color:#aaa;margin-top:4px}.miner-earned{color:#70ffad;font-weight:bold}.miner-earned span{font-size:18px}
+@keyframes robotWalk{0%{transform:translateX(-5px) rotate(-1deg)}50%{transform:translateX(4px) rotate(1deg)}100%{transform:translateX(9px) rotate(-1deg)}}@keyframes armTap{0%{transform:rotate(18deg)}100%{transform:rotate(70deg)}}@keyframes armShake{0%{transform:rotate(-18deg)}100%{transform:rotate(22deg)}}@keyframes computerPulse{0%,100%{filter:drop-shadow(0 0 3px #39ff88)}50%{filter:drop-shadow(0 0 15px #39ff88)}}@keyframes toolSwing{0%{transform:rotate(-14deg)}100%{transform:rotate(15deg)}}@keyframes miniBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@media(max-width:480px){.robot-stage{height:260px}.robot-actions{gap:5px}.robot-actions span{font-size:8px;padding:7px}.mini-robots{grid-template-columns:repeat(2,1fr)}.points-card{display:block}.points-card .button{width:100%}.tool-grid{grid-template-columns:1fr}}
+
+
+/* NEXORA GLOBAL LIVE LIGHTNING BACKGROUND */
+body{position:relative}
+.nexora-lightning-bg{
+    position:fixed;
+    inset:0;
+    overflow:hidden;
+    pointer-events:none;
+    z-index:0;
+}
+.nexora-lightning-bg .bolt{
+    position:absolute;
+    top:-12%;
+    width:3px;
+    height:135%;
+    opacity:0;
+    transform-origin:top center;
+    background:linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(90,220,255,.95) 18%,
+        #fff 48%,
+        rgba(20,230,100,.9) 72%,
+        transparent 100%
+    );
+    filter:drop-shadow(0 0 4px #39ff88) drop-shadow(0 0 12px rgba(20,230,100,.85));
+    clip-path:polygon(
+        50% 0%,58% 8%,42% 17%,63% 25%,45% 34%,
+        67% 43%,43% 52%,60% 62%,39% 72%,57% 82%,
+        44% 91%,50% 100%
+    );
+    animation:nexoraLightning 6s infinite;
+}
+.nexora-lightning-bg .bolt::before,
+.nexora-lightning-bg .bolt::after{
+    content:"";
+    position:absolute;
+    width:2px;
+    height:48%;
+    top:20%;
+    background:linear-gradient(to bottom,transparent,#fff,rgba(20,230,100,.85),transparent);
+    filter:drop-shadow(0 0 5px #39ff88);
+}
+.nexora-lightning-bg .bolt::before{
+    left:-18px;
+    transform:rotate(31deg);
+}
+.nexora-lightning-bg .bolt::after{
+    right:-20px;
+    top:43%;
+    transform:rotate(-28deg);
+}
+.nexora-lightning-bg .bolt:nth-of-type(1){left:5%;transform:rotate(-9deg);animation-delay:-.8s;animation-duration:5.8s}
+.nexora-lightning-bg .bolt:nth-of-type(2){left:15%;transform:rotate(7deg);animation-delay:-4.1s;animation-duration:7.2s}
+.nexora-lightning-bg .bolt:nth-of-type(3){left:27%;transform:rotate(-5deg);animation-delay:-2.4s;animation-duration:6.4s}
+.nexora-lightning-bg .bolt:nth-of-type(4){left:39%;transform:rotate(8deg);animation-delay:-5.3s;animation-duration:8s}
+.nexora-lightning-bg .bolt:nth-of-type(5){left:51%;transform:rotate(-7deg);animation-delay:-1.7s;animation-duration:6.9s}
+.nexora-lightning-bg .bolt:nth-of-type(6){left:63%;transform:rotate(6deg);animation-delay:-6s;animation-duration:7.6s}
+.nexora-lightning-bg .bolt:nth-of-type(7){left:75%;transform:rotate(-8deg);animation-delay:-3.2s;animation-duration:5.5s}
+.nexora-lightning-bg .bolt:nth-of-type(8){left:87%;transform:rotate(7deg);animation-delay:-4.8s;animation-duration:6.7s}
+.nexora-lightning-bg .flash{
+    position:absolute;
+    inset:0;
+    background:rgba(80,210,255,.055);
+    opacity:0;
+    animation:nexoraSkyFlash 4.8s infinite;
+}
+.nexora-lightning-bg .flash:nth-child(10){animation-delay:-2.1s}
+.nexora-lightning-bg .flash:nth-child(11){animation-delay:-3.7s}
+
+@keyframes nexoraLightning{
+    0%,88%,100%{opacity:0}
+    89%{opacity:.15}
+    89.4%{opacity:1}
+    89.8%{opacity:.12}
+    90.2%{opacity:.9}
+    90.7%{opacity:.08}
+    91.4%{opacity:.65}
+    92.5%{opacity:0}
+}
+@keyframes nexoraSkyFlash{
+    0%,88%,100%{opacity:0}
+    89.3%{opacity:.18}
+    89.8%{opacity:0}
+    90.3%{opacity:.12}
+    91%{opacity:0}
+}
+
+/* Keep every real NEXORA interface layer above the lightning. */
+.page{position:relative;z-index:2}
+.bottom{z-index:100}
+.announcement-backdrop{z-index:1000}
+
+@media(prefers-reduced-motion:reduce){
+    .nexora-lightning-bg .bolt,
+    .nexora-lightning-bg .flash{animation:none}
+}
+
+
+/* Global live green waves — background only */
+.nexora-green-waves{
+    position:fixed;
+    inset:0;
+    overflow:hidden;
+    pointer-events:none;
+    z-index:1;
+    opacity:.68;
+}
+
+.green-wave{
+    position:absolute;
+    left:-8%;
+    width:116%;
+    height:18vh;
+    border:0;
+    border-top:1px solid rgba(35,255,115,.34);
+    border-bottom:1px solid rgba(35,255,115,.12);
+    border-radius:50%;
+    box-shadow:
+        0 0 16px rgba(35,255,115,.10),
+        0 0 34px rgba(35,255,115,.045);
+    animation:nexoraSnakeWave 6s ease-in-out infinite;
+    will-change:transform;
+}
+
+.green-wave::after{
+    content:"";
+    position:absolute;
+    inset:18% -2%;
+    border-top:1px solid rgba(105,255,165,.20);
+    border-radius:50%;
+}
+
+/* Twelve staggered horizontal snake waves */
+.wave-1{top:2%;animation-duration:6.2s;animation-delay:-.4s}
+.wave-2{top:10%;animation-duration:7.1s;animation-delay:-2.1s}
+.wave-3{top:18%;animation-duration:5.8s;animation-delay:-4.3s}
+.wave-4{top:26%;animation-duration:7.8s;animation-delay:-1.2s}
+.wave-5{top:34%;animation-duration:6.5s;animation-delay:-3.7s}
+.wave-6{top:42%;animation-duration:8.1s;animation-delay:-5.1s}
+.wave-7{top:50%;animation-duration:6s;animation-delay:-2.8s}
+.wave-8{top:58%;animation-duration:7.4s;animation-delay:-4.7s}
+.wave-9{top:66%;animation-duration:5.7s;animation-delay:-1.7s}
+.wave-10{top:74%;animation-duration:8.3s;animation-delay:-6s}
+.wave-11{top:82%;animation-duration:6.7s;animation-delay:-3.1s}
+.wave-12{top:90%;animation-duration:7.6s;animation-delay:-5.5s}
+
+@keyframes nexoraSnakeWave{
+    0%{
+        transform:translateX(-5%) translateY(0) rotate(-3deg) scaleY(.88);
+    }
+    25%{
+        transform:translateX(4%) translateY(-13px) rotate(4deg) scaleY(1.05);
+    }
+    50%{
+        transform:translateX(8%) translateY(2px) rotate(-4deg) scaleY(.90);
+    }
+    75%{
+        transform:translateX(-2%) translateY(13px) rotate(4deg) scaleY(1.07);
+    }
+    100%{
+        transform:translateX(-7%) translateY(0) rotate(-3deg) scaleY(.90);
+    }
+}
+
+/* Manager and Deposit tabs — match the NEXORA Home blue/cyan cards */
+a[href="/manager"],
+a[href="/deposit"]{
+    border:1px solid #11994d !important;
+    background:linear-gradient(145deg,#061a25,#000) !important;
+    color:#fff !important;
+    box-shadow:0 0 18px rgba(20,230,100,.12);
+}
+
+a[href="/manager"]:hover,
+a[href="/deposit"]:hover{
+    border-color:#20e878 !important;
+    box-shadow:0 0 24px rgba(0,200,255,.22);
+}
+
+@media (prefers-reduced-motion:reduce){
+    .green-wave{
+        animation:none;
+    }
+}
+
+
+/* Compact NEXORA interface — smaller typography and tighter rectangular surfaces */
+body{
+    font-size:13px;
+}
+
+.page .box{
+    font-size:13px;
+}
+
+.title{
+    font-size:18px !important;
+}
+
+.welcome{
+    font-size:14px !important;
+}
+
+.phone{
+    font-size:11px !important;
+}
+
+.muted{
+    font-size:11px !important;
+}
+
+.value{
+    font-size:17px !important;
+}
+
+.section{
+    padding:10px !important;
+    margin-bottom:8px !important;
+    border-radius:10px !important;
+}
+
+.services{
+    gap:7px !important;
+}
+
+.services .service{
+    min-height:58px !important;
+    padding:7px 5px !important;
+    border-radius:10px !important;
+    font-size:11px !important;
+}
+
+.services .icon{
+    font-size:17px !important;
+    margin-bottom:3px !important;
+}
+
+.button,
+.action,
+button{
+    min-height:36px !important;
+    padding:7px 12px !important;
+    border-radius:8px !important;
+    font-size:11px !important;
+}
+
+input,
+select,
+textarea{
+    min-height:34px !important;
+    padding:7px 9px !important;
+    border-radius:8px !important;
+    font-size:12px !important;
+}
+
+.table{
+    font-size:11px !important;
+}
+
+.table th,
+.table td{
+    padding:7px 6px !important;
+}
+
+.wallet{
+    gap:8px !important;
+}
+
+.wallet > div{
+    padding:9px !important;
+    border-radius:10px !important;
+}
+
+.top{
+    margin-bottom:9px !important;
+}
+
+.vip-circle{
+    width:34px !important;
+    height:34px !important;
+}
+
+.vip-label{
+    font-size:9px !important;
+}
+
+.linkrow{
+    font-size:11px !important;
+}
+
+/* Keep the animated background completely behind the interface */
+.nexora-green-waves,
+.nexora-lightning-bg{
+    pointer-events:none !important;
+}
+
+.page,
+nav{
+    position:relative;
+    z-index:2;
+}
+
+/* Bottom navigation must always stay visible */
+.bottom{
+    position:fixed !important;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:100 !important;
+}
+
+@media (prefers-reduced-motion:reduce){
+    .green-wave{
+        animation:none !important;
+    }
+}

@@ -1,0 +1,46 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.codex700.ai"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="23"
+9        android:targetSdkVersion="35" />
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:5:5-66
+11-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:5:22-64
+12
+13    <application
+13-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:7:5-23:19
+14        android:allowBackup="false"
+14-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:10:9-36
+15        android:debuggable="true"
+16        android:extractNativeLibs="false"
+17        android:label="CODEX AI"
+17-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:9:9-33
+18        android:theme="@style/AppTheme" >
+18-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:8:9-40
+19        <activity
+19-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:12:9-22:20
+20            android:name="com.codex700.ai.MainActivity"
+20-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:13:13-41
+21            android:exported="true"
+21-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:15:13-36
+22            android:screenOrientation="portrait" >
+22-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:14:13-49
+23            <intent-filter>
+23-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:17:13-20:29
+24                <action android:name="android.intent.action.MAIN" />
+24-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:18:17-68
+24-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:18:25-66
+25
+26                <category android:name="android.intent.category.LAUNCHER" />
+26-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:19:17-76
+26-->/data/data/com.termux/files/home/codex_apk/gradle_build/app/src/main/AndroidManifest.xml:19:27-74
+27            </intent-filter>
+28        </activity>
+29    </application>
+30
+31</manifest>

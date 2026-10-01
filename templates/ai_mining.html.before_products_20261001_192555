@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.nx-products{font-family:Inter,system-ui,sans-serif;padding-bottom:90px}
+.nx-products-head{padding:8px 2px 20px}
+.nx-products-head .tag{color:#39ff88;font-size:10px;letter-spacing:2px;font-weight:800}
+.nx-products-head h1{font-size:30px;margin:9px 0 7px}.nx-products-head p{color:#819889;font-size:12px;line-height:1.55}
+.nx-note{padding:13px 15px;border-radius:17px;background:#07130b;border:1px solid #154d2d;color:#8eae99;font-size:11px;line-height:1.5;margin-bottom:18px}
+.nx-products-list{display:grid;gap:13px}
+.nx-product{position:relative;overflow:hidden;padding:18px;border-radius:24px;background:linear-gradient(145deg,#091910,#040a06);border:1px solid #165a34;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.nx-product:after{content:"";position:absolute;right:-45px;top:-45px;width:130px;height:130px;border-radius:50%;border:1px solid rgba(57,255,136,.12)}
+.nx-product-top{display:flex;justify-content:space-between;align-items:center}.nx-code{color:#39ff88;font-size:11px;letter-spacing:1.5px;font-weight:800}.nx-badge{font-size:9px;color:#8be6a9;border:1px solid #1c6139;padding:5px 8px;border-radius:20px}
+.nx-product h3{margin:12px 0 5px;font-size:21px}.nx-product p{margin:0;color:#819889;font-size:11px}
+.nx-data{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:17px}
+.nx-data div{padding:10px;border-radius:13px;background:#061009;border:1px solid #103a22}.nx-data small{display:block;color:#688272;font-size:9px}.nx-data b{display:block;margin-top:4px;font-size:12px}
+.nx-product a{display:block;text-align:center;text-decoration:none;margin-top:13px;padding:12px;border-radius:14px;background:#18d66b;color:#031008;font-weight:800;font-size:12px}
+</style>
+<div class="nx-products">
+  <div class="nx-products-head">
+    <div class="tag">NEXORA CATALOGUE</div>
+    <h1>Digital Products</h1>
+    <p>Explore the available NEXORA product models and review their configured terms.</p>
+  </div>
+  <div class="nx-note">Independent platform notice: displayed product figures are simulated/projected figures for this platform and are not guarantees of financial returns.</div>
+  <div class="nx-products-list">
+  {% for code,p in plans.items() %}
+    <article class="nx-product">
+      <div class="nx-product-top"><span class="nx-code">{{ code }}</span><span class="nx-badge">AVAILABLE</span></div>
+      <h3>{{ p.get('series', 'NEXORA DIGITAL') }}</h3>
+      <p>NEXORA digital product model</p>
+      <div class="nx-data">
+        <div><small>ENTRY</small><b>UGX {{ "{:,.0f}".format(p["price"]) }}</b></div>
+        <div><small>TERM</small><b>{{ p["days"] }} DAYS</b></div>
+        <div><small>PROJECTED</small><b>UGX {{ "{:,.0f}".format(p["total"]) }}</b></div>
+      </div>
+      <a href="/ai-product/buy/{{ loop.index0 }}">View product</a>
+    </article>
+  {% endfor %}
+  </div>
+</div>
+{% endblock %}
