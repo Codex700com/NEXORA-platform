@@ -1639,38 +1639,129 @@ def deposit():
 @required
 def withdraw():
     u=current_user()
-    con_check=db()
-    pending=None
-    con_check.close()
 
     if request.method=="POST":
-        method=request.form.get("method","MTN UG").strip()
-        destination=request.form.get("destination","").strip()
-        try: amount=float(request.form.get("amount") or 0)
-        except (TypeError,ValueError): amount=0
-        allowed={"MTN UG":"mtn_number","Airtel UG":"airtel_number"}
-        if method not in allowed:
-            flash("Select a valid payout method.","error")
-        elif amount < 1000:
+        try:
+            amount=float(request.form.get("amount","0") or 0)
+        except:
+            amount=0
+
+        method=request.form.get("method","").strip()
+        allowed={
+            "MTN UG":"mtn_number",
+            "Airtel UG":"airtel_number"
+        }
+
+        column=allowed.get(method)
+
+        if amount < 1000:
             flash("Minimum withdrawal is 1,000 UGX.","error")
-        else:
-            con=db(); fresh=con.execute("SELECT * FROM users WHERE id=?",(u["id"],)).fetchone(); saved=(fresh[allowed[method]] or "").strip()
-            machine=con.execute("SELECT 1 FROM products WHERE uid=? AND status='ACTIVE' LIMIT 1",(u["id"],)).fetchone()
-            if not machine:
-                con.close(); flash("You need an active AI machine before you can withdraw.","error")
-            elif not saved or destination != saved:
-                con.close(); flash("Save your payout details on the Card page before withdrawing.","error")
-            elif amount > fresh["balance"]:
-                con.close(); flash("Insufficient balance for this withdrawal.","error")
-            else:
-                fee=round(amount*0.10,2); receive=round(amount-fee,2); ref="WDR-"+secrets.token_hex(4).upper()
-                con.execute("UPDATE users SET balance=balance-? WHERE id=? AND balance>=?",(amount,u["id"],amount))
-                if con.total_changes != 1:
-                    con.rollback(); con.close(); flash("Withdrawal could not be completed. Please try again.","error")
-                else:
-                    con.execute("INSERT INTO transactions(uid,kind,amount,status,reference,created_at) VALUES(?,?,?,?,?,?)",(u["id"],"WITHDRAW",amount,"PENDING",ref,now()))
-                    con.commit(); con.close(); flash(f"Withdrawal request submitted. Fee: UGX {fee:,.2f}. You receive: UGX {receive:,.2f}.","success"); return redirect(url_for("withdraw"))
-    return render_template("withdraw.html",title="Withdraw",user=current_user(),active="My")
+            return redirect(url_for("withdraw"))
+
+        if not column:
+            flash("Please select a valid payout method.","error")
+            return redirect(url_for("withdraw"))
+
+        con=db()
+
+        fresh=con.execute(
+            "SELECT * FROM users WHERE id=?",
+            (u["id"],)
+        ).fetchone()
+
+        destination=(fresh[column] or "").strip() if fresh else ""
+
+        if not destination:
+            con.close()
+            flash("Save your payout details on the Card page before withdrawing.","error")
+            return redirect(url_for("withdraw"))
+
+        active_machine=con.execute("""
+            SELECT 1 FROM ai_machines
+            WHERE uid=? AND status IN ('ACTIVE','RUNNING')
+            LIMIT 1
+        """,(u["id"],)).fetchone()
+
+        if not active_machine:
+            con.close()
+            flash("You need an active AI machine before you can withdraw.","error")
+            return redirect(url_for("withdraw"))
+
+        balance=float(fresh["balance"] or 0)
+
+        if amount > balance:
+            con.close()
+            flash("Insufficient balance for this withdrawal.","error")
+            return redirect(url_for("withdraw"))
+
+        fee=round(amount*0.10,2)
+        receive=round(amount-fee,2)
+        ref="WD-"+__import__("uuid").uuid4().hex[:12].upper()
+
+        try:
+            con.execute("""
+                UPDATE users
+                SET balance=COALESCE(balance,0)-?
+                WHERE id=? AND COALESCE(balance,0)>=?
+            """,(amount,u["id"],amount))
+
+            changed=con.execute("SELECT changes()").fetchone()[0]
+
+            if changed != 1:
+                con.rollback()
+                con.close()
+                flash("Withdrawal could not be completed. Please try again.","error")
+                return redirect(url_for("withdraw"))
+
+            con.execute("""
+                INSERT INTO transactions
+                (uid,kind,amount,status,reference,created_at,withdraw_method,withdraw_destination)
+                VALUES(?,?,?,?,?,?,?,?)
+            """,(
+                u["id"],
+                "WITHDRAW",
+                amount,
+                "PENDING",
+                ref,
+                now(),
+                method,
+                destination
+            ))
+
+            con.commit()
+            con.close()
+
+            flash(
+                f"Withdrawal request submitted to {method} number {destination}. "
+                f"Fee: UGX {fee:,.2f}. You receive: UGX {receive:,.2f}.",
+                "success"
+            )
+            return redirect(url_for("withdraw"))
+
+        except Exception:
+            con.rollback()
+            con.close()
+            flash("Withdrawal could not be completed. Please try again.","error")
+            return redirect(url_for("withdraw"))
+
+    con=db()
+
+    pending=con.execute("""
+        SELECT *
+        FROM transactions
+        WHERE uid=? AND kind='WITHDRAW' AND status='PENDING'
+        ORDER BY id DESC
+    """,(u["id"],)).fetchall()
+
+    con.close()
+
+    return render_template(
+        "withdraw.html",
+        title="Withdraw",
+        user=current_user(),
+        pending=pending,
+        active="My"
+    )
 
 @app.route("/download")
 @required
