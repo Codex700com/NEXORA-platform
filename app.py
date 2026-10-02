@@ -2217,7 +2217,6 @@ def reveal_promo(chance_id,box_id):
     return redirect(url_for("raffle"))
 
 
-@app.route("/admin")
 @app.route("/admin/")
 @admin_required
 def admin():
@@ -2308,9 +2307,23 @@ def admin_transaction(tid,action):
         award_referral_points(t["uid"])
     return redirect(url_for("admin"))
 
-@app.route("/admin/support/<int:uid>",methods=["POST"])
+@app.route("/admin/support/<int:uid>",methods=["GET","POST"])
 @admin_required
 def admin_support(uid):
+    if request.method=="GET":
+        con=db()
+        messages=con.execute(
+            "SELECT * FROM support_messages WHERE uid=? ORDER BY id",
+            (uid,)
+        ).fetchall()
+        con.close()
+        return render_template(
+            "admin_chat.html",
+            messages=messages,
+            uid=uid,
+            user=current_user()
+        )
+
     msg=request.form.get("message","").strip()
     if msg:
         con=db(); con.execute("INSERT INTO support_messages(uid,sender,message,created_at) VALUES(?,?,?,?)",(uid,"MANAGER",msg,now())); con.commit(); con.close()
@@ -2337,24 +2350,45 @@ def admin_announcement():
 @app.route("/admin/support/send",methods=["POST"])
 @admin_required
 def admin_support_send():
-    try:
-        uid=int(request.form.get("uid") or 0)
-    except:
-        uid=0
-    message=(request.form.get("message") or "").strip()
-    if not uid or not message:
-        flash("Select a user and enter a message.","error")
-        return redirect(url_for("admin"))
-    con=db()
-    if con.execute("SELECT 1 FROM users WHERE id=?",(uid,)).fetchone():
+    import os, uuid
+    from werkzeug.utils import secure_filename
+
+    uid=int(request.form.get("uid",0))
+    msg=request.form.get("message","").strip()
+    uploaded=request.files.get("media")
+    media_url=""
+
+    if uploaded and uploaded.filename:
+        filename=secure_filename(uploaded.filename)
+        ext=os.path.splitext(filename)[1].lower()
+        allowed={
+            ".jpg",".jpeg",".png",".gif",".webp",
+            ".mp4",".webm",".mov",".m4v",
+            ".mp3",".wav",".ogg",".m4a"
+        }
+
+        if ext not in allowed:
+            return ("Unsupported media type",400)
+
+        folder=os.path.join(app.root_path,"static","chat_media")
+        os.makedirs(folder,exist_ok=True)
+        saved="admin_"+uuid.uuid4().hex+ext
+        uploaded.save(os.path.join(folder,saved))
+        media_url=url_for("static",filename="chat_media/"+saved)
+
+    if uid and (msg or media_url):
+        con=db()
+        cols=[r[1] for r in con.execute("PRAGMA table_info(support_messages)").fetchall()]
+        if "media" not in cols:
+            con.execute("ALTER TABLE support_messages ADD COLUMN media TEXT")
         con.execute(
-            "INSERT INTO support_messages(uid,sender,message,created_at) VALUES(?,?,?,?)",
-            (uid,"MANAGER",message,now())
+            "INSERT INTO support_messages(uid,sender,message,created_at,media) VALUES(?,?,?,?,?)",
+            (uid,"ADMIN",msg,now(),media_url)
         )
         con.commit()
-        flash("Message sent to user.","success")
-    con.close()
-    return redirect(url_for("admin"))
+        con.close()
+
+    return redirect(url_for("admin_support",uid=uid))
 
 @app.route("/admin/gift",methods=["POST"])
 @admin_required

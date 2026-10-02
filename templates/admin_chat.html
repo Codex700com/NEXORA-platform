@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.admin-chat{max-width:760px;margin:auto;padding:14px 10px 105px;background:#000;color:#f2fff6}
+.admin-head{background:#050805;border:1px solid #173b24;border-radius:16px;padding:16px;margin-bottom:12px}
+.admin-head h2{margin:0;color:#39ff72}
+.admin-head small{color:#9bb5a3}
+.chat-box{display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;padding:11px 13px;border-radius:15px;background:#071009;border:1px solid #163c23}
+.msg.admin{align-self:flex-end;background:#092812;border-color:#39ff72}
+.msg img,.msg video{max-width:100%;border-radius:12px;margin-top:7px}
+.msg audio{width:100%;margin-top:7px}
+.msg a{color:#39ff72;word-break:break-all}
+.chat-form{position:fixed;left:0;right:0;bottom:0;background:#000;border-top:1px solid #173b24;padding:9px;z-index:50}
+.chat-form-inner{max-width:760px;margin:auto;display:flex;gap:7px;align-items:center}
+.chat-form textarea{flex:1;resize:none;background:#050805;color:white;border:1px solid #173b24;border-radius:12px;padding:10px}
+.btn{background:#39ff72;color:#001507;border:0;border-radius:11px;padding:11px 13px;font-weight:900}
+.iconbtn{background:#071009;color:#39ff72;border:1px solid #173b24;border-radius:11px;padding:10px}
+</style>
+
+<div class="admin-chat">
+  <div class="admin-head">
+    <h2>ADMIN COMMUNICATION</h2>
+    <small>Direct administration • No manager layer</small>
+  </div>
+
+  <div class="chat-box">
+    {% for m in messages %}
+      <div class="msg {{ 'admin' if m['sender']=='ADMIN' else 'user' }}">
+        {% if m['message'] %}
+          <div>{{ m['message']|e|replace('\n','<br>')|safe }}</div>
+        {% endif %}
+
+        {% if m['media'] %}
+          {% set media=m['media'] %}
+          {% if media.lower().endswith(('.jpg','.jpeg','.png','.gif','.webp')) %}
+            <img src="{{ media }}">
+          {% elif media.lower().endswith(('.mp4','.webm','.mov','.m4v')) %}
+            <video controls src="{{ media }}"></video>
+          {% elif media.lower().endswith(('.mp3','.wav','.ogg','.m4a')) %}
+            <audio controls src="{{ media }}"></audio>
+          {% else %}
+            <a href="{{ media }}" target="_blank">{{ media }}</a>
+          {% endif %}
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<form class="chat-form" method="post" action="{{ url_for('admin_support_send') }}" enctype="multipart/form-data">
+  <input type="hidden" name="uid" value="{{ uid }}">
+  <div class="chat-form-inner">
+    <button class="iconbtn" type="button" id="voiceBtn">🎤</button>
+    <label class="iconbtn">📎<input id="media" name="media" type="file" accept="image/*,video/*,audio/*" hidden></label>
+    <textarea name="message" rows="1" placeholder="Write a message or paste a link..."></textarea>
+    <button class="btn" type="submit">SEND</button>
+  </div>
+</form>
+
+<script>
+let recorder=null,chunks=[];
+const voiceBtn=document.getElementById("voiceBtn");
+
+voiceBtn.onclick=async()=>{
+  if(recorder && recorder.state==="recording"){
+    recorder.stop();
+    voiceBtn.textContent="🎤";
+    return;
+  }
+
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    recorder=new MediaRecorder(stream);
+    chunks=[];
+
+    recorder.ondataavailable=e=>{
+      if(e.data.size) chunks.push(e.data);
+    };
+
+    recorder.onstop=()=>{
+      const blob=new Blob(chunks,{type:recorder.mimeType||"audio/webm"});
+      const file=new File([blob],"admin_voice.webm",{type:blob.type});
+      const dt=new DataTransfer();
+      dt.items.add(file);
+      document.getElementById("media").files=dt.files;
+      stream.getTracks().forEach(t=>t.stop());
+    };
+
+    recorder.start();
+    voiceBtn.textContent="⏹";
+  }catch(e){
+    alert("Microphone permission is required.");
+  }
+};
+</script>
+{% endblock %}
