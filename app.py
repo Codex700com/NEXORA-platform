@@ -1887,6 +1887,16 @@ except Exception:
 @app.route("/support",methods=["GET","POST"])
 @required
 def support():
+    # Guarantee the communication media column exists on the active database.
+    con=db()
+    try:
+        cols=[r[1] for r in con.execute("PRAGMA table_info(support_messages)").fetchall()]
+        if "media" not in cols:
+            con.execute("ALTER TABLE support_messages ADD COLUMN media TEXT")
+            con.commit()
+    finally:
+        con.close()
+
     import os
     from werkzeug.utils import secure_filename
 
