@@ -1,1 +1,51 @@
-{% extends 'base.html' %}{% block content %}<div class="title">Welcome</div><form method="post"><div class="field">▯&nbsp;&nbsp;<input name="phone" placeholder="Phone Number" required></div><div class="field">⚿&nbsp;&nbsp;<input type="password" name="password" placeholder="Login Password" required></div><button class="button" type="submit">Login</button></form><div class="linkrow"><a href="/register">‹ Register</a><a href="/reset">Forgot your password?</a></div>{% endblock %}
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.nx-auth{min-height:78vh;display:flex;align-items:center;justify-content:center;padding:18px 4px 100px;font-family:Inter,system-ui,sans-serif}
+.nx-auth-card{width:100%;max-width:430px;padding:26px 21px;border-radius:28px;background:linear-gradient(160deg,#07140d,#020604);border:1px solid #1b6339;box-shadow:0 20px 55px rgba(0,0,0,.48)}
+.nx-mark{width:52px;height:52px;border-radius:17px;display:flex;align-items:center;justify-content:center;background:#0c2919;border:1px solid #31e77b;color:#39ff88;font-size:20px;font-weight:900;margin-bottom:18px}
+.nx-kicker{font-size:9px;letter-spacing:2.5px;color:#39ff88;font-weight:900}
+.nx-auth h1{font-size:29px;margin:7px 0 6px;color:#eefcf3}
+.nx-sub{font-size:11px;color:#718c7a;line-height:1.5;margin-bottom:22px}
+.nx-field{margin-bottom:12px}
+.nx-field label{display:block;font-size:9px;letter-spacing:1px;color:#769582;margin:0 0 6px 3px}
+.nx-field input{width:100%;box-sizing:border-box;padding:14px;border-radius:14px;border:1px solid #17492c;background:#050b07;color:#effff4;outline:none}
+.nx-field input:focus{border-color:#39ff88;box-shadow:0 0 0 3px rgba(57,255,136,.08)}
+.nx-login{width:100%;border:0;border-radius:15px;padding:14px;background:#39e879;color:#021108;font-weight:900;font-size:13px;margin-top:7px}
+.nx-links{display:flex;justify-content:space-between;gap:10px;margin-top:18px;font-size:10px}
+.nx-links a{color:#6de99c;text-decoration:none}
+.nx-note{margin-top:20px;padding:11px 12px;border-radius:13px;background:#06100a;border:1px solid #123d25;color:#587365;font-size:9px;line-height:1.5}
+</style>
+
+<div class="nx-auth">
+  <section class="nx-auth-card">
+    <div class="nx-mark">N</div>
+    <div class="nx-kicker">NEXORA // ACCESS NODE</div>
+    <h1>Sign in</h1>
+    <div class="nx-sub">Enter your account credentials to continue to your NEXORA workspace.</div>
+
+    <form method="post">
+      <div class="nx-field">
+        <label>PHONE NUMBER</label>
+        <input name="phone" placeholder="Enter phone number" required>
+      </div>
+
+      <div class="nx-field">
+        <label>LOGIN PASSWORD</label>
+        <input type="password" name="password" placeholder="Enter password" required>
+      </div>
+
+      <button class="nx-login" type="submit">ENTER NEXORA</button>
+    </form>
+
+    <div class="nx-links">
+      <a href="/register">Create account →</a>
+      <a href="/reset">Forgot password?</a>
+    </div>
+
+    <div class="nx-note">
+      Independent NEXORA platform. Your login credentials are handled by this application.
+    </div>
+  </section>
+</div>
+{% endblock %}

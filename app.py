@@ -22,49 +22,19 @@ app=Flask(__name__)
 app.secret_key=os.environ.get("SECRET_KEY","change-this-before-production")
 
 PLANS={
- "CX-1":{"series":"CX series","price":250000,"daily":20000,"days":30,"total":600000},
- "CXM-1":{"series":"CXM series","price":48000,"daily":9800,"days":20,"total":196000},
- "CXM-2":{"series":"CXM series","price":88000,"daily":20000,"days":25,"total":500000},
- "CX-2":{"series":"CX series","price":500000,"daily":40000,"days":30,"total":1200000},
- "BM-1":{"series":"BM series","price":1000000,"daily":85000,"days":30,"total":2550000},
- "BM-2":{"series":"BM series","price":2000000,"daily":180000,"days":30,"total":5400000},
- "DS-3":{"series":"DS series","price":3500000,"daily":320000,"days":30,"total":9600000},
- "DS-4":{"series":"DS series","price":5000000,"daily":500000,"days":30,"total":15000000},
- "CX-3":{"series":"CX series","price":7500000,"daily":700000,"days":30,"total":21000000},
- "CX-4":{"series":"CX series","price":10000000,"daily":950000,"days":30,"total":28500000},
- "BM-3":{"series":"BM series","price":15000000,"daily":1450000,"days":30,"total":43500000},
- "BM-4":{"series":"BM series","price":25000000,"daily":2450000,"days":30,"total":73500000},
- "DS-5":{"series":"DS series","price":50000000,"daily":5000000,"days":30,"total":150000000},
- "DS-6":{"series":"DS series","price":100000000,"daily":10000000,"days":30,"total":300000000},
+ "NX-15":{"series":"NEXORA CORE","price":50000,"daily":10000,"days":15,"total":200000},
+ "NX-19":{"series":"NEXORA CORE","price":100000,"daily":20000,"days":19,"total":480000},
+ "NX-25":{"series":"NEXORA PRIME","price":250000,"daily":50000,"days":25,"total":1500000},
+ "NX-30":{"series":"NEXORA PRIME","price":500000,"daily":100000,"days":30,"total":3500000},
+ "NX-45":{"series":"NEXORA PRIME","price":1000000,"daily":200000,"days":45,"total":10000000},
+ "NX-30P":{"series":"NEXORA PRO","price":2500000,"daily":500000,"days":30,"total":17500000},
+ "NX-45P":{"series":"NEXORA PRO","price":5000000,"daily":1000000,"days":45,"total":50000000},
+ "NX-30X":{"series":"NEXORA X","price":7500000,"daily":1500000,"days":30,"total":52500000},
+ "NX-45X":{"series":"NEXORA X","price":10000000,"daily":2000000,"days":45,"total":100000000},
 }
 REWARDS=[(120,750000),(100,500000),(60,275000),(30,150000),(15,98000),(6,45000)]
 
 
-
-# NEXORA_A1_A2_A6
-PLANS.update({
-    "A1": {
-        "series": "AI series",
-        "price": 50000,
-        "daily": 208700.66 / 19,
-        "days": 19,
-        "total": 208700.66
-    },
-    "A2": {
-        "series": "AI series",
-        "price": 100000,
-        "daily": 478000 / 19,
-        "days": 19,
-        "total": 478000
-    },
-    "A6": {
-        "series": "AI series",
-        "price": 1000000,
-        "daily": 2500000 / 3,
-        "days": 3,
-        "total": 2500000
-    },
-})
 
 def db():
     con=sqlite3.connect(DB,timeout=30)
@@ -394,116 +364,234 @@ def referral_deposit_commission(referred_uid,deposit_amount,deposit_tx_id):
 
 def settle_machine_income(uid):
     """
-    AI machine earnings use Uganda calendar midnight.
+    Settle NEXORA machine income using Uganda calendar days.
+
+    NX-15 and NX-19:
+      - Income remains locked during the product period.
+      - Accumulated income is transferred to Balance once at expiry.
+
+    All other products:
+      - Each completed Uganda calendar day earns the configured daily income.
+      - Daily income is transferred to Balance once per day.
+      - A unique transaction reference prevents duplicate credits.
 
     Day 0 = purchase day.
-    Each completed Uganda calendar day adds one daily earning.
-    At the end of the lock period, the accumulated AI income is
-    transferred to Balance exactly once.
     """
-    con=db()
-    rows=con.execute("""
+
+    con = db()
+    rows = con.execute("""
         SELECT * FROM products
         WHERE uid=? AND status='ACTIVE'
-    """,(uid,)).fetchall()
+    """, (uid,)).fetchall()
 
-    today=uganda_now().date()
+    today = uganda_now().date()
+
+    # The first two catalogue products remain locked.
+    LOCKED_CODES = {"NX-15", "NX-19"}
 
     for r in rows:
         try:
-            purchase_day=uganda_date(r["purchased_at"])
-            lock_days=int(r["lock_days"])
-            completed=min(
-                max(0,(today-purchase_day).days),
+            purchase_day = uganda_date(r["purchased_at"])
+            lock_days = int(r["lock_days"])
+
+            completed = min(
+                max(0, (today - purchase_day).days),
                 lock_days
             )
-            earned_days=int(r["earned_days"] or 0)
-            due=max(0,completed-earned_days)
 
-            if due>0:
-                remaining=max(
+            earned_days = int(r["earned_days"] or 0)
+            due = max(0, completed - earned_days)
+
+            if due > 0:
+                daily = float(r["daily_income"] or 0)
+                remaining = max(
                     0,
-                    float(r["total_income"])-float(r["earned_income"] or 0)
+                    float(r["total_income"] or 0)
+                    - float(r["earned_income"] or 0)
                 )
-                amount=min(
+
+                amount = min(
                     remaining,
-                    float(r["daily_income"])*due
+                    daily * due
                 )
 
-                if amount>0:
-                    con.execute("""
-                        UPDATE products
-                        SET earned_income=earned_income+?,
-                            earned_days=?,
-                            last_income_at=?
-                        WHERE id=? AND status='ACTIVE'
-                    """,(amount,completed,now(),r["id"]))
+                code = str(r["code"] or "").strip()
+                is_locked = code in LOCKED_CODES
 
-                    con.execute("""
-                        INSERT INTO transactions
-                        (uid,kind,amount,status,reference,created_at)
-                        VALUES(?,?,?,?,?,?)
-                    """,(
-                        uid,
-                        "AI_INCOME",
-                        amount,
-                        "APPROVED",
-                        f"AI-INCOME-{r['id']}-{completed}",
-                        now()
-                    ))
-                else:
-                    con.execute("""
-                        UPDATE products
-                        SET earned_days=?,last_income_at=?
-                        WHERE id=? AND status='ACTIVE'
-                    """,(completed,now(),r["id"]))
-
-            if completed>=lock_days:
-                fresh=con.execute("""
-                    SELECT earned_income,status
-                    FROM products WHERE id=?
-                """,(r["id"],)).fetchone()
-
-                if fresh and fresh["status"]=="ACTIVE":
-                    earned=float(fresh["earned_income"] or 0)
-                    payout_ref=f"AI-PAYOUT-{r['id']}"
-
-                    if earned>0 and not con.execute("""
-                        SELECT 1 FROM transactions
-                        WHERE uid=? AND kind='AI_MACHINE_PAYOUT'
-                          AND reference=?
-                    """,(uid,payout_ref)).fetchone():
-
-                        con.execute(
-                            "UPDATE users SET balance=balance+? WHERE id=?",
-                            (earned,uid)
-                        )
-
+                if amount > 0:
+                    if is_locked:
+                        # Locked products accumulate income without
+                        # moving money into Balance yet.
                         con.execute("""
-                            INSERT INTO transactions
-                            (uid,kind,amount,status,reference,created_at)
-                            VALUES(?,?,?,?,?,?)
-                        """,(
-                            uid,
-                            "AI_MACHINE_PAYOUT",
-                            earned,
-                            "APPROVED",
-                            payout_ref,
-                            now()
+                            UPDATE products
+                            SET earned_income=earned_income+?,
+                                earned_days=?,
+                                last_income_at=?
+                            WHERE id=? AND status='ACTIVE'
+                        """, (
+                            amount,
+                            completed,
+                            now(),
+                            r["id"]
                         ))
 
+                        for day_no in range(
+                            earned_days + 1,
+                            completed + 1
+                        ):
+                            ref = f"AI-LOCKED-INCOME-{r['id']}-{day_no}"
+
+                            exists = con.execute("""
+                                SELECT 1 FROM transactions
+                                WHERE uid=? AND reference=?
+                            """, (uid, ref)).fetchone()
+
+                            if not exists:
+                                day_amount = min(
+                                    daily,
+                                    max(
+                                        0,
+                                        float(r["total_income"] or 0)
+                                        - float(r["earned_income"] or 0)
+                                        - daily * (
+                                            day_no - earned_days - 1
+                                        )
+                                    )
+                                )
+
+                                if day_amount > 0:
+                                    con.execute("""
+                                        INSERT INTO transactions
+                                        (uid,kind,amount,status,reference,created_at)
+                                        VALUES(?,?,?,?,?,?)
+                                    """, (
+                                        uid,
+                                        "AI_LOCKED_INCOME",
+                                        day_amount,
+                                        "APPROVED",
+                                        ref,
+                                        now()
+                                    ))
+
+                    else:
+                        # Non-locked products pay directly to Balance.
+                        for day_no in range(
+                            earned_days + 1,
+                            completed + 1
+                        ):
+                            ref = f"AI-DAILY-INCOME-{r['id']}-{day_no}"
+
+                            exists = con.execute("""
+                                SELECT 1 FROM transactions
+                                WHERE uid=? AND reference=?
+                            """, (uid, ref)).fetchone()
+
+                            if not exists:
+                                day_amount = min(
+                                    daily,
+                                    max(
+                                        0,
+                                        float(r["total_income"] or 0)
+                                        - float(r["earned_income"] or 0)
+                                    )
+                                )
+
+                                if day_amount > 0:
+                                    con.execute("""
+                                        UPDATE users
+                                        SET balance=balance+?
+                                        WHERE id=?
+                                    """, (day_amount, uid))
+
+                                    con.execute("""
+                                        INSERT INTO transactions
+                                        (uid,kind,amount,status,reference,created_at)
+                                        VALUES(?,?,?,?,?,?)
+                                    """, (
+                                        uid,
+                                        "AI_DAILY_INCOME",
+                                        day_amount,
+                                        "APPROVED",
+                                        ref,
+                                        now()
+                                    ))
+
+                                    con.execute("""
+                                        UPDATE products
+                                        SET earned_income=earned_income+?
+                                        WHERE id=? AND status='ACTIVE'
+                                    """, (
+                                        day_amount,
+                                        r["id"]
+                                    ))
+
+                        con.execute("""
+                            UPDATE products
+                            SET earned_days=?,
+                                last_income_at=?
+                            WHERE id=? AND status='ACTIVE'
+                        """, (
+                            completed,
+                            now(),
+                            r["id"]
+                        ))
+
+            # Product expires after its configured number of completed days.
+            if completed >= lock_days:
+                fresh = con.execute("""
+                    SELECT code,earned_income,status
+                    FROM products
+                    WHERE id=?
+                """, (r["id"],)).fetchone()
+
+                if fresh and fresh["status"] == "ACTIVE":
+                    code = str(fresh["code"] or "").strip()
+
+                    # Only the first two locked products receive a
+                    # final balance payout.
+                    if code in LOCKED_CODES:
+                        earned = float(fresh["earned_income"] or 0)
+                        payout_ref = f"AI-PAYOUT-{r['id']}"
+
+                        if earned > 0 and not con.execute("""
+                            SELECT 1 FROM transactions
+                            WHERE uid=? AND kind='AI_MACHINE_PAYOUT'
+                              AND reference=?
+                        """, (uid, payout_ref)).fetchone():
+
+                            con.execute("""
+                                UPDATE users
+                                SET balance=balance+?
+                                WHERE id=?
+                            """, (earned, uid))
+
+                            con.execute("""
+                                INSERT INTO transactions
+                                (uid,kind,amount,status,reference,created_at)
+                                VALUES(?,?,?,?,?,?)
+                            """, (
+                                uid,
+                                "AI_MACHINE_PAYOUT",
+                                earned,
+                                "APPROVED",
+                                payout_ref,
+                                now()
+                            ))
+
                     con.execute("""
                         UPDATE products
-                        SET status='EXPIRED',last_income_at=?
+                        SET status='EXPIRED',
+                            last_income_at=?
                         WHERE id=? AND status='ACTIVE'
-                    """,(now(),r["id"]))
+                    """, (now(), r["id"]))
 
         except Exception:
-            pass
+            # Preserve existing application behaviour for an individual
+            # product if its data cannot be settled.
+            continue
 
     con.commit()
     con.close()
-
 
 def settle_promo_machine_income(uid):
     """Credit elapsed daily income for promotional DS4 machines only."""
