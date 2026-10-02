@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="title">Gift Code Claims</div>
+
+<div class="section">
+<h2>{{ code }}</h2>
+
+{% for c in claims %}
+<div class="row">
+<span>{{ c.display_name or c.phone or ("User " ~ c.uid) }}</span>
+<span>{{ c.claimed_at }}</span>
+</div>
+{% else %}
+<p class="muted">No claims yet.</p>
+{% endfor %}
+
+</div>
+{% endblock %}

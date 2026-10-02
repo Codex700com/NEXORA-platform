@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.comm-page{
+    min-height:calc(100vh - 80px);
+    background:#000;
+    color:#f2fff6;
+    padding:12px 10px 100px;
+}
+.comm-shell{
+    max-width:700px;
+    margin:0 auto;
+}
+.comm-header{
+    background:#050805;
+    border:1px solid #123d20;
+    border-radius:18px;
+    padding:15px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    box-shadow:0 0 18px rgba(25,230,107,.08);
+}
+.comm-avatar{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:#0d2a17;
+    border:2px solid #19e66b;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:23px;
+}
+.comm-title{
+    font-size:18px;
+    font-weight:800;
+}
+.comm-status{
+    color:#19e66b;
+    font-size:12px;
+    margin-top:3px;
+}
+.comm-messages{
+    margin-top:12px;
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+}
+.msg{
+    max-width:84%;
+    padding:10px 12px;
+    border-radius:15px;
+    word-break:break-word;
+    line-height:1.45;
+}
+.msg.me{
+    align-self:flex-end;
+    background:#0b3b1c;
+    border:1px solid #166a32;
+    border-bottom-right-radius:4px;
+}
+.msg.manager{
+    align-self:flex-start;
+    background:#050805;
+    border:1px solid #17321f;
+    border-bottom-left-radius:4px;
+}
+.msg-time{
+    color:#789080;
+    font-size:10px;
+    margin-top:5px;
+}
+.msg a{
+    color:#39f27d;
+    text-decoration:underline;
+}
+.msg-media{
+    display:block;
+    width:100%;
+    max-width:300px;
+    max-height:360px;
+    object-fit:contain;
+    border-radius:12px;
+    margin-top:7px;
+}
+.msg-video{
+    display:block;
+    width:100%;
+    max-width:320px;
+    max-height:360px;
+    border-radius:12px;
+    margin-top:7px;
+}
+.audio-player{
+    width:100%;
+    max-width:320px;
+    margin-top:7px;
+}
+.link-row{
+    display:flex;
+    gap:6px;
+    margin-top:7px;
+}
+.copy-link{
+    background:#07150b;
+    color:#39f27d;
+    border:1px solid #185f2e;
+    border-radius:8px;
+    padding:5px 9px;
+    font-size:11px;
+}
+.chat-box{
+    position:fixed;
+    left:10px;
+    right:10px;
+    bottom:65px;
+    z-index:20;
+    max-width:680px;
+    margin:auto;
+    background:#020302;
+    border:1px solid #174c27;
+    border-radius:17px;
+    padding:8px;
+    box-shadow:0 0 25px rgba(0,0,0,.8);
+}
+.chat-form{
+    display:flex;
+    align-items:flex-end;
+    gap:6px;
+}
+.chat-text{
+    flex:1;
+    min-height:42px;
+    max-height:110px;
+    resize:none;
+    background:#050805;
+    color:#fff;
+    border:1px solid #174c27;
+    border-radius:13px;
+    padding:11px;
+    outline:none;
+}
+.chat-btn{
+    width:42px;
+    height:42px;
+    flex:none;
+    border-radius:12px;
+    border:1px solid #195f2e;
+    background:#07150b;
+    color:#39f27d;
+    font-size:18px;
+}
+.send-btn{
+    background:#19e66b;
+    color:#001b09;
+    border:0;
+    font-weight:900;
+}
+.file-label{
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    border:1px solid #195f2e;
+    background:#07150b;
+    color:#39f27d;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+}
+#mediaInput{display:none}
+.recording{
+    border-color:#ff4747!important;
+    color:#ff4747!important;
+}
+.empty-chat{
+    text-align:center;
+    color:#708078;
+    padding:60px 20px;
+}
+</style>
+
+<div class="comm-page">
+<div class="comm-shell">
+
+    <div class="comm-header">
+        <div class="comm-avatar">💬</div>
+        <div>
+            <div class="comm-title">Communication</div>
+            <div class="comm-status">● Chat with Customer Service</div>
+        </div>
+    </div>
+
+    <div class="comm-messages" id="messages">
+
+    {% if messages %}
+        {% for m in messages %}
+            {% set mine = (m.sender|string|upper == 'USER') %}
+            {% set txt = m.message if m.message is defined else '' %}
+            {% set media = m.media if m.media is defined else '' %}
+
+            <div class="msg {% if mine %}me{% else %}manager{% endif %}">
+
+                {% if txt %}
+                    <div class="message-text">{{ txt }}</div>
+                {% endif %}
+
+                {% if media %}
+                    {% set ml = media|string|lower %}
+
+                    {% if '.mp4' in ml or '.webm' in ml or '.mov' in ml or '.m4v' in ml %}
+                        <video class="msg-video" controls src="{{ media }}"></video>
+                    {% elif '.mp3' in ml or '.wav' in ml or '.ogg' in ml or '.m4a' in ml %}
+                        <audio class="audio-player" controls src="{{ media }}"></audio>
+                    {% else %}
+                        <img class="msg-media" src="{{ media }}" alt="Image">
+                    {% endif %}
+
+                    <div class="link-row">
+                        <button class="copy-link" type="button"
+                                onclick="copyLink(this,'{{ media }}')">📋 Copy link</button>
+                    </div>
+                {% endif %}
+
+                <div class="msg-time">
+                    {{ m.created_at if m.created_at is defined else '' }}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-chat">
+            <div style="font-size:40px">💬</div>
+            <div>No messages yet.</div>
+            <div style="font-size:12px;margin-top:5px">Send a message to Customer Service.</div>
+        </div>
+    {% endif %}
+
+    </div>
+</div>
+</div>
+
+<div class="chat-box">
+<form class="chat-form" method="post" enctype="multipart/form-data"
+      action="{{ url_for('support') }}">
+
+    <label class="file-label" for="mediaInput" title="Send image or video">📎</label>
+    <input id="mediaInput" name="media" type="file"
+           accept="image/*,video/*,audio/*">
+
+    <textarea class="chat-text" name="message" id="messageInput"
+              placeholder="Write a message..." rows="1"></textarea>
+
+    <button class="chat-btn" type="button" id="voiceBtn"
+            title="Record voice">🎙️</button>
+
+    <button class="chat-btn send-btn" type="submit"
+            title="Send">➤</button>
+</form>
+</div>
+
+<script>
+function linkify(root){
+    root.querySelectorAll(".message-text").forEach(function(el){
+        if(el.dataset.linkified==="1") return;
+        el.dataset.linkified="1";
+
+        let text=el.textContent;
+        let parts=text.split(/(https?:\/\/[^\s]+|www\.[^\s]+)/gi);
+        el.innerHTML="";
+
+        parts.forEach(function(part){
+            if(/^https?:\/\//i.test(part) || /^www\./i.test(part)){
+                let a=document.createElement("a");
+                a.href=/^www\./i.test(part) ? "https://"+part : part;
+                a.target="_blank";
+                a.rel="noopener noreferrer";
+                a.textContent=part;
+                el.appendChild(a);
+
+                let row=document.createElement("div");
+                row.className="link-row";
+                let b=document.createElement("button");
+                b.type="button";
+                b.className="copy-link";
+                b.textContent="📋 Copy link";
+                b.onclick=function(){copyLink(b,a.href)};
+                row.appendChild(b);
+                el.appendChild(row);
+            }else{
+                el.appendChild(document.createTextNode(part));
+            }
+        });
+    });
+}
+
+function copyLink(btn,url){
+    navigator.clipboard.writeText(url).then(function(){
+        let old=btn.textContent;
+        btn.textContent="✓ Copied";
+        setTimeout(function(){btn.textContent=old},1200);
+    }).catch(function(){
+        prompt("Copy this link:",url);
+    });
+}
+
+linkify(document);
+
+const voiceBtn=document.getElementById("voiceBtn");
+const mediaInput=document.getElementById("mediaInput");
+const form=document.querySelector(".chat-form");
+
+let recorder=null;
+let chunks=[];
+
+voiceBtn.addEventListener("click",async function(){
+    if(recorder && recorder.state==="recording"){
+        recorder.stop();
+        voiceBtn.classList.remove("recording");
+        voiceBtn.textContent="🎙️";
+        return;
+    }
+
+    try{
+        const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+        chunks=[];
+
+        recorder=new MediaRecorder(stream);
+
+        recorder.ondataavailable=function(e){
+            if(e.data.size>0) chunks.push(e.data);
+        };
+
+        recorder.onstop=function(){
+            const blob=new Blob(chunks,{type:"audio/webm"});
+            const file=new File([blob],"voice_message.webm",{type:"audio/webm"});
+            const dt=new DataTransfer();
+            dt.items.add(file);
+            mediaInput.files=dt.files;
+            stream.getTracks().forEach(t=>t.stop());
+
+            voiceBtn.textContent="✓";
+            setTimeout(function(){voiceBtn.textContent="🎙️"},1200);
+        };
+
+        recorder.start();
+        voiceBtn.classList.add("recording");
+        voiceBtn.textContent="⏹️";
+
+    }catch(e){
+        alert("Microphone permission is required for voice messages.");
+    }
+});
+
+document.getElementById("messageInput").addEventListener("input",function(){
+    this.style.height="42px";
+    this.style.height=Math.min(this.scrollHeight,110)+"px";
+});
+
+document.getElementById("mediaInput").addEventListener("change",function(){
+    if(this.files.length){
+        document.getElementById("messageInput").placeholder=
+            this.files[0].name+" selected — add a message or send now";
+    }
+});
+
+window.addEventListener("load",function(){
+    const box=document.getElementById("messages");
+    if(box) box.scrollTop=box.scrollHeight;
+});
+</script>
+
+{% endblock %}

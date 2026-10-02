@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+/* NEXORA SERVICE CARD SYSTEM */
+.nx-service{
+  padding:10px 2px 95px;
+  color:#e8f5ed;
+}
+.nx-service .title,
+.nx-service .matrix-title,
+.nx-service .manager-title{
+  color:#f2fff5;
+  font-weight:900;
+}
+.nx-service .muted,
+.nx-service .matrix-sub,
+.nx-service .manager-sub{
+  color:#759582;
+}
+.nx-service .section,
+.nx-service .row,
+.nx-service .field,
+.nx-service .matrix-chance,
+.nx-service .matrix-board,
+.nx-service .matrix-history,
+.nx-service .manager-card{
+  background:linear-gradient(145deg,#091a0f,#040906) !important;
+  border:1px solid #165a34 !important;
+  border-radius:21px !important;
+  box-shadow:0 10px 27px rgba(0,0,0,.35);
+}
+.nx-service .section{
+  padding:17px !important;
+  margin:12px 0 !important;
+}
+.nx-service .field{
+  padding:13px !important;
+}
+.nx-service .row{
+  padding:14px !important;
+  margin:9px 0 !important;
+}
+.nx-service input,
+.nx-service textarea,
+.nx-service select{
+  box-sizing:border-box;
+  width:100%;
+  background:#030806 !important;
+  color:#f2fff5 !important;
+  border:1px solid #123d25 !important;
+  border-radius:13px !important;
+  padding:13px !important;
+  outline:none;
+}
+.nx-service input:focus,
+.nx-service textarea:focus,
+.nx-service select:focus{
+  border-color:#18d66b !important;
+  box-shadow:0 0 0 1px rgba(24,214,107,.15);
+}
+.nx-service button,
+.nx-service .button,
+.nx-service .choose-btn{
+  width:100%;
+  box-sizing:border-box;
+  border:0 !important;
+  border-radius:13px !important;
+  padding:14px !important;
+  background:#18d66b !important;
+  color:#031008 !important;
+  font-weight:900 !important;
+  box-shadow:0 9px 22px rgba(24,214,107,.16);
+}
+.nx-service .value{
+  color:#39ff88 !important;
+  font-weight:900;
+}
+.nx-service table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0 7px;
+}
+.nx-service th{
+  color:#789382;
+  font-size:10px;
+  text-align:left;
+  padding:7px;
+}
+.nx-service td{
+  background:#07130b;
+  color:#e8f5ed;
+  border-top:1px solid #123d25;
+  border-bottom:1px solid #123d25;
+  padding:11px 8px;
+  font-size:11px;
+}
+.nx-service td:first-child{
+  border-left:1px solid #123d25;
+  border-radius:11px 0 0 11px;
+}
+.nx-service td:last-child{
+  border-right:1px solid #123d25;
+  border-radius:0 11px 11px 0;
+}
+.nx-service .manager-card{
+  background:linear-gradient(145deg,#091a0f,#040906) !important;
+}
+.nx-service .manager-avatar{
+  background:linear-gradient(145deg,#18d66b,#087f72) !important;
+  border:2px solid #18d66b !important;
+}
+.nx-service .manager-name{
+  color:#f2fff5 !important;
+}
+.nx-service .manager-role,
+.nx-service .manager-note{
+  color:#759582 !important;
+}
+.nx-service .whatsapp-btn{
+  background:#18d66b !important;
+  color:#031008 !important;
+  border-radius:13px !important;
+}
+.nx-service .matrix-box{
+  background:linear-gradient(145deg,#0a1b10,#050b07) !important;
+  border:1px solid #165a34 !important;
+  border-radius:15px !important;
+}
+.nx-service .matrix-kicker{
+  color:#39ff88 !important;
+}
+.nx-service .matrix-result,
+.nx-service .matrix-reward{
+  background:#07130b !important;
+  border:1px solid #165a34 !important;
+  border-radius:17px !important;
+}
+.nx-service a{
+  color:#39ff88;
+}
+</style>
+
+<div class="nx-service">
+
+
+<style>
+.manager-wrap{max-width:560px;margin:20px auto}
+.manager-title{font-size:25px;font-weight:900;margin-bottom:6px}
+.manager-sub{opacity:.72;margin-bottom:20px;line-height:1.5}
+
+.manager-card{
+    background:#071426;
+    border:1px solid #29415f;
+    border-radius:20px;
+    padding:18px;
+    margin-bottom:13px;
+}
+
+.manager-head{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.manager-avatar{
+    width:64px;
+    height:64px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(145deg,#162f50,#081321);
+    border:2px solid #18d66b;
+    font-size:32px;
+    flex:none;
+}
+
+.manager-name{
+    font-size:20px;
+    font-weight:900;
+}
+
+.manager-role{
+    font-size:13px;
+    opacity:.68;
+    margin-top:4px;
+}
+
+.choose-btn,
+.whatsapp-btn{
+    display:block;
+    width:100%;
+    box-sizing:border-box;
+    border:0;
+    border-radius:13px;
+    padding:14px;
+    margin-top:15px;
+    text-align:center;
+    text-decoration:none;
+    font-weight:900;
+    font-size:15px;
+}
+
+.choose-btn{
+    background:#18d66b;
+    color:#fff;
+}
+
+.whatsapp-btn{
+    background:#25D366;
+    color:#fff;
+}
+
+.manager-note{
+    font-size:13px;
+    opacity:.65;
+    margin-top:12px;
+    line-height:1.5;
+}
+</style>
+
+<div class="manager-wrap">
+
+<div class="manager-title">My Manager</div>
+
+{% if assigned %}
+
+<div class="manager-sub">
+Your manager has been permanently assigned to your account.
+</div>
+
+<div class="manager-card">
+    <div class="manager-head">
+        <div class="manager-avatar">{{ assigned.avatar }}</div>
+        <div>
+            <div class="manager-name">{{ assigned.name }}</div>
+            <div class="manager-role">{{ assigned.role }}</div>
+        </div>
+    </div>
+
+    <a class="whatsapp-btn"
+       href="/manager/chat/{{ assigned.id }}">
+        Chat on WhatsApp
+    </a>
+
+    <div class="manager-note">
+        Your assigned manager is permanently linked to this account.
+    </div>
+</div>
+
+{% else %}
+
+<div class="manager-sub">
+Choose your manager.
+</div>
+
+{% for manager in managers %}
+
+<div class="manager-card">
+    <div class="manager-head">
+        <div class="manager-avatar">{{ manager.avatar }}</div>
+
+        <div>
+            <div class="manager-name">{{ manager.name }}</div>
+            <div class="manager-role">{{ manager.role }}</div>
+        </div>
+    </div>
+
+    <form method="post" action="/manager">
+        <input type="hidden"
+               name="manager_id"
+               value="{{ manager.id }}">
+
+        <button class="choose-btn" type="submit">
+            Choose {{ manager.name }}
+        </button>
+    </form>
+</div>
+
+{% endfor %}
+
+{% endif %}
+
+</div>
+
+</div>
+{% endblock %}

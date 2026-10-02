@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.withdraw-page{
+  padding:10px 2px 90px;
+  color:#f4f7fb;
+  font-family:Inter,Arial,sans-serif;
+}
+.withdraw-hero{
+  position:relative;
+  overflow:hidden;
+  padding:24px 20px;
+  border-radius:24px;
+  background:linear-gradient(145deg,#111827,#07111f 65%,#0b1728);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 18px 45px rgba(0,0,0,.35);
+  margin-bottom:16px;
+}
+.withdraw-hero:after{
+  content:"";
+  position:absolute;
+  width:150px;height:150px;
+  right:-55px;top:-60px;
+  border-radius:50%;
+  background:rgba(22,131,255,.12);
+}
+.withdraw-kicker{
+  position:relative;
+  z-index:1;
+  color:#7fb7ff;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.withdraw-title{
+  position:relative;
+  z-index:1;
+  margin:7px 0 5px;
+  font-size:28px;
+  font-weight:900;
+}
+.withdraw-sub{
+  position:relative;
+  z-index:1;
+  color:#94a3b8;
+  font-size:13px;
+}
+.balance-card{
+  margin-top:18px;
+  padding:16px;
+  border-radius:17px;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.08);
+}
+.balance-label{
+  color:#8fa0b5;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.balance-value{
+  margin-top:5px;
+  font-size:24px;
+  font-weight:900;
+}
+.withdraw-card{
+  background:#0d1624;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:21px;
+  padding:18px;
+  margin-bottom:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.22);
+}
+.card-heading{
+  font-size:16px;
+  font-weight:850;
+  margin-bottom:4px;
+}
+.card-sub{
+  color:#8190a5;
+  font-size:12px;
+  margin-bottom:15px;
+}
+.methods{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.method{
+  border:1px solid #263449;
+  background:#111d2d;
+  color:#dce6f2;
+  border-radius:15px;
+  padding:14px 10px;
+  text-align:center;
+  cursor:pointer;
+  font-weight:800;
+}
+.method.active{
+  border-color:#1683ff;
+  background:linear-gradient(145deg,#102c4d,#0d1d31);
+  box-shadow:0 0 0 1px rgba(22,131,255,.2);
+}
+.method-name{font-size:13px}
+.method-note{
+  margin-top:4px;
+  font-size:10px;
+  color:#7f91a8;
+}
+.field-label{
+  display:block;
+  margin:15px 0 7px;
+  color:#a9b7c8;
+  font-size:12px;
+  font-weight:700;
+}
+.input{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid #263449;
+  background:#08111e;
+  color:#fff;
+  border-radius:13px;
+  padding:14px;
+  outline:none;
+}
+.input:focus{border-color:#1683ff}
+.summary{
+  margin-top:15px;
+  padding:14px;
+  border-radius:15px;
+  background:#091321;
+  border:1px solid #1d2b40;
+}
+.row{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:5px 0;
+  color:#8999ad;
+  font-size:12px;
+}
+.row strong{color:#edf3fa}
+.receive{
+  margin-top:7px;
+  padding-top:10px;
+  border-top:1px solid #1d2b40;
+  color:#fff;
+  font-size:14px;
+}
+.receive strong{font-size:17px}
+.submit{
+  width:100%;
+  margin-top:15px;
+  border:0;
+  border-radius:14px;
+  padding:15px;
+  background:linear-gradient(135deg,#1683ff,#0757b8);
+  color:white;
+  font-weight:900;
+  font-size:14px;
+  cursor:pointer;
+  box-shadow:0 10px 25px rgba(22,131,255,.22);
+}
+.minimum{
+  text-align:center;
+  margin-top:10px;
+  color:#687a91;
+  font-size:11px;
+}
+.pending{
+  border-left:3px solid #1683ff;
+}
+.pending-item{
+  padding:12px 0;
+  border-bottom:1px solid #1c2939;
+}
+.pending-item:last-child{border-bottom:0}
+.pending-ref{
+  color:#dce8f6;
+  font-weight:800;
+  font-size:12px;
+}
+.pending-meta{
+  color:#75869c;
+  font-size:11px;
+  margin-top:4px;
+}
+</style>
+
+<div class="withdraw-page">
+
+  <div class="withdraw-hero">
+    <div class="withdraw-kicker">NEXORA PAYOUT CENTER</div>
+    <div class="withdraw-title">Withdraw Funds</div>
+    <div class="withdraw-sub">
+      Select your saved Ugandan mobile-money account and request a payout.
+    </div>
+
+    <div class="balance-card">
+      <div class="balance-label">Available Balance</div>
+      <div class="balance-value">UGX {{ "{:,.2f}".format(user.balance or 0) }}</div>
+    </div>
+  </div>
+
+  <div class="withdraw-card">
+    <div class="card-heading">Choose payout method</div>
+    <div class="card-sub">Only your saved MTN or Airtel Uganda details can be used.</div>
+
+    <div class="methods">
+      <button type="button" class="method active" data-method="MTN UG" onclick="selectMethod('MTN UG')">
+        <div class="method-name">MTN Uganda</div>
+        <div class="method-note">Mobile Money</div>
+      </button>
+
+      <button type="button" class="method" data-method="Airtel UG" onclick="selectMethod('Airtel UG')">
+        <div class="method-name">Airtel Uganda</div>
+        <div class="method-note">Mobile Money</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="withdraw-card">
+    <div class="card-heading">Withdrawal request</div>
+    <div class="card-sub">Enter the amount you want to withdraw.</div>
+
+    <form method="post" id="withdrawForm">
+      <input type="hidden" name="method" id="method" value="MTN UG">
+
+      <label class="field-label">Amount (UGX)</label>
+      <input
+        class="input"
+        type="number"
+        name="amount"
+        id="amount"
+        min="1000"
+        step="1"
+        placeholder="Enter amount"
+        required
+        oninput="updateSummary()"
+      >
+
+      <label class="field-label">Saved payout number</label>
+      <input
+        class="input"
+        type="text"
+        id="destination"
+        name="destination"
+        value="{{ user.mtn_number or '' }}"
+        readonly
+      >
+
+      <div class="summary">
+        <div class="row">
+          <span>Requested</span>
+          <strong id="requested">UGX 0.00</strong>
+        </div>
+        <div class="row">
+          <span>Withdrawal fee (10%)</span>
+          <strong id="fee">UGX 0.00</strong>
+        </div>
+        <div class="row receive">
+          <span>You receive</span>
+          <strong id="receive">UGX 0.00</strong>
+        </div>
+      </div>
+
+      <button class="submit" type="submit">REQUEST WITHDRAWAL</button>
+      <div class="minimum">Minimum withdrawal: UGX 1,000</div>
+    </form>
+  </div>
+
+  {% if pending %}
+  <div class="withdraw-card pending">
+    <div class="card-heading">Pending withdrawal</div>
+    <div class="card-sub">Your request is currently awaiting review.</div>
+    {% for w in pending %}
+    <div class="pending-item">
+      <div class="pending-ref">{{ w.reference }}</div>
+      <div class="pending-meta">
+        UGX {{ "{:,.2f}".format(w.amount or 0) }} · {{ w.status }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+const savedNumbers = {
+  "MTN UG": {{ (user.mtn_number or '')|tojson }},
+  "Airtel UG": {{ (user.airtel_number or '')|tojson }}
+};
+
+function selectMethod(method){
+  document.getElementById("method").value = method;
+  document.querySelectorAll(".method").forEach(btn=>{
+    btn.classList.toggle("active",btn.dataset.method===method);
+  });
+  document.getElementById("destination").value = savedNumbers[method] || "";
+}
+
+function updateSummary(){
+  const amount = parseFloat(document.getElementById("amount").value) || 0;
+  const fee = amount * 0.10;
+  const receive = amount - fee;
+
+  document.getElementById("requested").textContent =
+    "UGX " + amount.toLocaleString("en-US",{minimumFractionDigits:2});
+
+  document.getElementById("fee").textContent =
+    "UGX " + fee.toLocaleString("en-US",{minimumFractionDigits:2});
+
+  document.getElementById("receive").textContent =
+    "UGX " + Math.max(receive,0).toLocaleString("en-US",{minimumFractionDigits:2});
+}
+
+document.getElementById("withdrawForm").addEventListener("submit",function(e){
+  const amount = parseFloat(document.getElementById("amount").value) || 0;
+  if(amount < 1000){
+    e.preventDefault();
+    alert("Minimum withdrawal is UGX 1,000.");
+  }
+});
+</script>
+{% endblock %}

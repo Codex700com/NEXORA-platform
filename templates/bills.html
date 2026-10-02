@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+.bills-page{
+    padding:10px 4px 100px;
+    color:#e8f5ed;
+    text-align:center;
+}
+
+.bills-hero{
+    margin:8px 0 16px;
+    padding:22px 16px;
+    background:linear-gradient(145deg,#0b2414,#040906);
+    border:1px solid #176b3c;
+    border-radius:21px;
+    box-shadow:0 10px 28px rgba(0,0,0,.42);
+}
+
+.bills-icon{
+    width:58px;
+    height:58px;
+    margin:0 auto 12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:17px;
+    background:#07130b;
+    border:1px solid #18d66b;
+    color:#39ff88;
+    font-size:27px;
+    font-weight:900;
+}
+
+.bills-title{
+    font-size:25px;
+    font-weight:900;
+    color:#f2fff5;
+    margin:0;
+}
+
+.bills-sub{
+    margin:7px 0 0;
+    color:#759582;
+    font-size:13px;
+}
+
+.bills-card{
+    width:100%;
+    box-sizing:border-box;
+    margin:12px 0;
+    padding:18px 15px;
+    background:linear-gradient(145deg,#091a0f,#040906);
+    border:1px solid #165a34;
+    border-radius:20px;
+    box-shadow:0 9px 25px rgba(0,0,0,.36);
+}
+
+.bills-card-title{
+    color:#f2fff5;
+    font-size:17px;
+    font-weight:900;
+    margin-bottom:13px;
+    text-align:center;
+}
+
+.bill-item{
+    width:100%;
+    box-sizing:border-box;
+    margin:9px 0;
+    padding:14px 13px;
+    background:#07130b;
+    border:1px solid #123d25;
+    border-radius:15px;
+    text-align:center;
+}
+
+.bill-kind{
+    font-size:14px;
+    font-weight:900;
+    margin-bottom:5px;
+}
+
+.bill-kind.deposit{
+    color:#39ff88;
+}
+
+.bill-kind.withdraw{
+    color:#8cffb9;
+}
+
+.bill-amount{
+    color:#f2fff5;
+    font-size:20px;
+    font-weight:900;
+}
+
+.bill-status{
+    display:inline-block;
+    margin-top:7px;
+    padding:5px 11px;
+    border-radius:20px;
+    background:#0b2414;
+    border:1px solid #176b3c;
+    color:#9de8ba;
+    font-size:11px;
+    font-weight:800;
+}
+
+.bill-meta{
+    margin-top:7px;
+    color:#759582;
+    font-size:11px;
+    word-break:break-word;
+}
+
+.bills-empty{
+    padding:25px 12px;
+    color:#759582;
+    text-align:center;
+}
+
+.bills-empty strong{
+    display:block;
+    color:#e8f5ed;
+    font-size:16px;
+    margin-bottom:6px;
+}
+</style>
+
+<div class="bills-page">
+
+    <div class="bills-hero">
+        <div class="bills-icon">▤</div>
+        <h1 class="bills-title">Bills</h1>
+        <div class="bills-sub">Your deposit and withdrawal transaction history</div>
+    </div>
+
+    <div class="bills-card">
+        <div class="bills-card-title">Transaction History</div>
+
+        {% if transactions %}
+            {% for t in transactions %}
+                <div class="bill-item">
+
+                    {% if t['kind'] == 'DEPOSIT' %}
+                        <div class="bill-kind deposit">DEPOSIT</div>
+                    {% else %}
+                        <div class="bill-kind withdraw">WITHDRAW</div>
+                    {% endif %}
+
+                    <div class="bill-amount">
+                        UGX {{ '{:,.2f}'.format(t['amount']|float) }}
+                    </div>
+
+                    <div class="bill-status">
+                        {{ t['status'] or 'RECORDED' }}
+                    </div>
+
+                    {% if t['reference'] %}
+                        <div class="bill-meta">
+                            Ref: {{ t['reference'] }}
+                        </div>
+                    {% endif %}
+
+                    {% if t['created_at'] %}
+                        <div class="bill-meta">
+                            {{ t['created_at'] }}
+                        </div>
+                    {% endif %}
+
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="bills-empty">
+                <strong>No transactions yet</strong>
+                Only deposit and withdrawal transactions will appear here.
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}

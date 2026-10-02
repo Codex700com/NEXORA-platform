@@ -1,0 +1,341 @@
+{% extends 'base.html' %}{% block content %}
+
+<style id="NEXORA_RECTANGULAR_CENTERED_CARDS">
+/* NEXORA — Deposit/Withdrawal style rectangular service cards */
+.nx-service{
+    width:100% !important;
+    box-sizing:border-box !important;
+    padding:12px 8px 100px !important;
+    color:#e8f5ed !important;
+    text-align:center !important;
+}
+
+/* Every service section becomes a real rectangular card */
+.nx-service .section,
+.nx-service .row,
+.nx-service .field,
+.nx-service .matrix-chance,
+.nx-service .matrix-board,
+.nx-service .matrix-history,
+.nx-service .manager-card{
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    margin:12px 0 !important;
+    padding:18px 16px !important;
+    background:linear-gradient(145deg,#091a0f,#040906) !important;
+    border:1px solid #176b3c !important;
+    border-radius:18px !important;
+    box-shadow:0 8px 24px rgba(0,0,0,.38) !important;
+    color:#e8f5ed !important;
+    text-align:center !important;
+}
+
+/* Headings and words in the middle */
+.nx-service .title,
+.nx-service .matrix-title,
+.nx-service .manager-title,
+.nx-service h1,
+.nx-service h2,
+.nx-service h3,
+.nx-service h4,
+.nx-service p,
+.nx-service label,
+.nx-service .muted,
+.nx-service .value,
+.nx-service .inviteLink,
+.nx-service .manager-name,
+.nx-service .manager-role{
+    display:block !important;
+    width:100% !important;
+    box-sizing:border-box !important;
+    text-align:center !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+}
+
+/* Main headings */
+.nx-service .title,
+.nx-service h1,
+.nx-service h2{
+    color:#f2fff5 !important;
+    font-weight:900 !important;
+    text-align:center !important;
+}
+
+/* Green values */
+.nx-service .value,
+.nx-service strong,
+.nx-service b{
+    color:#39ff88 !important;
+    font-weight:900 !important;
+}
+
+/* Muted text */
+.nx-service .muted{
+    color:#759582 !important;
+}
+
+/* Inputs stay inside rectangular cards */
+.nx-service input,
+.nx-service select,
+.nx-service textarea{
+    display:block !important;
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    margin:10px auto !important;
+    padding:13px 14px !important;
+    background:#030806 !important;
+    color:#e8f5ed !important;
+    border:1px solid #165a34 !important;
+    border-radius:12px !important;
+    text-align:center !important;
+    outline:none !important;
+}
+
+.nx-service input:focus,
+.nx-service select:focus,
+.nx-service textarea:focus{
+    border-color:#18d66b !important;
+    box-shadow:0 0 0 2px rgba(24,214,107,.12) !important;
+}
+
+/* Buttons */
+.nx-service .button,
+.nx-service button,
+.nx-service .submit{
+    display:block !important;
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    margin:12px auto !important;
+    padding:13px 16px !important;
+    background:#18d66b !important;
+    color:#031008 !important;
+    border:0 !important;
+    border-radius:12px !important;
+    font-weight:900 !important;
+    text-align:center !important;
+}
+
+/* Rows inside cards */
+.nx-service .row{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:10px !important;
+}
+
+/* Tables become centered rectangular sections */
+.nx-service table{
+    width:100% !important;
+    border-collapse:separate !important;
+    border-spacing:0 7px !important;
+    text-align:center !important;
+}
+
+.nx-service th,
+.nx-service td{
+    padding:12px 8px !important;
+    text-align:center !important;
+    color:#e8f5ed !important;
+}
+
+.nx-service tbody tr{
+    background:#07130b !important;
+    outline:1px solid #123d25 !important;
+}
+
+/* Links */
+.nx-service a{
+    color:#39ff88 !important;
+    text-align:center !important;
+}
+
+/* Manager cards */
+.nx-service .manager-card{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+}
+
+.nx-service .manager-avatar{
+    margin:0 auto 12px !important;
+    border:2px solid #18d66b !important;
+}
+
+/* Matrix/Raffle boxes */
+.nx-service .matrix-board,
+.nx-service .matrix-history,
+.nx-service .matrix-chance{
+    text-align:center !important;
+}
+
+/* Mobile */
+@media(max-width:600px){
+    .nx-service{
+        padding-left:7px !important;
+        padding-right:7px !important;
+    }
+
+    .nx-service .section,
+    .nx-service .row,
+    .nx-service .field,
+    .nx-service .matrix-chance,
+    .nx-service .matrix-board,
+    .nx-service .matrix-history,
+    .nx-service .manager-card{
+        border-radius:18px !important;
+        padding:17px 14px !important;
+    }
+}
+</style>
+
+
+<style>
+/* NEXORA SERVICE CARD SYSTEM */
+.nx-service{
+  padding:10px 2px 95px;
+  color:#e8f5ed;
+}
+.nx-service .title,
+.nx-service .matrix-title,
+.nx-service .manager-title{
+  color:#f2fff5;
+  font-weight:900;
+}
+.nx-service .muted,
+.nx-service .matrix-sub,
+.nx-service .manager-sub{
+  color:#759582;
+}
+.nx-service .section,
+.nx-service .row,
+.nx-service .field,
+.nx-service .matrix-chance,
+.nx-service .matrix-board,
+.nx-service .matrix-history,
+.nx-service .manager-card{
+  background:linear-gradient(145deg,#091a0f,#040906) !important;
+  border:1px solid #165a34 !important;
+  border-radius:21px !important;
+  box-shadow:0 10px 27px rgba(0,0,0,.35);
+}
+.nx-service .section{
+  padding:17px !important;
+  margin:12px 0 !important;
+}
+.nx-service .field{
+  padding:13px !important;
+}
+.nx-service .row{
+  padding:14px !important;
+  margin:9px 0 !important;
+}
+.nx-service input,
+.nx-service textarea,
+.nx-service select{
+  box-sizing:border-box;
+  width:100%;
+  background:#030806 !important;
+  color:#f2fff5 !important;
+  border:1px solid #123d25 !important;
+  border-radius:13px !important;
+  padding:13px !important;
+  outline:none;
+}
+.nx-service input:focus,
+.nx-service textarea:focus,
+.nx-service select:focus{
+  border-color:#18d66b !important;
+  box-shadow:0 0 0 1px rgba(24,214,107,.15);
+}
+.nx-service button,
+.nx-service .button,
+.nx-service .choose-btn{
+  width:100%;
+  box-sizing:border-box;
+  border:0 !important;
+  border-radius:13px !important;
+  padding:14px !important;
+  background:#18d66b !important;
+  color:#031008 !important;
+  font-weight:900 !important;
+  box-shadow:0 9px 22px rgba(24,214,107,.16);
+}
+.nx-service .value{
+  color:#39ff88 !important;
+  font-weight:900;
+}
+.nx-service table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0 7px;
+}
+.nx-service th{
+  color:#789382;
+  font-size:10px;
+  text-align:left;
+  padding:7px;
+}
+.nx-service td{
+  background:#07130b;
+  color:#e8f5ed;
+  border-top:1px solid #123d25;
+  border-bottom:1px solid #123d25;
+  padding:11px 8px;
+  font-size:11px;
+}
+.nx-service td:first-child{
+  border-left:1px solid #123d25;
+  border-radius:11px 0 0 11px;
+}
+.nx-service td:last-child{
+  border-right:1px solid #123d25;
+  border-radius:0 11px 11px 0;
+}
+.nx-service .manager-card{
+  background:linear-gradient(145deg,#091a0f,#040906) !important;
+}
+.nx-service .manager-avatar{
+  background:linear-gradient(145deg,#18d66b,#087f72) !important;
+  border:2px solid #18d66b !important;
+}
+.nx-service .manager-name{
+  color:#f2fff5 !important;
+}
+.nx-service .manager-role,
+.nx-service .manager-note{
+  color:#759582 !important;
+}
+.nx-service .whatsapp-btn{
+  background:#18d66b !important;
+  color:#031008 !important;
+  border-radius:13px !important;
+}
+.nx-service .matrix-box{
+  background:linear-gradient(145deg,#0a1b10,#050b07) !important;
+  border:1px solid #165a34 !important;
+  border-radius:15px !important;
+}
+.nx-service .matrix-kicker{
+  color:#39ff88 !important;
+}
+.nx-service .matrix-result,
+.nx-service .matrix-reward{
+  background:#07130b !important;
+  border:1px solid #165a34 !important;
+  border-radius:17px !important;
+}
+.nx-service a{
+  color:#39ff88;
+}
+</style>
+
+<div class="nx-service">
+<div class="title">Chats</div><div class="section">{% for m in messages %}<p><b>{{m.sender}}</b>: {{m.message}}</p><small class="muted">{{m.created_at}}</small><hr>{% else %}<p class="muted">No messages yet.</p>{% endfor %}</div><form method="post"><div class="field"><input name="message" placeholder="Write a message..." required></div><button class="button">Send</button></form>
+</div>
+{% endblock %}

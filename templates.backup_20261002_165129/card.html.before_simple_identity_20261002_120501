@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.identity-page{padding:8px 2px 90px;color:#e8f5ed}
+.identity-hero{padding:22px 18px;border-radius:25px;background:linear-gradient(145deg,#0b2414,#041008);border:1px solid #176b3c;box-shadow:0 15px 35px rgba(0,0,0,.4);margin-bottom:14px}
+.identity-kicker{color:#39ff88;font-size:9px;font-weight:900;letter-spacing:2px}
+.identity-title{margin:7px 0 5px;font-size:28px;font-weight:900}
+.identity-desc{color:#759582;font-size:11px;line-height:1.55}
+.identity-status{margin-top:16px;padding:12px 14px;border-radius:15px;background:#061009;border:1px solid #164d2c;color:#83d69e;font-size:10px}
+.identity-card{padding:18px;border-radius:22px;background:linear-gradient(145deg,#091a0f,#040906);border:1px solid #165a34;box-shadow:0 10px 27px rgba(0,0,0,.35);margin-bottom:13px}
+.identity-heading{font-size:16px;font-weight:900;margin-bottom:5px}
+.identity-note{color:#708a79;font-size:10px;line-height:1.5;margin-bottom:15px}
+.identity-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px;margin-bottom:9px;border-radius:15px;background:#07130b;border:1px solid #123d25}
+.identity-row:last-of-type{margin-bottom:0}
+.identity-method{color:#6fa584;font-size:10px;letter-spacing:.7px;text-transform:uppercase}
+.identity-number{color:#f2fff5;font-size:12px;font-weight:900;text-align:right}
+.identity-actions{display:grid;gap:9px;margin-top:15px}
+.identity-btn{display:block;text-align:center;text-decoration:none;padding:13px;border-radius:13px;font-size:12px;font-weight:900}
+.identity-btn.primary{background:#18d66b;color:#031008}
+.identity-btn.secondary{background:#07140b;color:#39ff88;border:1px solid #195b35}
+</style>
+
+<div class="identity-page">
+  <div class="identity-hero">
+    <div class="identity-kicker">NEXORA IDENTITY</div>
+    <div class="identity-title">Payout Identity</div>
+    <div class="identity-desc">
+      Manage the mobile-money details connected to your NEXORA withdrawals.
+    </div>
+    <div class="identity-status">
+      ✓ Your saved payout details are protected and used by the Withdrawal page.
+    </div>
+  </div>
+
+  <div class="identity-card">
+    <div class="identity-heading">Withdrawal details</div>
+    <div class="identity-note">
+      These saved numbers are used as your payout destinations.
+    </div>
+
+    <div class="identity-row">
+      <span class="identity-method">MTN Uganda</span>
+      <b class="identity-number">{{ user.mtn_number or 'Not saved' }}</b>
+    </div>
+
+    <div class="identity-row">
+      <span class="identity-method">Airtel Uganda</span>
+      <b class="identity-number">{{ user.airtel_number or 'Not saved' }}</b>
+    </div>
+
+    <div class="identity-actions">
+      <a class="identity-btn primary" href="/account">EDIT IDENTITY DETAILS</a>
+      <a class="identity-btn secondary" href="/withdraw">BACK TO WITHDRAW</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

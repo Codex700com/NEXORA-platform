@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+.matrix-page{
+  padding:18px 4px 105px;
+  color:#effff5;
+}
+.matrix-head{
+  margin-bottom:18px;
+}
+.matrix-kicker{
+  color:#39ff88;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:2px;
+}
+.matrix-title{
+  margin:7px 0 5px;
+  font-size:28px;
+  font-weight:900;
+}
+.matrix-sub{
+  color:#789382;
+  font-size:11px;
+  line-height:1.55;
+}
+.matrix-chance{
+  background:#07130b;
+  border:1px solid #154b2c;
+  border-radius:18px;
+  padding:15px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+}
+.matrix-chance small{
+  display:block;
+  color:#6f8e7a;
+  font-size:9px;
+  letter-spacing:1px;
+  font-weight:800;
+}
+.matrix-chance strong{
+  display:block;
+  color:#39ff88;
+  font-size:25px;
+  margin-top:3px;
+}
+.matrix-board{
+  background:#030806;
+  border:1px solid #154b2c;
+  border-radius:21px;
+  padding:12px;
+}
+.matrix-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:9px;
+}
+.matrix-box{
+  position:relative;
+  aspect-ratio:1/1;
+  min-width:0;
+  border:1px solid #165a34;
+  border-radius:15px;
+  background:linear-gradient(145deg,#0a1b10,#050b07);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  box-shadow:0 8px 18px rgba(0,0,0,.3);
+}
+.matrix-box::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,transparent 45%,rgba(57,255,136,.07) 50%,transparent 55%);
+}
+.matrix-question{
+  position:relative;
+  z-index:2;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:1px solid #1b693d;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#39ff88;
+  font-size:22px;
+  font-weight:900;
+}
+.matrix-box button{
+  position:absolute;
+  inset:0;
+  z-index:5;
+  border:0;
+  background:transparent;
+  cursor:pointer;
+}
+.matrix-reward{
+  position:relative;
+  z-index:3;
+  text-align:center;
+  padding:7px;
+}
+.matrix-reward .icon{
+  font-size:22px;
+  color:#39ff88;
+  margin-bottom:6px;
+}
+.matrix-reward b{
+  display:block;
+  color:#effff5;
+  font-size:11px;
+  line-height:1.25;
+}
+.matrix-selected{
+  border-color:#39ff88;
+  box-shadow:0 0 22px rgba(24,214,107,.28);
+}
+.matrix-selected .matrix-reward b{
+  color:#39ff88;
+}
+.matrix-info{
+  color:#668071;
+  font-size:9px;
+  line-height:1.5;
+  text-align:center;
+  margin:12px 5px 0;
+}
+.matrix-result{
+  margin-top:14px;
+  padding:15px;
+  border-radius:16px;
+  background:#07130b;
+  border:1px solid #18d66b;
+  text-align:center;
+}
+.matrix-result small{
+  color:#789382;
+  font-size:9px;
+  letter-spacing:1px;
+}
+.matrix-result strong{
+  display:block;
+  color:#39ff88;
+  font-size:20px;
+  margin-top:5px;
+}
+.matrix-history{
+  margin-top:15px;
+  background:#07130b;
+  border:1px solid #123d25;
+  border-radius:18px;
+  padding:15px;
+}
+.matrix-history h3{
+  margin:0 0 10px;
+  color:#39ff88;
+  font-size:13px;
+}
+.matrix-history-row{
+  display:flex;
+  justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid #10331f;
+  color:#789382;
+  font-size:10px;
+}
+.matrix-history-row:last-child{
+  border-bottom:0;
+}
+.matrix-history-row b{
+  color:#eefaf2;
+}
+.matrix-empty{
+  text-align:center;
+  padding:28px 12px;
+  color:#789382;
+  font-size:11px;
+}
+.matrix-empty strong{
+  display:block;
+  color:#39ff88;
+  font-size:15px;
+  margin-bottom:6px;
+}
+@media(max-width:360px){
+  .matrix-grid{gap:7px}
+  .matrix-box{border-radius:12px}
+  .matrix-question{width:36px;height:36px}
+}
+</style>
+
+<div class="matrix-page">
+
+  <div class="matrix-head">
+    <div class="matrix-kicker">NEXORA MATRIX</div>
+    <div class="matrix-title">Choose Your Box</div>
+    <div class="matrix-sub">
+      Select one square to reveal your assigned Matrix reward.
+    </div>
+  </div>
+
+  <div class="matrix-chance">
+    <div>
+      <small>AVAILABLE CHANCES</small>
+      <strong>{{ chances|length }}</strong>
+    </div>
+    <div style="text-align:right;color:#789382;font-size:9px">
+      ONE CHANCE<br>PER REVEAL
+    </div>
+  </div>
+
+  {% if revealed %}
+
+    <div class="matrix-board">
+      <div class="matrix-grid">
+
+        {% for r in revealed_boxes %}
+        <div class="matrix-box {% if loop.index == revealed_box_id %}matrix-selected{% endif %}">
+          <div class="matrix-reward">
+            <div class="icon">
+              {% if r.reward_type == 'IPHONE' %}★{% else %}◆{% endif %}
+            </div>
+            <b>
+              {% if r.reward_type == 'IPHONE' %}
+                iPhone
+              {% else %}
+                UGX {{ '{:,.0f}'.format(r.reward_amount) }}
+              {% endif %}
+            </b>
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+
+      <div class="matrix-result">
+        <small>YOUR SELECTED REWARD</small>
+        <strong>
+          {% if revealed.reward_type == 'IPHONE' %}
+            iPhone
+          {% else %}
+            UGX {{ '{:,.0f}'.format(revealed.reward_amount) }}
+          {% endif %}
+        </strong>
+      </div>
+    </div>
+
+  {% else %}
+
+    <div class="matrix-board">
+      <div class="matrix-grid">
+
+        {% for n in range(1,10) %}
+        <div class="matrix-box">
+          <div class="matrix-question">?</div>
+
+          {% if chances %}
+          <form method="post"
+                action="{{ url_for('reveal_promo',chance_id=chances[0].id,box_id=n) }}">
+            <button type="submit" aria-label="Choose Matrix box {{ n }}"></button>
+          </form>
+          {% else %}
+          <form method="post"
+                action="{{ url_for('raffle') }}">
+            <button type="submit" aria-label="Matrix box {{ n }}"></button>
+          </form>
+          {% endif %}
+
+        </div>
+        {% endfor %}
+
+      </div>
+
+      <div class="matrix-info">
+        {% if chances %}
+          Tap one box to reveal your assigned reward.
+        {% else %}
+          No chances available. The boxes remain visible until you unlock a chance.
+        {% endif %}
+      </div>
+    </div>
+
+  {% endif %}
+
+  {% if history %}
+  <div class="matrix-history">
+    <h3>Recent Matrix Rewards</h3>
+
+    {% for h in history %}
+    <div class="matrix-history-row">
+      <span>Matrix #{{ h.id }}</span>
+      <b>
+        {% if h.reward_type == 'IPHONE' %}
+          iPhone
+        {% else %}
+          UGX {{ '{:,.0f}'.format(h.reward_amount) }}
+        {% endif %}
+      </b>
+    </div>
+    {% endfor %}
+
+  </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}

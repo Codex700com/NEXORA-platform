@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+.deposit-page{
+  padding:18px 4px 100px;
+  color:#eefaf2;
+}
+.deposit-head{
+  margin-bottom:18px;
+}
+.deposit-kicker{
+  color:#39ff88;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:2px;
+}
+.deposit-title{
+  margin:7px 0 5px;
+  font-size:27px;
+  font-weight:900;
+}
+.deposit-sub{
+  color:#789382;
+  font-size:11px;
+  line-height:1.55;
+}
+.deposit-card{
+  background:#07130b;
+  border:1px solid #154b2c;
+  border-radius:19px;
+  padding:17px;
+  margin-bottom:12px;
+}
+.deposit-label{
+  display:block;
+  color:#789382;
+  font-size:10px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+.deposit-input{
+  width:100%;
+  box-sizing:border-box;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #174b2c;
+  background:#030806;
+  color:#fff;
+  font-size:17px;
+  outline:none;
+}
+.deposit-input:focus{
+  border-color:#18d66b;
+}
+.quick-title{
+  color:#789382;
+  font-size:10px;
+  font-weight:800;
+  margin:17px 0 9px;
+}
+.amount-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.amount-btn{
+  height:48px;
+  border-radius:11px;
+  border:1px solid #154b2c;
+  background:#030806;
+  color:#b9d9c4;
+  font-weight:900;
+  font-size:11px;
+}
+.amount-btn.active{
+  background:#18d66b;
+  color:#031008;
+  border-color:#18d66b;
+}
+.method-title{
+  color:#789382;
+  font-size:10px;
+  font-weight:800;
+  margin-bottom:9px;
+}
+.method-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+.method{
+  position:relative;
+}
+.method input{
+  position:absolute;
+  opacity:0;
+}
+.method-box{
+  display:block;
+  text-align:center;
+  padding:16px 8px;
+  border-radius:13px;
+  background:#030806;
+  border:1px solid #154b2c;
+  color:#b9d9c4;
+  font-size:11px;
+  font-weight:900;
+}
+.method input:checked + .method-box{
+  background:#18d66b;
+  border-color:#18d66b;
+  color:#031008;
+}
+.deposit-submit{
+  width:100%;
+  border:0;
+  border-radius:13px;
+  padding:14px;
+  background:#18d66b;
+  color:#031008;
+  font-size:12px;
+  font-weight:900;
+  margin-top:15px;
+}
+.deposit-note{
+  color:#668071;
+  font-size:9px;
+  line-height:1.5;
+  text-align:center;
+  margin-top:12px;
+}
+</style>
+
+<div class="deposit-page">
+
+  <div class="deposit-head">
+    <div class="deposit-kicker">NEXORA WALLET</div>
+    <div class="deposit-title">Deposit</div>
+    <div class="deposit-sub">
+      Add funds to your NEXORA balance using mobile money.
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('deposit') }}">
+
+    <div class="deposit-card">
+
+      <label class="deposit-label" for="amount">
+        ENTER AMOUNT
+      </label>
+
+      <input
+        class="deposit-input"
+        id="amount"
+        name="amount"
+        type="number"
+        min="20000"
+        step="1000"
+        placeholder="Enter amount in UGX"
+        required
+      >
+
+      <div class="quick-title">QUICK AMOUNT</div>
+
+      <div class="amount-grid">
+        <button type="button" class="amount-btn" data-value="20000">20K</button>
+        <button type="button" class="amount-btn" data-value="50000">50K</button>
+        <button type="button" class="amount-btn" data-value="100000">100K</button>
+        <button type="button" class="amount-btn" data-value="250000">250K</button>
+        <button type="button" class="amount-btn" data-value="500000">500K</button>
+        <button type="button" class="amount-btn" data-value="1000000">1M</button>
+        <button type="button" class="amount-btn" data-value="2000000">2M</button>
+        <button type="button" class="amount-btn" data-value="3000000">3M</button>
+        <button type="button" class="amount-btn" data-value="5000000">5M</button>
+      </div>
+
+    </div>
+
+    <div class="deposit-card">
+
+      <div class="method-title">CHOOSE PAYMENT METHOD</div>
+
+      <div class="method-grid">
+
+        <label class="method">
+          <input type="radio" name="method" value="MTN UG" required>
+          <span class="method-box">MTN MONEY</span>
+        </label>
+
+        <label class="method">
+          <input type="radio" name="method" value="Airtel UG" required>
+          <span class="method-box">AIRTEL MONEY</span>
+        </label>
+
+      </div>
+
+      <button class="deposit-submit" type="submit">
+        CONTINUE
+      </button>
+
+      <div class="deposit-note">
+        Minimum deposit: UGX 20,000
+      </div>
+
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+document.querySelectorAll(".amount-btn").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    document.getElementById("amount").value=this.dataset.value;
+
+    document.querySelectorAll(".amount-btn").forEach(function(b){
+      b.classList.remove("active");
+    });
+
+    this.classList.add("active");
+  });
+});
+</script>
+
+{% endblock %}

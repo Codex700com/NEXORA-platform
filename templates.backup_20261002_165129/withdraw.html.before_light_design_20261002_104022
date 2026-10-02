@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="withdraw-page">
+  <div class="page-head"><a class="back-btn" href="/my">←</a><h1>Withdraw</h1><div class="head-spacer"></div></div>
+
+  {% if pending_withdrawal %}
+  <section class="withdraw-card" style="margin-bottom:16px">
+    <h2>Withdraw Under Review</h2>
+    <p>Your withdrawal request has been submitted and is waiting for administrator approval.</p>
+    <div class="withdraw-summary">
+      <div><span>Withdrawal amount</span><b>UGX {{ '{:,.2f}'.format(pending_withdrawal.amount) }}</b></div>
+      <div><span>Status</span><b>{{ pending_withdrawal.status }}</b></div>
+      <div><span>Reference</span><b>{{ pending_withdrawal.reference }}</b></div>
+    </div>
+    <p class="helper">The reserved withdrawal amount will return to your balance if the request is rejected.</p>
+  </section>
+  {% endif %}
+
+  <section class="balance-card">
+    <div class="balance-label">Available balance</div>
+    <div class="balance-number">{{ '{:,.2f}'.format(user.balance) }}</div>
+  </section>
+
+  <form method="post" action="/withdraw" id="withdrawForm" class="withdraw-form">
+    <section class="withdraw-card">
+      <div class="form-label">Payout method</div>
+      <div class="method-grid">
+        <button type="button" class="method-btn active" data-method="MTN UG">MTN UG</button>
+        <button type="button" class="method-btn" data-method="Airtel UG">Airtel UG</button>
+        <button type="button" class="method-btn" data-method="USDT TRC20">USDT TRC20</button>
+      </div>
+      <input type="hidden" name="method" id="method" value="MTN UG">
+
+      <div class="form-label amount-label">Amount (UGX)</div>
+      <div class="amount-input"><input id="amount" name="amount" type="number" min="5000" step="1" placeholder="5000" required inputmode="numeric"></div>
+      <div class="helper">Minimum withdrawal is 5,000 UGX</div>
+
+      <div class="details-warning" id="detailsWarning">
+        <strong>Withdrawal details required</strong>
+        <span>Save your phone number and the name registered on that number or your USDT wallet before withdrawing.</span>
+        <a href="/card">Save my card details</a>
+      </div>
+
+      <div class="form-label destination-label">Destination</div>
+      <div class="amount-input"><input id="destination" name="destination" type="text" value="{{ user.mtn_number }}" placeholder="Saved payout destination" readonly></div>
+      <div class="helper" id="destinationHelp">Taken from your saved MTN details. Change it on the Card page.</div>
+
+      <div class="withdraw-summary">
+        <div><span>Amount (UGX)</span><b id="summaryAmount">0.00</b></div>
+        <div><span>Withdrawal fee (10%)</span><b class="fee" id="summaryFee">-0.00</b></div>
+        <div class="receive"><span>You receive</span><b id="summaryReceive">0.00</b></div>
+      </div>
+
+      <button class="button primary withdraw-submit" type="submit">WITHDRAW</button>
+    </section>
+  </form>
+
+  <section class="withdraw-note">
+    <b>Withdrawal processing</b>
+    <p>Your request is recorded as pending. An administrator must approve it before it is completed.</p>
+  </section>
+</div>
+<script>
+(function(){
+  const methods={
+    'MTN UG':{value:{{ user.mtn_number|tojson }},help:'Taken from your saved MTN details. Change it on the Card page.',placeholder:'Saved MTN number'},
+    'Airtel UG':{value:{{ user.airtel_number|tojson }},help:'Taken from your saved Airtel details. Change it on the Card page.',placeholder:'Saved Airtel number'},
+    'USDT TRC20':{value:{{ user.usdt_wallet|tojson }},help:'Taken from your saved USDT TRC20 wallet. Change it on the Card page.',placeholder:'Saved USDT TRC20 wallet'}
+  };
+  const methodInput=document.getElementById('method'), dest=document.getElementById('destination'), help=document.getElementById('destinationHelp'), warning=document.getElementById('detailsWarning'), amount=document.getElementById('amount');
+  document.querySelectorAll('.method-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.method-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+    const m=btn.dataset.method, data=methods[m]; methodInput.value=m; dest.value=data.value||''; dest.placeholder=data.placeholder; help.textContent=data.help; warning.style.display=data.value?'none':'block';
+  }));
+  function update(){const a=Math.max(0,Number(amount.value)||0), fee=a*.10, receive=Math.max(0,a-fee); document.getElementById('summaryAmount').textContent=a.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); document.getElementById('summaryFee').textContent='-'+fee.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); document.getElementById('summaryReceive').textContent=receive.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+  amount.addEventListener('input',update); update();
+  document.getElementById('withdrawForm').addEventListener('submit',e=>{if(!dest.value.trim()){e.preventDefault(); warning.style.display='block'; warning.scrollIntoView({behavior:'smooth',block:'center'});}});
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<div class="title">{{title}}</div><form method="post" action="{{action}}">{% for name,label,typ in fields %}<div class="field"><input name="{{name}}" type="{{typ}}" placeholder="{{label}}" min="1" required></div>{% endfor %}<button class="button" type="submit">Submit</button></form>{% endblock %}

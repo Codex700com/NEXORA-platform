@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+.nx-settings{
+  max-width:720px;
+  margin:0 auto;
+  padding:10px 4px 100px;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+.nx-settings-hero{
+  position:relative;
+  overflow:hidden;
+  border-radius:26px;
+  padding:26px 22px;
+  margin-bottom:18px;
+  background:
+    radial-gradient(circle at 90% 10%,rgba(45,212,191,.28),transparent 35%),
+    radial-gradient(circle at 10% 90%,rgba(59,130,246,.25),transparent 40%),
+    linear-gradient(135deg,#07152c,#0b2947 55%,#062d35);
+  border:1px solid rgba(120,220,255,.20);
+  box-shadow:0 18px 45px rgba(0,0,0,.25);
+}
+
+.nx-settings-hero:before,
+.nx-settings-hero:after{
+  content:"";
+  position:absolute;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.08);
+}
+.nx-settings-hero:before{
+  width:180px;height:180px;right:-75px;top:-90px;
+}
+.nx-settings-hero:after{
+  width:120px;height:120px;left:-55px;bottom:-70px;
+}
+
+.nx-kicker{
+  position:relative;
+  z-index:1;
+  color:#72e6d4;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+
+.nx-settings-hero h1{
+  position:relative;
+  z-index:1;
+  margin:7px 0 5px;
+  color:#fff;
+  font-size:29px;
+  letter-spacing:-.7px;
+}
+
+.nx-settings-hero p{
+  position:relative;
+  z-index:1;
+  margin:0;
+  color:#b8c9d9;
+  font-size:13px;
+}
+
+.nx-profile{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  margin-top:22px;
+  position:relative;
+  z-index:1;
+}
+
+.nx-avatar{
+  width:54px;
+  height:54px;
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:21px;
+  font-weight:800;
+  background:linear-gradient(145deg,#19b8a5,#2563eb);
+  box-shadow:0 8px 22px rgba(15,118,110,.28);
+}
+
+.nx-profile b{
+  display:block;
+  color:#fff;
+  font-size:16px;
+}
+.nx-profile small{
+  display:block;
+  color:#9fb4c8;
+  margin-top:3px;
+}
+
+.nx-card{
+  background:rgba(255,255,255,.97);
+  border:1px solid rgba(15,23,42,.07);
+  border-radius:22px;
+  padding:20px;
+  margin-bottom:15px;
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+
+.nx-card-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:17px;
+}
+
+.nx-icon{
+  width:40px;
+  height:40px;
+  border-radius:13px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#e9f8f6;
+  color:#087f72;
+  font-size:18px;
+}
+
+.nx-card-head h2{
+  margin:0;
+  color:#102033;
+  font-size:17px;
+}
+.nx-card-head p{
+  margin:3px 0 0;
+  color:#8290a0;
+  font-size:11px;
+}
+
+.nx-label{
+  display:block;
+  margin:14px 0 7px;
+  color:#506070;
+  font-size:12px;
+  font-weight:700;
+}
+
+.nx-input{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid #dce4ec;
+  background:#f8fafc;
+  color:#172235;
+  border-radius:13px;
+  padding:13px 14px;
+  font-size:14px;
+  outline:none;
+  transition:.2s;
+}
+
+.nx-input:focus{
+  border-color:#16a394;
+  background:#fff;
+  box-shadow:0 0 0 4px rgba(22,163,148,.10);
+}
+
+.nx-phone{
+  display:inline-flex;
+  margin-top:8px;
+  padding:7px 10px;
+  border-radius:9px;
+  background:#f1f5f9;
+  color:#687789;
+  font-size:12px;
+}
+
+.nx-payout{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.nx-pay{
+  border:1px solid #e1e8ef;
+  border-radius:16px;
+  padding:14px;
+  background:#fbfdff;
+}
+
+.nx-pay-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:9px;
+  font-size:12px;
+  font-weight:800;
+  color:#26374a;
+}
+
+.nx-dot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:#12a67a;
+}
+
+.nx-notice{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+}
+
+.nx-notice-text b{
+  display:block;
+  color:#1d2b3b;
+  font-size:14px;
+}
+.nx-notice-text span{
+  display:block;
+  color:#8793a1;
+  font-size:11px;
+  margin-top:3px;
+}
+
+.nx-toggle{
+  position:relative;
+  width:48px;
+  height:27px;
+  flex:none;
+}
+.nx-toggle input{
+  opacity:0;
+  width:0;
+  height:0;
+}
+.nx-slider{
+  position:absolute;
+  inset:0;
+  border-radius:30px;
+  background:#cbd5df;
+  cursor:pointer;
+  transition:.2s;
+}
+.nx-slider:before{
+  content:"";
+  position:absolute;
+  width:21px;
+  height:21px;
+  left:3px;
+  top:3px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 2px 5px rgba(0,0,0,.2);
+  transition:.2s;
+}
+.nx-toggle input:checked + .nx-slider{
+  background:#12a67a;
+}
+.nx-toggle input:checked + .nx-slider:before{
+  transform:translateX(21px);
+}
+
+.nx-save{
+  width:100%;
+  border:0;
+  border-radius:16px;
+  padding:15px;
+  color:#fff;
+  font-size:14px;
+  font-weight:800;
+  cursor:pointer;
+  background:linear-gradient(135deg,#087f72,#1269c7);
+  box-shadow:0 12px 25px rgba(18,105,199,.20);
+  transition:transform .15s,box-shadow .15s;
+}
+.nx-save:active{
+  transform:scale(.98);
+}
+
+.nx-foot{
+  text-align:center;
+  color:#9aa6b3;
+  font-size:10px;
+  margin-top:17px;
+}
+
+@media(max-width:560px){
+  .nx-payout{grid-template-columns:1fr}
+  .nx-settings-hero{border-radius:22px}
+  .nx-card{border-radius:19px;padding:17px}
+}
+</style>
+
+<div class="nx-settings">
+
+  <div class="nx-settings-hero">
+    <div class="nx-kicker">NEXORA • Account Center</div>
+    <h1>Settings</h1>
+    <p>Manage your profile, payout details and notifications.</p>
+
+    <div class="nx-profile">
+      <div class="nx-avatar">
+        {{ (user.display_name or user.phone or 'U')[0]|upper }}
+      </div>
+      <div>
+        <b>{{ user.display_name or 'NEXORA User' }}</b>
+        <small>{{ user.phone }}</small>
+      </div>
+    </div>
+  </div>
+
+  <form method="post">
+
+    <div class="nx-card">
+      <div class="nx-card-head">
+        <div class="nx-icon">◉</div>
+        <div>
+          <h2>Profile</h2>
+          <p>Your personal account information</p>
+        </div>
+      </div>
+
+      <label class="nx-label">Display name</label>
+      <input class="nx-input"
+             name="display_name"
+             value="{{ user.display_name or '' }}"
+             placeholder="Enter your display name">
+
+      <div class="nx-phone">☎ {{ user.phone }}</div>
+    </div>
+
+    <div class="nx-card">
+      <div class="nx-card-head">
+        <div class="nx-icon">₵</div>
+        <div>
+          <h2>Payout details</h2>
+          <p>Keep your withdrawal numbers up to date</p>
+        </div>
+      </div>
+
+      <div class="nx-payout">
+        <div class="nx-pay">
+          <div class="nx-pay-title">
+            <span class="nx-dot"></span>
+            MTN Uganda
+          </div>
+          <input class="nx-input"
+                 name="mtn_number"
+                 value="{{ user.mtn_number or '' }}"
+                 placeholder="MTN number">
+        </div>
+
+        <div class="nx-pay">
+          <div class="nx-pay-title">
+            <span class="nx-dot"></span>
+            Airtel Uganda
+          </div>
+          <input class="nx-input"
+                 name="airtel_number"
+                 value="{{ user.airtel_number or '' }}"
+                 placeholder="Airtel number">
+        </div>
+      </div>
+    </div>
+
+    <div class="nx-card">
+      <div class="nx-card-head">
+        <div class="nx-icon">⌁</div>
+        <div>
+          <h2>Notifications</h2>
+          <p>Choose how NEXORA keeps you updated</p>
+        </div>
+      </div>
+
+      <div class="nx-notice">
+        <div class="nx-notice-text">
+          <b>Push & in-app notifications</b>
+          <span>Receive important account updates and messages.</span>
+        </div>
+
+        <label class="nx-toggle">
+          <input type="checkbox"
+                 name="notifications"
+                 {% if user.notifications_enabled %}checked{% endif %}>
+          <span class="nx-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <button class="nx-save" type="submit">
+      Save Settings
+    </button>
+
+  </form>
+
+  <div class="nx-foot">
+    NEXORA Account Center
+  </div>
+
+</div>
+
+{% endblock %}

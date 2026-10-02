@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<div class="title">Gift code</div><div class="section"><h2>🎁 Redeem a gift code</h2><form method="post"><div class="field"><input name="code" placeholder="NEXORA" required></div><button class="button">Claim extra cash</button></form><p class="muted">Gift codes are issued by the manager and can be redeemed once.</p></div>{% endblock %}
