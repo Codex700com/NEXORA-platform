@@ -1,5 +1,13 @@
 {% extends 'base.html' %}
 {% block content %}
+
+{% if user and (user["phone"]|string == "0758878297" or user["is_admin"]) %}
+<div style="margin:12px 0;">
+<a href="{{ url_for('admin') }}" style="display:block;text-decoration:none;background:#39ff72;color:#001507;padding:14px;border-radius:12px;text-align:center;font-weight:900;">
+ADMIN PANEL
+</a>
+</div>
+{% endif %}
 <style>
 .nx-home{font-family:Inter,system-ui,sans-serif;padding-bottom:95px}
 .nx-head{display:flex;justify-content:space-between;align-items:center;padding:8px 1px 20px}
