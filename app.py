@@ -1394,13 +1394,18 @@ def deposit():
     u=current_user()
     con=db()
 
-    # Add payer_number to older databases without touching existing data.
-    cols=[r["name"] for r in con.execute("PRAGMA table_info(deposit_sessions)").fetchall()]
+    cols=[r["name"] for r in con.execute(
+        "PRAGMA table_info(deposit_sessions)"
+    ).fetchall()]
+
     if "payer_number" not in cols:
-        con.execute("ALTER TABLE deposit_sessions ADD COLUMN payer_number TEXT")
+        con.execute(
+            "ALTER TABLE deposit_sessions ADD COLUMN payer_number TEXT"
+        )
         con.commit()
 
-    # One unfinished deposit attempt at a time.
+    # Close expired sessions on the server. Reloading the page never
+    # resets the five-minute countdown.
     active=con.execute("""
         SELECT * FROM deposit_sessions
         WHERE uid=? AND status='WAITING_VERIFICATION'
@@ -1410,75 +1415,90 @@ def deposit():
     if active:
         try:
             expiry=datetime.fromisoformat(active["expires_at"])
-        except:
+        except Exception:
             expiry=datetime.now(timezone.utc)
 
-        # Timer has expired: permanently close this attempt.
+        # The database expiry is authoritative. Logging out, closing
+        # the browser, refreshing, or reopening the app does not reset it.
         if datetime.now(timezone.utc)>=expiry:
-            con.execute(
-                "UPDATE deposit_sessions SET status='EXPIRED' WHERE id=? AND uid=?",
-                (active["id"],u["id"])
-            )
+            con.execute("""
+                UPDATE deposit_sessions
+                SET status='EXPIRED'
+                WHERE id=? AND uid=? AND status='WAITING_VERIFICATION'
+            """,(active["id"],u["id"]))
             con.commit()
             active=None
-        else:
-            # Returning user goes directly to the final proof popup.
-            if request.method=="GET":
-                con.close()
-                return render_template(
-                    "deposit.html",
-                    user=u,
-                    stage="proof",
-                    deposit=active
-                )
 
     if request.method=="POST":
-        action=request.form.get("action","")
+        action=request.form.get("action","").strip()
 
-        # STEP 1: amount
+        # Fresh deposit: amount + Airtel/MTN are selected together.
         if action=="start":
             try:
                 amount=float(request.form.get("amount") or 0)
-            except:
+            except Exception:
                 amount=0
+
+            method=request.form.get("method","").strip()
 
             if amount < 20000:
                 con.close()
                 return render_template(
                     "deposit.html",
                     user=u,
-                    stage="amount",
-                    error="Amount is below the minimum required deposit."
+                    stage="start",
+                    error="Minimum deposit is UGX 20,000."
                 )
 
-            # Do not allow a second unfinished session.
-            existing=con.execute("""
-                SELECT * FROM deposit_sessions
-                WHERE uid=? AND status='WAITING_VERIFICATION'
-                ORDER BY id DESC LIMIT 1
-            """,(u["id"],)).fetchone()
-
-            if existing:
+            if method not in ("Airtel","MTN"):
                 con.close()
                 return render_template(
                     "deposit.html",
                     user=u,
-                    stage="method",
-                    deposit=existing
+                    stage="start",
+                    error="Choose Airtel or MTN."
                 )
 
+            # Do not create another unfinished deposit.
+            if active:
+                try:
+                    expiry=datetime.fromisoformat(active["expires_at"])
+                except Exception:
+                    expiry=datetime.now(timezone.utc)
+
+                stage="payment" if active["payment_method"] else "start"
+
+                con.close()
+                return render_template(
+                    "deposit.html",
+                    user=u,
+                    stage=stage,
+                    deposit=active
+                )
+
+            # Alternate payment agent on every fresh session.
+            count=con.execute("""
+                SELECT COUNT(*) FROM deposit_sessions WHERE uid=?
+            """,(u["id"],)).fetchone()[0]
+
+            if count % 2 == 0:
+                agent="0757837051 (Mary Namara)"
+            else:
+                agent="0731199883 (Collins Monday)"
+
             expires=(
-                datetime.now(timezone.utc)+timedelta(minutes=30)
+                datetime.now(timezone.utc)+timedelta(minutes=5)
             ).isoformat(timespec="seconds")
 
             con.execute("""
                 INSERT INTO deposit_sessions
                 (uid,amount,payment_method,agent,expires_at,status,created_at)
-                VALUES(?,?,NULL,?,?,'WAITING_VERIFICATION',?)
+                VALUES(?,?,?,?,?,'WAITING_VERIFICATION',?)
             """,(
                 u["id"],
                 amount,
-                "0757837051 (Mary Namara)",
+                method,
+                agent,
                 expires,
                 now()
             ))
@@ -1491,82 +1511,47 @@ def deposit():
             """,(u["id"],)).fetchone()
 
             con.close()
+
             return render_template(
                 "deposit.html",
                 user=u,
-                stage="method",
+                stage="payment",
                 deposit=deposit
             )
 
-        # STEP 2: Airtel or MTN
-        if action=="method":
-            method=request.form.get("method","").strip()
-
-            if method not in ("Airtel","MTN"):
-                con.close()
-                return render_template(
-                    "deposit.html",
-                    user=u,
-                    stage="method",
-                    deposit=active,
-                    error="Choose either Airtel or MTN."
-                )
-
-            if not active:
-                con.close()
-                return redirect(url_for("deposit"))
-
-            con.execute("""
-                UPDATE deposit_sessions
-                SET payment_method=?
-                WHERE id=? AND uid=? AND status='WAITING_VERIFICATION'
-            """,(method,active["id"],u["id"]))
-            con.commit()
-
-            deposit=con.execute(
-                "SELECT * FROM deposit_sessions WHERE id=? AND uid=?",
-                (active["id"],u["id"])
-            ).fetchone()
-
-            con.close()
-            return render_template(
-                "deposit.html",
-                user=u,
-                stage="agent",
-                deposit=deposit
-            )
-
-        # STEP 3: final payment request
-        if action=="proof":
+        # Submit transaction ID before the five-minute deadline.
+        if action=="submit":
             if not active:
                 con.close()
                 return redirect(url_for("deposit"))
 
             try:
                 expiry=datetime.fromisoformat(active["expires_at"])
-            except:
+            except Exception:
                 expiry=datetime.now(timezone.utc)
 
             if datetime.now(timezone.utc)>=expiry:
-                con.execute(
-                    "UPDATE deposit_sessions SET status='EXPIRED' WHERE id=? AND uid=?",
-                    (active["id"],u["id"])
-                )
+                con.execute("""
+                    UPDATE deposit_sessions
+                    SET status='EXPIRED'
+                    WHERE id=? AND uid=? AND status='WAITING_VERIFICATION'
+                """,(active["id"],u["id"]))
                 con.commit()
                 con.close()
                 return redirect(url_for("deposit"))
 
-            proof=(request.form.get("proof") or "").strip()
-            payer=(request.form.get("payer_number") or "").strip()
+            transaction_id=(
+                request.form.get("transaction_id") or ""
+            ).strip()
 
-            if not proof or not payer:
+            if not transaction_id:
                 con.close()
                 return render_template(
                     "deposit.html",
                     user=u,
-                    stage="proof",
+                    stage="payment",
                     deposit=active,
-                    error="Enter the transaction ID and the number that made the payment."
+                    error="Provide the transaction ID before the timer expires."
                 )
 
             ref="DEP-"+secrets.token_hex(4).upper()+"-S"+str(active["id"])
@@ -1586,10 +1571,12 @@ def deposit():
 
             con.execute("""
                 UPDATE deposit_sessions
-                SET proof=?,payer_number=?,status='SUBMITTED'
+                SET proof=?,payer_number='',status='SUBMITTED'
                 WHERE id=? AND uid=? AND status='WAITING_VERIFICATION'
             """,(
-                proof,payer,active["id"],u["id"]
+                transaction_id,
+                active["id"],
+                u["id"]
             ))
 
             con.commit()
@@ -1604,12 +1591,25 @@ def deposit():
             return render_template(
                 "deposit.html",
                 user=u,
-                stage="review",
+                stage="pending",
                 deposit=submitted,
                 success=True
             )
 
-    # If a submitted request already exists, show its review state.
+    # IMPORTANT:
+    # If the user returns after logout/app exit while the five-minute
+    # payment session is still active, restore the SAME payment screen.
+    if active:
+        stage="payment" if active["payment_method"] else "start"
+        con.close()
+        return render_template(
+            "deposit.html",
+            user=u,
+            stage=stage,
+            deposit=active
+        )
+
+    # Already submitted deposit: show pending status.
     review=con.execute("""
         SELECT * FROM deposit_sessions
         WHERE uid=? AND status='SUBMITTED'
@@ -1617,23 +1617,21 @@ def deposit():
     """,(u["id"],)).fetchone()
 
     if review:
-        pending=con.execute("""
-            SELECT * FROM transactions
-            WHERE uid=? AND kind='DEPOSIT' AND status='PENDING'
-            ORDER BY id DESC LIMIT 1
-        """,(u["id"],)).fetchone()
-
-        if pending:
-            con.close()
-            return render_template(
-                "deposit.html",
-                user=u,
-                stage="review",
-                deposit=review
-            )
+        con.close()
+        return render_template(
+            "deposit.html",
+            user=u,
+            stage="pending",
+            deposit=review
+        )
 
     con.close()
-    return render_template("deposit.html",user=u,stage="amount")
+
+    return render_template(
+        "deposit.html",
+        user=u,
+        stage="start"
+    )
 
 @app.route("/withdraw",methods=["GET","POST"])
 @required
