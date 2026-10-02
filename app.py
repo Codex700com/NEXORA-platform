@@ -2217,6 +2217,23 @@ def reveal_promo(chance_id,box_id):
     return redirect(url_for("raffle"))
 
 
+
+@app.route("/admin/control-center")
+@admin_required
+def admin_control_center():
+    con=db()
+    users=con.execute("SELECT * FROM users ORDER BY id DESC LIMIT 500").fetchall()
+    transactions=con.execute("SELECT * FROM transactions ORDER BY id DESC LIMIT 500").fetchall()
+    messages=con.execute("SELECT * FROM support_messages ORDER BY id DESC LIMIT 500").fetchall()
+    con.close()
+    return render_template(
+        "admin_control_center.html",
+        users=users,
+        transactions=transactions,
+        messages=messages,
+        user=current_user()
+    )
+
 @app.route("/admin/")
 @admin_required
 def admin():
