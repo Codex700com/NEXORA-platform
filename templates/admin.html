@@ -122,6 +122,15 @@ label{font-size:10px;color:#849889;font-weight:800}
   <div class="stat"><span>WITHDRAWALS</span><b>{{ withdrawals|length }}</b></div>
 </div>
 
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+  <a href="{{ url_for('admin_editor') }}" style="flex:1;min-width:180px;text-align:center;text-decoration:none;background:#39ff72;color:#001507;border-radius:13px;padding:13px;font-weight:900;font-size:12px">
+    ⚙️ EDIT MACHINES & PAGES
+  </a>
+  <a href="{{ url_for('admin_control_center') }}" style="flex:1;min-width:180px;text-align:center;text-decoration:none;background:#050805;color:#39ff72;border:1px solid #173b24;border-radius:13px;padding:13px;font-weight:900;font-size:12px">
+    CONTROL CENTER
+  </a>
+</div>
+
 <div class="nav">
   <a href="#money">💰 MONEY</a>
   <a href="#users">👥 USERS</a>

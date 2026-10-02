@@ -1922,7 +1922,23 @@ def invest(): return render_template("invest.html",plans=PLANS,active="AI")
 def product():
     code=request.values.get("p","").upper()
     if code not in PLANS:return "Product not found",404
-    plan=PLANS[code]
+
+    plan=dict(PLANS[code])
+    try:
+        con=db()
+        custom=con.execute(
+            "SELECT * FROM admin_machine_settings WHERE code=? AND enabled=1",
+            (code,)
+        ).fetchone()
+        con.close()
+        if custom:
+            plan["price"]=float(custom["price"])
+            plan["daily"]=float(custom["daily"])
+            plan["days"]=int(custom["days"])
+            plan["total"]=float(custom["total"])
+            plan["name"]=custom["name"]
+    except Exception:
+        pass
     if request.method=="POST":
         con=db(); u=con.execute("SELECT wallet FROM users WHERE id=?",(session["uid"],)).fetchone()
         if u["wallet"]<plan["price"]: con.close(); flash("Purchase failed due to insufficient wallet balance.","error")
@@ -2216,6 +2232,167 @@ def reveal_promo(chance_id,box_id):
     flash(message,"success")
     return redirect(url_for("raffle"))
 
+
+
+
+# ============================================================
+# ADMIN PLATFORM EDITOR
+# ============================================================
+def ensure_admin_editor_tables():
+    con=db()
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS admin_platform_settings(
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL DEFAULT '',
+            updated_at TEXT NOT NULL
+        )
+    """)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS admin_machine_settings(
+            code TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            price REAL NOT NULL DEFAULT 0,
+            daily REAL NOT NULL DEFAULT 0,
+            days INTEGER NOT NULL DEFAULT 0,
+            total REAL NOT NULL DEFAULT 0,
+            enabled INTEGER NOT NULL DEFAULT 1,
+            updated_at TEXT NOT NULL
+        )
+    """)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS admin_page_settings(
+            page TEXT PRIMARY KEY,
+            title TEXT NOT NULL DEFAULT '',
+            subtitle TEXT NOT NULL DEFAULT '',
+            content TEXT NOT NULL DEFAULT '',
+            enabled INTEGER NOT NULL DEFAULT 1,
+            updated_at TEXT NOT NULL
+        )
+    """)
+    for code,plan in PLANS.items():
+        con.execute("""
+            INSERT OR IGNORE INTO admin_machine_settings
+            (code,name,price,daily,days,total,enabled,updated_at)
+            VALUES(?,?,?,?,?,?,1,?)
+        """,(
+            code,
+            str(code)+" AI Machine",
+            float(plan["price"]),
+            float(plan["daily"]),
+            int(plan["days"]),
+            float(plan["total"]),
+            now()
+        ))
+    con.commit()
+    con.close()
+
+ensure_admin_editor_tables()
+
+@app.route("/admin/editor")
+@admin_required
+def admin_editor():
+    ensure_admin_editor_tables()
+    con=db()
+    machines=con.execute(
+        "SELECT * FROM admin_machine_settings ORDER BY code"
+    ).fetchall()
+    pages=con.execute(
+        "SELECT * FROM admin_page_settings ORDER BY page"
+    ).fetchall()
+    settings=con.execute(
+        "SELECT * FROM admin_platform_settings ORDER BY key"
+    ).fetchall()
+    con.close()
+    return render_template(
+        "admin_editor.html",
+        machines=machines,
+        pages=pages,
+        settings=settings
+    )
+
+@app.route("/admin/editor/machine/<code>",methods=["POST"])
+@admin_required
+def admin_editor_machine(code):
+    try:
+        price=float(request.form.get("price") or 0)
+        daily=float(request.form.get("daily") or 0)
+        days=int(request.form.get("days") or 0)
+        total=float(request.form.get("total") or 0)
+    except:
+        flash("Invalid machine values.","error")
+        return redirect(url_for("admin_editor"))
+
+    name=request.form.get("name","").strip() or code+" AI Machine"
+    enabled=1 if request.form.get("enabled")=="1" else 0
+
+    con=db()
+    con.execute("""
+        UPDATE admin_machine_settings
+        SET name=?,price=?,daily=?,days=?,total=?,enabled=?,updated_at=?
+        WHERE code=?
+    """,(name,price,daily,days,total,enabled,now(),code))
+    con.execute("""
+        INSERT INTO admin_activity(admin_uid,action,details,created_at)
+        VALUES(?,?,?,?)
+    """,(
+        current_user()["id"],
+        "MACHINE_EDIT",
+        f"{code} price={price} daily={daily} days={days} total={total} enabled={enabled}",
+        now()
+    ))
+    con.commit()
+    con.close()
+    flash("Machine settings saved.","success")
+    return redirect(url_for("admin_editor"))
+
+@app.route("/admin/editor/page/<page>",methods=["POST"])
+@admin_required
+def admin_editor_page(page):
+    title=request.form.get("title","").strip()
+    subtitle=request.form.get("subtitle","").strip()
+    content=request.form.get("content","").strip()
+    enabled=1 if request.form.get("enabled")=="1" else 0
+
+    con=db()
+    con.execute("""
+        INSERT INTO admin_page_settings(page,title,subtitle,content,enabled,updated_at)
+        VALUES(?,?,?,?,?,?)
+        ON CONFLICT(page) DO UPDATE SET
+          title=excluded.title,
+          subtitle=excluded.subtitle,
+          content=excluded.content,
+          enabled=excluded.enabled,
+          updated_at=excluded.updated_at
+    """,(page,title,subtitle,content,enabled,now()))
+    con.execute("""
+        INSERT INTO admin_activity(admin_uid,action,details,created_at)
+        VALUES(?,?,?,?)
+    """,(current_user()["id"],"PAGE_EDIT",f"Edited {page}",now()))
+    con.commit()
+    con.close()
+    flash("Page settings saved.","success")
+    return redirect(url_for("admin_editor"))
+
+@app.route("/admin/editor/setting/<key>",methods=["POST"])
+@admin_required
+def admin_editor_setting(key):
+    value=request.form.get("value","")
+    con=db()
+    con.execute("""
+        INSERT INTO admin_platform_settings(key,value,updated_at)
+        VALUES(?,?,?)
+        ON CONFLICT(key) DO UPDATE SET
+          value=excluded.value,
+          updated_at=excluded.updated_at
+    """,(key,value,now()))
+    con.execute("""
+        INSERT INTO admin_activity(admin_uid,action,details,created_at)
+        VALUES(?,?,?,?)
+    """,(current_user()["id"],"SETTING_EDIT",f"Edited {key}",now()))
+    con.commit()
+    con.close()
+    flash("Setting saved.","success")
+    return redirect(url_for("admin_editor"))
 
 
 @app.route("/admin/control-center")

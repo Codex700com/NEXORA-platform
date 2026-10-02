@@ -2,7 +2,7 @@
 {% block content %}
 <style>
 body{background:#000!important}
-.chatpage{min-height:100vh;background:#000;color:#fff;padding-bottom:78px;font-family:Inter,system-ui,sans-serif}
+.chatpage{min-height:100vh;background:#000;color:#fff;padding-bottom:185px;font-family:Inter,system-ui,sans-serif}
 .head{position:sticky;top:0;z-index:20;background:rgba(0,0,0,.96);border-bottom:1px solid #173b24;padding:11px}
 .headin{max-width:850px;margin:auto;display:flex;align-items:center;gap:10px}
 .back{color:#39ff72;text-decoration:none;font-size:27px}.ava{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#092412;color:#39ff72;font-weight:900}
@@ -12,10 +12,45 @@ body{background:#000!important}
 .msg.admin{align-self:flex-end;background:#092412;border-color:#39ff72}.msg.user{align-self:flex-start}
 .msg img,.msg video{display:block;max-width:100%;border-radius:12px;margin-top:7px}.msg audio{width:100%;margin-top:7px}
 .msg a{color:#39ff72;word-break:break-all}.time{font-size:9px;color:#668071;margin-top:4px}
-.composer{position:fixed;bottom:0;left:0;right:0;z-index:30;background:#000;border-top:1px solid #173b24;padding:8px}
-.formin{max-width:850px;margin:auto;display:flex;gap:6px;align-items:flex-end}
-textarea{flex:1;min-height:42px;max-height:120px;background:#050805;color:#fff;border:1px solid #173b24;border-radius:14px;padding:11px;resize:none}
-.btn{width:43px;height:43px;border-radius:12px;background:#071009;color:#39ff72;border:1px solid #173b24;font-size:18px}
+.composer{
+ position:fixed;
+ left:50%;
+ transform:translateX(-50%);
+ bottom:68px;
+ width:min(850px,calc(100% - 20px));
+ z-index:30;
+ background:#030503;
+ border:1px solid #39ff72;
+ border-radius:18px;
+ padding:9px;
+ box-shadow:0 10px 35px rgba(0,0,0,.65);
+}
+.formin{display:flex;gap:7px;align-items:flex-end}
+textarea{
+ flex:1;
+ min-height:58px;
+ max-height:140px;
+ background:#050805;
+ color:#fff;
+ border:1px solid #173b24;
+ border-radius:14px;
+ padding:12px;
+ resize:none;
+ outline:none;
+ font-size:13px;
+}
+textarea:focus{border-color:#39ff72}
+.btn{
+ width:45px;
+ height:45px;
+ flex:0 0 45px;
+ border-radius:12px;
+ background:#071009;
+ color:#39ff72;
+ border:1px solid #173b24;
+ font-size:18px;
+ cursor:pointer
+}
 .send{background:#39ff72;color:#001507;border:0;font-weight:900}
 </style>
 
@@ -46,7 +81,7 @@ textarea{flex:1;min-height:42px;max-height:120px;background:#050805;color:#fff;b
 <div class="formin">
 <button class="btn" type="button" id="voice">🎤</button>
 <label class="btn">📎<input id="media" name="media" type="file" accept="image/*,video/*,audio/*" hidden></label>
-<textarea id="message" name="message" placeholder="Message or paste a link..."></textarea>
+<textarea id="message" name="message" placeholder="Write a message or paste a link..."></textarea>
 <button class="btn send" type="submit">➤</button>
 </div>
 </form>

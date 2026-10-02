@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+body{background:#000!important;color:#f2fff6}
+.editor{max-width:1050px;margin:auto;padding:14px 10px 110px;font-family:Inter,system-ui,sans-serif}
+.head{background:#030703;border:1px solid #173b24;border-radius:22px;padding:20px;margin-bottom:12px}
+.head small{color:#39ff72;font-weight:900;letter-spacing:2px}
+.head h1{margin:6px 0;font-size:25px}
+.head p{margin:0;color:#789080;font-size:12px}
+.back{display:inline-block;color:#39ff72;text-decoration:none;margin-bottom:12px;font-weight:900}
+.section{background:#030503;border:1px solid #173b24;border-radius:20px;padding:14px;margin-bottom:13px}
+.section h2{font-size:18px;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:#050805;border:1px solid #173b24;border-radius:16px;padding:13px}
+.card h3{margin:0 0 12px}
+label{font-size:10px;color:#819588;font-weight:900;display:block;margin-top:8px}
+input,textarea{width:100%;box-sizing:border-box;background:#020402;color:#fff;border:1px solid #20482b;border-radius:10px;padding:10px;margin-top:5px}
+textarea{min-height:100px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.save{width:100%;margin-top:10px;background:#39ff72;color:#001507;border:0;border-radius:11px;padding:11px;font-weight:900}
+.toggle{display:flex;align-items:center;gap:8px;margin-top:10px;color:#9ab0a0;font-size:11px}
+.toggle input{width:auto;margin:0}
+.note{font-size:11px;color:#718678;line-height:1.5}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+</style>
+
+<div class="editor">
+<a class="back" href="{{ url_for('admin') }}">‹ BACK TO ADMIN</a>
+
+<div class="head">
+<small>PLATFORM CONFIGURATION</small>
+<h1>PAGE & MACHINE EDITOR</h1>
+<p>Edit platform content and machine configuration from one dedicated administration screen.</p>
+</div>
+
+<section class="section">
+<h2>🤖 Machine Editor</h2>
+<div class="grid">
+{% for m in machines %}
+<div class="card">
+<h3 class="green">{{ m["code"] }}</h3>
+
+<form method="post" action="{{ url_for('admin_editor_machine',code=m['code']) }}">
+<label>MACHINE NAME</label>
+<input name="name" value="{{ m['name'] }}">
+
+<div class="row">
+<div><label>PRICE</label><input type="number" step="0.01" name="price" value="{{ m['price'] }}"></div>
+<div><label>DAILY</label><input type="number" step="0.01" name="daily" value="{{ m['daily'] }}"></div>
+</div>
+
+<div class="row">
+<div><label>DAYS</label><input type="number" name="days" value="{{ m['days'] }}"></div>
+<div><label>TOTAL</label><input type="number" step="0.01" name="total" value="{{ m['total'] }}"></div>
+</div>
+
+<label class="toggle">
+<input type="checkbox" name="enabled" value="1" {% if m["enabled"] %}checked{% endif %}>
+ MACHINE ENABLED
+</label>
+
+<button class="save">SAVE MACHINE</button>
+</form>
+</div>
+{% endfor %}
+</div>
+</section>
+
+<section class="section">
+<h2>🏠 Homepage Editor</h2>
+<div class="card">
+<form method="post" action="{{ url_for('admin_editor_page',page='home') }}">
+<label>HOMEPAGE TITLE</label>
+<input name="title" placeholder="Homepage title">
+
+<label>SUBTITLE</label>
+<input name="subtitle" placeholder="Homepage subtitle">
+
+<label>HOMEPAGE CONTENT</label>
+<textarea name="content" placeholder="Homepage announcement or content"></textarea>
+
+<label class="toggle">
+<input type="checkbox" name="enabled" value="1" checked>
+ CONTENT ENABLED
+</label>
+
+<button class="save">SAVE HOMEPAGE</button>
+</form>
+</div>
+</section>
+
+<section class="section">
+<h2>📄 Other Pages</h2>
+<div class="grid">
+{% for page in ["invest","product","income","deposit","withdraw","invite","team","support","gift","reward","settings"] %}
+<div class="card">
+<h3>{{ page|upper }}</h3>
+<form method="post" action="{{ url_for('admin_editor_page',page=page) }}">
+<label>TITLE</label>
+<input name="title" placeholder="{{ page|capitalize }} title">
+<label>SUBTITLE</label>
+<input name="subtitle" placeholder="Page subtitle">
+<label>CONTENT</label>
+<textarea name="content" placeholder="Page content"></textarea>
+<label class="toggle">
+<input type="checkbox" name="enabled" value="1" checked> ENABLED
+</label>
+<button class="save">SAVE PAGE</button>
+</form>
+</div>
+{% endfor %}
+</div>
+</section>
+
+<section class="section">
+<h2>⚙️ Platform Settings</h2>
+<div class="grid">
+{% for key,label in [
+("platform_name","Platform Name"),
+("support_title","Support Title"),
+("announcement","Announcement"),
+("footer_text","Footer Text")
+] %}
+<div class="card">
+<form method="post" action="{{ url_for('admin_editor_setting',key=key) }}">
+<label>{{ label|upper }}</label>
+<input name="value" placeholder="{{ label }}">
+<button class="save">SAVE</button>
+</form>
+</div>
+{% endfor %}
+</div>
+</section>
+
+</div>
+{% endblock %}
