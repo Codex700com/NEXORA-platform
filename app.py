@@ -811,6 +811,25 @@ def process_invite_milestone_rewards(uid):
     finally:
         con.close()
 
+
+# SUPPORT_MEDIA_AUTO_MIGRATION
+def ensure_support_media_column():
+    try:
+        con=db()
+        cols=[r[1] for r in con.execute("PRAGMA table_info(support_messages)").fetchall()]
+        if "media" not in cols:
+            con.execute("ALTER TABLE support_messages ADD COLUMN media TEXT")
+            con.commit()
+        con.close()
+    except Exception as e:
+        print("SUPPORT MEDIA MIGRATION:",e)
+
+try:
+    ensure_support_media_column()
+except Exception as e:
+    print("SUPPORT MEDIA MIGRATION STARTUP:",e)
+
+
 @app.route("/ping")
 def ping():
     return "OK NEXORA Alive - 200", 200
