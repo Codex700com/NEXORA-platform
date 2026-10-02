@@ -1,13 +1,112 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="page-head"><a class="back-btn" href="/my">←</a><h1>Card</h1><div class="head-spacer"></div></div>
-<section class="section card-save">
-  <h2>Withdrawal details</h2>
-  <p class="muted">These details are used by the Withdraw page as your payout destination.</p>
-  <div class="saved-row"><span>MTN UG</span><b>{{ user.mtn_number or 'Not saved' }}</b></div>
-  <div class="saved-row"><span>Airtel UG</span><b>{{ user.airtel_number or 'Not saved' }}</b></div>
-  <div class="saved-row"><span>USDT TRC20</span><b class="wallet-text">{{ user.usdt_wallet or 'Not saved' }}</b></div>
-  <a class="button primary as-button" href="/account">EDIT CARD DETAILS</a>
-  <a class="button as-button" href="/withdraw">BACK TO WITHDRAW</a>
-</section>
+
+<style>
+.identity-simple{
+  padding:18px 4px 90px;
+  color:#edf9f1;
+}
+.identity-header{
+  margin-bottom:18px;
+}
+.identity-label{
+  color:#39ff88;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:2px;
+  margin-bottom:7px;
+}
+.identity-title{
+  font-size:25px;
+  font-weight:900;
+  margin:0 0 6px;
+}
+.identity-sub{
+  color:#789382;
+  font-size:11px;
+  line-height:1.5;
+}
+.identity-box{
+  background:#07130b;
+  border:1px solid #154b2c;
+  border-radius:18px;
+  padding:17px;
+  margin-bottom:12px;
+}
+.identity-box-title{
+  font-size:13px;
+  font-weight:900;
+  margin-bottom:4px;
+}
+.identity-box-text{
+  color:#708a79;
+  font-size:10px;
+  margin-bottom:15px;
+}
+.identity-line{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 12px;
+  background:#030806;
+  border:1px solid #123d25;
+  border-radius:12px;
+  margin-top:9px;
+}
+.identity-line span{
+  color:#6fa584;
+  font-size:10px;
+  font-weight:800;
+}
+.identity-line strong{
+  color:#f1fff5;
+  font-size:12px;
+}
+.identity-edit{
+  display:block;
+  text-align:center;
+  text-decoration:none;
+  background:#18d66b;
+  color:#031008;
+  padding:13px;
+  border-radius:12px;
+  font-size:11px;
+  font-weight:900;
+  margin-top:14px;
+}
+</style>
+
+<div class="identity-simple">
+
+  <div class="identity-header">
+    <div class="identity-label">NEXORA</div>
+    <h1 class="identity-title">Identity</h1>
+    <div class="identity-sub">
+      Your saved mobile-money details for withdrawals.
+    </div>
+  </div>
+
+  <div class="identity-box">
+    <div class="identity-box-title">Payout details</div>
+    <div class="identity-box-text">
+      Keep your payout number correct before requesting a withdrawal.
+    </div>
+
+    <div class="identity-line">
+      <span>MTN</span>
+      <strong>{{ user.mtn_number or 'Not saved' }}</strong>
+    </div>
+
+    <div class="identity-line">
+      <span>AIRTEL</span>
+      <strong>{{ user.airtel_number or 'Not saved' }}</strong>
+    </div>
+
+    <a class="identity-edit" href="/account">
+      EDIT DETAILS
+    </a>
+  </div>
+
+</div>
+
 {% endblock %}

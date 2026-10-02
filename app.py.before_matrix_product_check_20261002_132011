@@ -1873,46 +1873,12 @@ def raffle():
     )
 
 
-@app.route("/raffle/no-chance",methods=["POST"])
-@required
-def raffle_no_chance():
-    u=current_user()
-    con=db()
-
-    product=con.execute(
-        "SELECT id FROM products WHERE uid=? LIMIT 1",
-        (u["id"],)
-    ).fetchone()
-
-    if not product:
-        con.close()
-        flash("Please purchase a product first.","error")
-        return redirect(url_for("raffle"))
-
-    con.close()
-    flash("No chances available. Please purchase a product.","error")
-    return redirect(url_for("raffle"))
-
-
 @app.route("/raffle/reveal/<int:chance_id>/<int:box_id>",methods=["POST"])
 @required
 def reveal_promo(chance_id,box_id):
     u=current_user()
     con=db()
 
-    # Product check: a Matrix reveal is only available to a user
-    # who actually has a purchased product.
-    product=con.execute(
-        "SELECT id FROM products WHERE uid=? LIMIT 1",
-        (u["id"],)
-    ).fetchone()
-
-    if not product:
-        con.close()
-        flash("Please purchase a product first.","error")
-        return redirect(url_for("raffle"))
-
-    # Chance check: the chance must belong to this user and be unused.
     c=con.execute(
         "SELECT * FROM promo_chances WHERE id=? AND uid=? AND claimed=0",
         (chance_id,u["id"])
@@ -1920,13 +1886,7 @@ def reveal_promo(chance_id,box_id):
 
     if not c:
         con.close()
-        flash("No chances available. Please purchase a product.","error")
-        return redirect(url_for("raffle"))
-
-    # Validate the selected square server-side.
-    if box_id < 1 or box_id > 9:
-        con.close()
-        flash("Invalid Matrix box.","error")
+        flash("No chances available.","error")
         return redirect(url_for("raffle"))
 
     box=con.execute(
@@ -1939,56 +1899,30 @@ def reveal_promo(chance_id,box_id):
         flash("Invalid Matrix selection.","error")
         return redirect(url_for("raffle"))
 
-    # Atomically consume exactly this chance.
-    cur=con.execute(
-        """UPDATE promo_chances
-           SET reward_type=?,reward_amount=?,reward_code=?,
-               claimed=1,claimed_at=?
-           WHERE id=? AND uid=? AND claimed=0""",
-        (
-            box["reward_type"],
-            box["reward_amount"],
-            box["reward_code"],
-            now(),
-            chance_id,
-            u["id"]
-        )
+    # Store the selected reward on the chance itself.
+    con.execute(
+        "UPDATE promo_chances SET reward_type=?,reward_amount=?,reward_code=?,claimed=1,claimed_at=? WHERE id=? AND claimed=0",
+        (box["reward_type"],box["reward_amount"],box["reward_code"],now(),chance_id)
     )
 
-    if cur.rowcount != 1:
-        con.rollback()
-        con.close()
-        flash("No chances available. Please purchase a product.","error")
-        return redirect(url_for("raffle"))
-
-    # Cash rewards are credited immediately and recorded once.
     if box["reward_type"]=="CASH":
         amount=float(box["reward_amount"] or 0)
 
-        if amount > 0:
+        if amount>0:
             con.execute(
                 "UPDATE users SET balance=balance+? WHERE id=?",
                 (amount,u["id"])
             )
 
             con.execute(
-                """INSERT INTO transactions
-                   (uid,kind,amount,status,reference,created_at)
-                   VALUES(?,?,?,?,?,?)""",
-                (
-                    u["id"],
-                    "PROMO_REWARD",
-                    amount,
-                    "APPROVED",
-                    f"MATRIX-{chance_id}",
-                    now()
-                )
+                "INSERT INTO transactions(uid,kind,amount,status,reference,created_at) VALUES(?,?,?,?,?,?)",
+                (u["id"],"PROMO_REWARD",amount,"APPROVED",f"MATRIX-{chance_id}",now())
             )
 
         message=f"UGX {amount:,.0f} Matrix reward added to your balance."
 
     elif box["reward_type"]=="IPHONE":
-        message="Congratulations! You selected the iPhone reward. Your prize has been recorded."
+        message="iPhone reward selected. Your Matrix reward has been recorded."
 
     else:
         message="Matrix reward selected."

@@ -74,20 +74,6 @@ def init_db():
     CREATE TABLE IF NOT EXISTS mining_tools(id INTEGER PRIMARY KEY AUTOINCREMENT,uid INTEGER NOT NULL,tool_name TEXT NOT NULL,points_cost INTEGER NOT NULL,rate REAL NOT NULL,capacity REAL NOT NULL DEFAULT 0,purchased_at TEXT NOT NULL,last_credit_at TEXT NOT NULL,earned REAL NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT 'ACTIVE');
     CREATE TABLE IF NOT EXISTS referral_point_awards(id INTEGER PRIMARY KEY AUTOINCREMENT,referrer_uid INTEGER NOT NULL,referred_uid INTEGER UNIQUE NOT NULL,points INTEGER NOT NULL DEFAULT 10,created_at TEXT NOT NULL);
     """)
-
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS promo_matrix_boxes(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chance_id INTEGER NOT NULL,
-            box_id INTEGER NOT NULL,
-            reward_type TEXT NOT NULL,
-            reward_amount REAL NOT NULL DEFAULT 0,
-            reward_code TEXT NOT NULL DEFAULT '',
-            created_at TEXT NOT NULL,
-            UNIQUE(chance_id,box_id)
-        )
-    """)
-
     # Safe migrations for any copy that already has an older fresh DB.
     cols={r[1] for r in con.execute("PRAGMA table_info(users)").fetchall()}
     for col,typ in [("points","INTEGER NOT NULL DEFAULT 0"),("display_name","TEXT NOT NULL DEFAULT ''"),("mtn_number","TEXT NOT NULL DEFAULT ''"),("airtel_number","TEXT NOT NULL DEFAULT ''"),("usdt_wallet","TEXT NOT NULL DEFAULT ''"),("notifications_enabled","INTEGER NOT NULL DEFAULT 1"),("salary_claimed_month","TEXT"),("reward_claimed_month","TEXT"),("manager_phone","TEXT"),("is_blocked","INTEGER NOT NULL DEFAULT 0"),("last_seen","TEXT"),("announcement_seen_id","INTEGER NOT NULL DEFAULT 0")]:
@@ -655,48 +641,25 @@ def active_income(uid):
     return total,today
 
 
-MATRIX_REWARDS=[
+PROMO_REWARDS=[
     ("CASH",3000,""),
     ("CASH",1000,""),
     ("CASH",5000,""),
-    ("CASH",24000,""),
-    ("CASH",123800,""),
-    ("CASH",500000,""),
+    ("CASH",10000,""),
+    ("CASH",40000,""),
+    ("CASH",50000,""),
     ("CASH",100000,""),
-    ("CASH",7000,""),
-    ("IPHONE",0,"IPHONE"),
+    ("CASH",3000,""),
+    ("DS4",0,"PROMO-DS4"),
 ]
 
 def create_promo_chances(con,uid,product_id,price):
-    product_count=con.execute(
-        "SELECT COUNT(*) n FROM products WHERE uid=?",(uid,)
-    ).fetchone()["n"]
-
-    chances=max(1,int(product_count))
-
-    existing=con.execute(
-        "SELECT COUNT(*) n FROM promo_chances WHERE uid=?",(uid,)
-    ).fetchone()["n"]
-
-    import random
-
+    count=con.execute("SELECT COUNT(*) n FROM promo_chances WHERE uid=?",(uid,)).fetchone()["n"]
+    chances=2 if price>=100000 else 1
     for _ in range(chances):
-        cur=con.execute(
-            "INSERT INTO promo_chances(uid,product_id,reward_type,reward_amount,reward_code,created_at) VALUES(?,?,?,?,?,?)",
-            (uid,product_id,"PENDING",0,"",now())
-        )
-        chance_id=cur.lastrowid
-
-        rewards=list(MATRIX_REWARDS)
-        random.SystemRandom().shuffle(rewards)
-
-        for box_id,reward in enumerate(rewards,1):
-            con.execute(
-                "INSERT INTO promo_matrix_boxes(chance_id,box_id,reward_type,reward_amount,reward_code,created_at) VALUES(?,?,?,?,?,?)",
-                (chance_id,box_id,reward[0],reward[1],reward[2],now())
-            )
-
-        existing+=1
+        reward=PROMO_REWARDS[count % len(PROMO_REWARDS)]
+        con.execute("INSERT INTO promo_chances(uid,product_id,reward_type,reward_amount,reward_code,created_at) VALUES(?,?,?,?,?,?)",(uid,product_id,reward[0],reward[1],reward[2],now()))
+        count+=1
 
 MINING_TOOLS=[
     {"name":"Axe Miner","cost":500,"rate":10.0,"capacity":100000},
@@ -1832,174 +1795,33 @@ def support():
 @app.route("/raffle")
 @required
 def raffle():
-    u=current_user()
-    con=db()
-
-    chances=con.execute(
-        "SELECT * FROM promo_chances WHERE uid=? AND claimed=0 ORDER BY id",
-        (u["id"],)
-    ).fetchall()
-
-    history=con.execute(
-        "SELECT * FROM promo_chances WHERE uid=? AND claimed=1 ORDER BY id DESC LIMIT 20",
-        (u["id"],)
-    ).fetchall()
-
+    u=current_user(); con=db()
+    chances=con.execute("SELECT * FROM promo_chances WHERE uid=? AND claimed=0 ORDER BY id",(u["id"],)).fetchall()
+    history=con.execute("SELECT * FROM promo_chances WHERE uid=? AND claimed=1 ORDER BY id DESC LIMIT 20",(u["id"],)).fetchall()
     revealed_id=session.pop("revealed_chance_id",None)
-    revealed=None
-    revealed_boxes=[]
-
-    if revealed_id:
-        revealed=con.execute(
-            "SELECT * FROM promo_chances WHERE id=? AND uid=? AND claimed=1",
-            (revealed_id,u["id"])
-        ).fetchone()
-
-        if revealed:
-            revealed_boxes=con.execute(
-                "SELECT * FROM promo_matrix_boxes WHERE chance_id=? ORDER BY box_id",
-                (revealed_id,)
-            ).fetchall()
-
+    revealed=con.execute("SELECT * FROM promo_chances WHERE id=? AND uid=? AND claimed=1",(revealed_id,u["id"])).fetchone() if revealed_id else None
     con.close()
+    return render_template("raffle.html",chances=chances,history=history,revealed=revealed,active="Raffle")
 
-    return render_template(
-        "raffle.html",
-        chances=chances,
-        history=history,
-        revealed=revealed,
-        revealed_boxes=revealed_boxes,
-        active="Raffle"
-    )
-
-
-@app.route("/raffle/no-chance",methods=["POST"])
+@app.route("/raffle/reveal/<int:chance_id>",methods=["POST"])
 @required
-def raffle_no_chance():
-    u=current_user()
-    con=db()
-
-    product=con.execute(
-        "SELECT id FROM products WHERE uid=? LIMIT 1",
-        (u["id"],)
-    ).fetchone()
-
-    if not product:
-        con.close()
-        flash("Please purchase a product first.","error")
-        return redirect(url_for("raffle"))
-
-    con.close()
-    flash("No chances available. Please purchase a product.","error")
-    return redirect(url_for("raffle"))
-
-
-@app.route("/raffle/reveal/<int:chance_id>/<int:box_id>",methods=["POST"])
-@required
-def reveal_promo(chance_id,box_id):
-    u=current_user()
-    con=db()
-
-    # Product check: a Matrix reveal is only available to a user
-    # who actually has a purchased product.
-    product=con.execute(
-        "SELECT id FROM products WHERE uid=? LIMIT 1",
-        (u["id"],)
-    ).fetchone()
-
-    if not product:
-        con.close()
-        flash("Please purchase a product first.","error")
-        return redirect(url_for("raffle"))
-
-    # Chance check: the chance must belong to this user and be unused.
-    c=con.execute(
-        "SELECT * FROM promo_chances WHERE id=? AND uid=? AND claimed=0",
-        (chance_id,u["id"])
-    ).fetchone()
-
+def reveal_promo(chance_id):
+    u=current_user(); con=db(); c=con.execute("SELECT * FROM promo_chances WHERE id=? AND uid=? AND claimed=0",(chance_id,u["id"])).fetchone()
     if not c:
-        con.close()
-        flash("No chances available. Please purchase a product.","error")
-        return redirect(url_for("raffle"))
-
-    # Validate the selected square server-side.
-    if box_id < 1 or box_id > 9:
-        con.close()
-        flash("Invalid Matrix box.","error")
-        return redirect(url_for("raffle"))
-
-    box=con.execute(
-        "SELECT * FROM promo_matrix_boxes WHERE chance_id=? AND box_id=?",
-        (chance_id,box_id)
-    ).fetchone()
-
-    if not box:
-        con.close()
-        flash("Invalid Matrix selection.","error")
-        return redirect(url_for("raffle"))
-
-    # Atomically consume exactly this chance.
-    cur=con.execute(
-        """UPDATE promo_chances
-           SET reward_type=?,reward_amount=?,reward_code=?,
-               claimed=1,claimed_at=?
-           WHERE id=? AND uid=? AND claimed=0""",
-        (
-            box["reward_type"],
-            box["reward_amount"],
-            box["reward_code"],
-            now(),
-            chance_id,
-            u["id"]
-        )
-    )
-
-    if cur.rowcount != 1:
-        con.rollback()
-        con.close()
-        flash("No chances available. Please purchase a product.","error")
-        return redirect(url_for("raffle"))
-
-    # Cash rewards are credited immediately and recorded once.
-    if box["reward_type"]=="CASH":
-        amount=float(box["reward_amount"] or 0)
-
-        if amount > 0:
-            con.execute(
-                "UPDATE users SET balance=balance+? WHERE id=?",
-                (amount,u["id"])
-            )
-
-            con.execute(
-                """INSERT INTO transactions
-                   (uid,kind,amount,status,reference,created_at)
-                   VALUES(?,?,?,?,?,?)""",
-                (
-                    u["id"],
-                    "PROMO_REWARD",
-                    amount,
-                    "APPROVED",
-                    f"MATRIX-{chance_id}",
-                    now()
-                )
-            )
-
-        message=f"UGX {amount:,.0f} Matrix reward added to your balance."
-
-    elif box["reward_type"]=="IPHONE":
-        message="Congratulations! You selected the iPhone reward. Your prize has been recorded."
-
+        con.close(); flash("That promotional chance is no longer available.","error"); return redirect(url_for("raffle"))
+    if c["reward_type"]=="DS4":
+        purchased_at=now()
+        con.execute("INSERT INTO products(uid,code,name,price,daily_income,lock_days,total_income,purchased_at,last_income_at,earned_income,status) VALUES(?,?,?,?,?,?,?,?,?,?,?)",(u["id"],"PROMO-DS4","DS4 AI Machine — Promotional Reward",0,500000,30,15000000,purchased_at,purchased_at,0,"ACTIVE"))
+        product_id=con.execute("SELECT last_insert_rowid()").fetchone()[0]
+        con.execute("INSERT INTO transactions(uid,kind,amount,status,reference,created_at) VALUES(?,?,?,?,?,?)",(u["id"],"PROMO_DS4","0","APPROVED",f"PROMO-DS4-{product_id}",now()))
+        message="DS4 AI Machine awarded and added to your AI products."
     else:
-        message="Matrix reward selected."
-
-    con.commit()
-    con.close()
-
-    session["revealed_chance_id"]=chance_id
-    flash(message,"success")
-    return redirect(url_for("raffle"))
-
+        amount=c["reward_amount"]
+        con.execute("UPDATE users SET balance=balance+? WHERE id=?",(amount,u["id"]))
+        con.execute("INSERT INTO transactions(uid,kind,amount,status,reference,created_at) VALUES(?,?,?,?,?,?)",(u["id"],"PROMO_REWARD",amount,"APPROVED",f"PROMO-{c['id']}",now()))
+        message=f"UGX {amount:,.0f} promotional reward added to your balance."
+    con.execute("UPDATE promo_chances SET claimed=1,claimed_at=? WHERE id=?",(now(),chance_id))
+    con.commit(); con.close(); session["revealed_chance_id"]=chance_id; flash(message,"success"); return redirect(url_for("raffle"))
 
 @app.route("/admin")
 @app.route("/admin/")

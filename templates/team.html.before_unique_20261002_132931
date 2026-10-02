@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% block content %}
+<div class="title">My Team</div>
+
+<div class="section">
+{% for r in rows %}
+<div class="section" style="margin-bottom:12px">
+  <div class="row">
+    <span><strong>{{r.phone}}</strong></span>
+    <span>{{r.created_at[:10]}}</span>
+  </div>
+
+  {% if r.machines %}
+    {% for m in r.machines %}
+    <div class="row" style="margin-top:8px">
+      <span>
+        <strong>{{m.code}}</strong><br>
+        <span class="muted">UGX {{'{:,.0f}'.format(m.price)}}</span>
+      </span>
+      <span style="text-align:right">
+        {{m.remaining_days}} days left<br>
+        <span class="muted">{{m.status}}</span>
+      </span>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="muted" style="margin-top:8px">No machine purchased yet.</div>
+  {% endif %}
+</div>
+{% else %}
+<p class="muted">No deposited direct invites yet.</p>
+{% endfor %}
+</div>
+{% endblock %}

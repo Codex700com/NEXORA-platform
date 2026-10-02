@@ -251,7 +251,7 @@
       </div>
     </div>
 
-  {% else %}
+  {% elif chances %}
 
     <div class="matrix-board">
       <div class="matrix-grid">
@@ -259,30 +259,27 @@
         {% for n in range(1,10) %}
         <div class="matrix-box">
           <div class="matrix-question">?</div>
-
-          {% if chances %}
           <form method="post"
                 action="{{ url_for('reveal_promo',chance_id=chances[0].id,box_id=n) }}">
             <button type="submit" aria-label="Choose Matrix box {{ n }}"></button>
           </form>
-          {% else %}
-          <form method="post"
-                action="{{ url_for('raffle_no_chance') }}">
-            <button type="submit" aria-label="Matrix box {{ n }}"></button>
-          </form>
-          {% endif %}
-
         </div>
         {% endfor %}
 
       </div>
 
       <div class="matrix-info">
-        {% if chances %}
-          Tap one box to reveal your assigned reward.
-        {% else %}
-          No chances available. The boxes remain visible until you unlock a chance.
-        {% endif %}
+        Tap one box. Your selected box determines the reward credited to you.
+        The other boxes reveal their assigned rewards after selection.
+      </div>
+    </div>
+
+  {% else %}
+
+    <div class="matrix-board">
+      <div class="matrix-empty">
+        <strong>No chances available</strong>
+        Purchase an AI machine to unlock your next Matrix chance.
       </div>
     </div>
 

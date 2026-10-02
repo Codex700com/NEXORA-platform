@@ -1,16 +1,20 @@
 <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#000"><link rel="manifest" href="/static/manifest.json"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="NEXORA"><title>{{title or 'NEXORA'}}</title><link rel="stylesheet" href="/static/css/nexora.css"><style>html,body{-ms-touch-action:manipulation;touch-action:manipulation}body{-webkit-text-size-adjust:100%}.announcement-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000}.announcement-backdrop.hidden{display:none}.announcement-modal{position:relative;width:min(430px,100%);border:1px solid #39ff88;border-radius:24px;background:linear-gradient(145deg,#03121b,#000);box-shadow:0 0 35px rgba(20,230,100,.35);padding:26px 20px 20px;text-align:center;animation:announcementIn .28s ease-out}.announcement-close{position:absolute;right:12px;top:8px;width:38px;height:38px;border:1px solid #18d66b;border-radius:50%;background:#00131c;color:#fff;font-size:28px;line-height:30px}.announcement-icon{font-size:44px;color:#39ff88}.announcement-kicker{color:#39ff88;font-size:12px;letter-spacing:2px;font-weight:bold;margin-top:2px}.announcement-modal h2{margin:7px 0 18px;color:#fff;font-size:25px}.announcement-line{text-align:left;border:1px solid #123c50;border-radius:14px;padding:12px;margin:9px 0;background:rgba(0,20,30,.55)}.announcement-line b{display:block;color:#20e878;margin-bottom:4px}.announcement-line span{color:#ddd;font-size:13px;line-height:1.4}.announcement-btn{margin-top:12px}@keyframes announcementIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-</style></head><body><div class="bolt"></div><div class="bolt"></div><div class="bolt"></div><div class="bolt"></div>
+</style></head><body><div class="nexora-lightning-bg" aria-hidden="true">
+<div class="flash"></div>
+<div class="bolt"></div><div class="bolt"></div><div class="bolt"></div><div class="bolt"></div>
 <div class="bolt"></div><div class="bolt"></div><div class="bolt"></div><div class="bolt"></div>
 <div class="flash"></div><div class="flash"></div>
-</div>
-
-
-
-
-
-
-
-
-
-
-</div><div class="page"><div class="box">{% with messages=get_flashed_messages(with_categories=true) %}{% for cat,msg in messages %}<div class="flash {{cat}}">{{msg}}</div>{% endfor %}{% endwith %}{% block content %}{% endblock %}</div></div>{% if request.endpoint not in ['login','register'] %}{% include 'nav.html' %}{% endif %}{% if show_announcement|default(false) %}<div class="announcement-backdrop" id="announcementPopup"><div class="announcement-modal" role="dialog" aria-modal="true" aria-labelledby="announcementTitle"><button class="announcement-close" type="button" onclick="closeAnnouncement()" aria-label="Close">×</button><div class="announcement-icon">♧</div><div class="announcement-kicker">NEXORA</div><h2 id="announcementTitle">{{ announcement_popup.title }}</h2><div class="announcement-line"><b>{{ announcement_popup.title }}</b><span>{{ announcement_popup.message }}</span></div><button class="button announcement-btn" type="button" onclick="closeAnnouncement()">CONTINUE</button></div></div><script>function closeAnnouncement(){var p=document.getElementById('announcementPopup');if(p)p.classList.add('hidden')}document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAnnouncement()});</script>{% endif %}</body></html>
+</div><div class="nexora-green-waves" aria-hidden="true">
+<div class="green-wave wave-1"></div>
+<div class="green-wave wave-2"></div>
+<div class="green-wave wave-3"></div>
+<div class="green-wave wave-4"></div>
+<div class="green-wave wave-5"></div>
+<div class="green-wave wave-6"></div>
+<div class="green-wave wave-7"></div>
+<div class="green-wave wave-8"></div>
+<div class="green-wave wave-9"></div>
+<div class="green-wave wave-10"></div>
+<div class="green-wave wave-11"></div>
+<div class="green-wave wave-12"></div>
+</div><div class="page"><div class="box">{% with messages=get_flashed_messages(with_categories=true) %}{% for cat,msg in messages %}<div class="flash {{cat}}">{{msg}}</div>{% endfor %}{% endwith %}{% block content %}{% endblock %}</div></div>{% include 'nav.html' %}{% if show_announcement|default(false) %}<div class="announcement-backdrop" id="announcementPopup"><div class="announcement-modal" role="dialog" aria-modal="true" aria-labelledby="announcementTitle"><button class="announcement-close" type="button" onclick="closeAnnouncement()" aria-label="Close">×</button><div class="announcement-icon">♧</div><div class="announcement-kicker">NEXORA</div><h2 id="announcementTitle">{{ announcement_popup.title }}</h2><div class="announcement-line"><b>{{ announcement_popup.title }}</b><span>{{ announcement_popup.message }}</span></div><button class="button announcement-btn" type="button" onclick="closeAnnouncement()">CONTINUE</button></div></div><script>function closeAnnouncement(){var p=document.getElementById('announcementPopup');if(p)p.classList.add('hidden')}document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAnnouncement()});</script>{% endif %}</body></html>

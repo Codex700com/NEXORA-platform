@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.nx-account{font-family:Inter,system-ui,sans-serif;padding-bottom:95px}
+.nx-account-head{display:flex;justify-content:space-between;align-items:center;padding:7px 1px 20px}
+.nx-account-head h1{font-size:25px;margin:0}.nx-phone{color:#6f907b;font-size:11px;margin-top:4px}
+.nx-avatar{width:48px;height:48px;border-radius:16px;background:linear-gradient(145deg,#18d66b,#063b20);color:#031008;display:grid;place-items:center;font-weight:900;font-size:20px}
+.nx-wallet{padding:19px;border-radius:22px;background:linear-gradient(145deg,#0a2012,#040a06);border:1px solid #17633a}
+.nx-wallet-label{font-size:9px;color:#70917c;letter-spacing:1.4px;text-transform:uppercase}
+.nx-wallet-value{font-size:27px;font-weight:850;margin-top:7px}
+.nx-wallet-sub{font-size:10px;color:#718c7b;margin-top:4px}
+.nx-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.nx-btn{padding:12px;border-radius:13px;text-align:center;text-decoration:none;font-size:11px;font-weight:850}
+.nx-btn.green{background:#18d66b;color:#031008}.nx-btn.dark{background:#07140b;border:1px solid #175d35;color:#39ff88}
+.nx-title{margin:23px 1px 10px;font-size:16px}
+.nx-menu{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.nx-item{min-height:76px;padding:13px;border-radius:17px;background:#07130b;border:1px solid #123d25;text-decoration:none;color:inherit}
+.nx-item i{font-style:normal;color:#39ff88;font-size:18px}
+.nx-item b{display:block;font-size:12px;margin-top:7px}.nx-item small{display:block;color:#698575;font-size:9px;margin-top:2px}
+.nx-stat{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.nx-stat-box{padding:15px;border-radius:17px;background:#07130b;border:1px solid #123d25}
+.nx-stat-box small{color:#6d8c78;font-size:9px}.nx-stat-box strong{display:block;font-size:17px;margin-top:6px}
+.nx-section{padding:16px;border-radius:19px;background:#07130b;border:1px solid #123d25;margin-top:10px}
+.nx-section-title{font-size:12px;color:#8bae98}.nx-section-value{font-size:20px;font-weight:800;margin:6px 0 12px}
+.nx-form button{width:100%;padding:11px;border:0;border-radius:12px;background:#18d66b;color:#031008;font-weight:850}
+.nx-logout{display:block;text-align:center;margin-top:18px;padding:13px;border-radius:14px;border:1px solid #492020;color:#d99595;text-decoration:none;font-size:11px}
+.nx-disclosure{margin-top:14px;padding:11px 13px;border-radius:14px;background:#061009;border:1px solid #143c25;color:#668171;font-size:9px;line-height:1.5}
+</style>
+
+<div class="nx-account">
+  <div class="nx-account-head">
+    <div>
+      <h1>My Account</h1>
+      <div class="nx-phone">{{ user.phone }}</div>
+    </div>
+    <div class="nx-avatar">N</div>
+  </div>
+
+  <section class="nx-wallet">
+    <div class="nx-wallet-label">Wallet balance</div>
+    <div class="nx-wallet-value">UGX {{ '%.2f'|format(user.wallet) }}</div>
+    <div class="nx-wallet-sub">Account balance: UGX {{ '%.2f'|format(user.balance) }}</div>
+    <div class="nx-actions">
+      <a class="nx-btn green" href="/deposit">Deposit</a>
+      <a class="nx-btn dark" href="/withdraw">Withdraw</a>
+    </div>
+  </section>
+
+  <div class="nx-title">Account activity</div>
+  <div class="nx-stat">
+    <div class="nx-stat-box"><small>PRODUCT INCOME</small><strong>UGX {{ "{:,.2f}".format(ai_income) }}</strong></div>
+    <div class="nx-stat-box"><small>TODAY</small><strong>{{ today }}</strong></div>
+    <div class="nx-stat-box"><small>LAST MONTH INVITES</small><strong>{{ invited_last_month }}</strong></div>
+    <div class="nx-stat-box"><small>THIS MONTH INVITES</small><strong>{{ invited_this_month }}</strong></div>
+  </div>
+
+  <div class="nx-title">Services</div>
+  <div class="nx-menu">
+    <a class="nx-item" href="/invest"><i>◈</i><b>Products</b><small>Catalogue</small></a>
+    <a class="nx-item" href="/income"><i>↗</i><b>Income</b><small>Activity</small></a>
+    <a class="nx-item" href="/invite"><i>◎</i><b>Invite</b><small>Referral centre</small></a>
+    <a class="nx-item" href="/my-team"><i>♧</i><b>My team</b><small>Team members</small></a>
+    <a class="nx-item" href="/reward"><i>★</i><b>Rewards</b><small>Available rewards</small></a>
+    <a class="nx-item" href="/gift-code"><i>◇</i><b>Gift code</b><small>Redeem code</small></a>
+    <a class="nx-item" href="/raffle"><i>◆</i><b>Raffle</b><small>Open raffle</small></a>
+    <a class="nx-item" href="/manager"><i>♙</i><b>Manager</b><small>Account manager</small></a>
+    <a class="nx-item" href="/card"><i>▣</i><b>Card</b><small>Card centre</small></a>
+    <a class="nx-item" href="/bills"><i>▤</i><b>Bills</b><small>Bill centre</small></a>
+    <a class="nx-item" href="/download"><i>↓</i><b>App</b><small>Download</small></a>
+    <a class="nx-item" href="/account"><i>⚙</i><b>Settings</b><small>Account settings</small></a>
+  </div>
+
+  <div class="nx-section">
+    <div class="nx-section-title">Previous month salary</div>
+    <div class="nx-section-value">UGX {{ "{:,.0f}".format(last_salary) }}</div>
+    <form class="nx-form" method="post" action="/my/claim-salary">
+      <button type="submit">Claim salary</button>
+    </form>
+  </div>
+
+  <div class="nx-section">
+    <div class="nx-section-title">Referral reward</div>
+    <div class="nx-section-value">Based on previous-month invites</div>
+    <form class="nx-form" method="post" action="/my/claim-reward">
+      <button type="submit">Claim reward</button>
+    </form>
+  </div>
+
+  <div class="nx-disclosure">
+    NEXORA is an independent platform. Product figures displayed elsewhere are configured/projected figures and are not guarantees of financial returns.
+  </div>
+
+  <a class="nx-logout" href="/logout">Log out</a>
+</div>
+{% endblock %}
