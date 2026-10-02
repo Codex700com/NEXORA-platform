@@ -1,5 +1,234 @@
 {% extends 'base.html' %}{% block content %}
 
+<style id="NEXORA_UNIQUE_YIELD_DESIGN">
+/* ===== UNIQUE YIELD TERMINAL ===== */
+.nx-service{
+    background:
+      radial-gradient(circle at 50% -10%,rgba(57,255,136,.13),transparent 38%),
+      linear-gradient(180deg,#010403 0%,#030806 48%,#010201 100%) !important;
+    min-height:100vh;
+    padding:18px 10px 115px !important;
+}
+
+.yield-shell{
+    width:100%;
+    max-width:920px;
+    margin:0 auto;
+}
+
+.yield-hero{
+    position:relative;
+    overflow:hidden;
+    padding:24px 18px !important;
+    margin:0 0 14px !important;
+    background:
+      linear-gradient(135deg,#071b10,#020604 65%),
+      #020604 !important;
+    border:1px solid #1e8a4d !important;
+    border-radius:26px !important;
+    box-shadow:0 0 35px rgba(24,214,107,.09) !important;
+    text-align:left !important;
+}
+
+.yield-hero:after{
+    content:"";
+    position:absolute;
+    width:150px;
+    height:150px;
+    right:-55px;
+    top:-55px;
+    border:1px solid rgba(57,255,136,.25);
+    border-radius:50%;
+    box-shadow:
+      0 0 0 18px rgba(57,255,136,.025),
+      0 0 0 38px rgba(57,255,136,.018);
+}
+
+.yield-kicker{
+    color:#39ff88 !important;
+    font-size:10px !important;
+    font-weight:1000 !important;
+    letter-spacing:3px !important;
+    text-align:left !important;
+}
+
+.yield-title{
+    margin:5px 0 4px !important;
+    color:#f5fff8 !important;
+    font-size:30px !important;
+    font-weight:1000 !important;
+    letter-spacing:-1px;
+    text-align:left !important;
+}
+
+.yield-sub{
+    color:#789a84 !important;
+    font-size:12px !important;
+    text-align:left !important;
+}
+
+.yield-live{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    margin-top:14px;
+    color:#8fb99d !important;
+    font-size:10px !important;
+    font-weight:900 !important;
+}
+
+.yield-dot{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#39ff88;
+    box-shadow:0 0 12px #39ff88;
+    animation:yieldPulse 1.4s infinite;
+}
+
+@keyframes yieldPulse{
+    0%,100%{opacity:.45;transform:scale(.8)}
+    50%{opacity:1;transform:scale(1.25)}
+}
+
+.yield-panel{
+    position:relative;
+    margin:13px 0 !important;
+    padding:18px !important;
+    background:#030705 !important;
+    border:1px solid #123c25 !important;
+    border-radius:20px !important;
+    box-shadow:inset 0 1px rgba(255,255,255,.025);
+}
+
+.yield-panel-title{
+    display:flex !important;
+    justify-content:space-between !important;
+    align-items:center !important;
+    margin-bottom:13px !important;
+}
+
+.yield-panel-title b{
+    color:#eafff0 !important;
+    font-size:14px !important;
+}
+
+.yield-panel-title span{
+    color:#39ff88 !important;
+    font-size:9px !important;
+    font-weight:1000 !important;
+    letter-spacing:1.5px;
+}
+
+.yield-stats{
+    display:grid !important;
+    grid-template-columns:repeat(3,1fr) !important;
+    gap:9px !important;
+}
+
+.yield-stat{
+    min-width:0;
+    padding:15px 10px !important;
+    background:linear-gradient(145deg,#08150d,#020503) !important;
+    border:1px solid #16482b !important;
+    border-radius:15px !important;
+    text-align:left !important;
+}
+
+.yield-stat small{
+    display:block !important;
+    color:#668270 !important;
+    font-size:8px !important;
+    font-weight:900 !important;
+    letter-spacing:1px;
+}
+
+.yield-stat strong{
+    display:block !important;
+    margin-top:7px !important;
+    color:#39ff88 !important;
+    font-size:16px !important;
+    font-weight:1000 !important;
+}
+
+.yield-ledger{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:8px !important;
+}
+
+.yield-entry{
+    display:grid !important;
+    grid-template-columns:42px 1fr auto !important;
+    gap:11px !important;
+    align-items:center !important;
+    padding:12px !important;
+    background:#050b07 !important;
+    border:1px solid #10341f !important;
+    border-radius:14px !important;
+    text-align:left !important;
+}
+
+.yield-entry-icon{
+    width:42px;
+    height:42px;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:12px;
+    background:#092014;
+    border:1px solid #1a6337;
+    color:#39ff88;
+    font-weight:1000;
+}
+
+.yield-entry-main{
+    min-width:0;
+}
+
+.yield-entry-main b{
+    display:block !important;
+    color:#eafff0 !important;
+    font-size:11px !important;
+}
+
+.yield-entry-main small{
+    display:block !important;
+    color:#63806e !important;
+    font-size:9px !important;
+    margin-top:3px !important;
+}
+
+.yield-entry-amount{
+    color:#39ff88 !important;
+    font-size:12px !important;
+    font-weight:1000 !important;
+    white-space:nowrap;
+}
+
+.yield-empty{
+    padding:28px 14px !important;
+    text-align:center !important;
+    color:#61766a !important;
+    border:1px dashed #17472b !important;
+    border-radius:16px !important;
+}
+
+@media(max-width:600px){
+    .yield-stats{
+        grid-template-columns:1fr !important;
+    }
+    .yield-title{
+        font-size:26px !important;
+    }
+    .yield-panel{
+        padding:14px !important;
+    }
+}
+</style>
+
+
+
 <style id="NEXORA_RECTANGULAR_CENTERED_CARDS">
 /* NEXORA — Deposit/Withdrawal style rectangular service cards */
 .nx-service{
