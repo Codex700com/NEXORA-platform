@@ -1,55 +1,174 @@
-{% extends 'base.html' %}{% block content %}
-<div class="ai-head">
-  <div>
-    <div class="title ai-title">NEXORA</div>
-    <div class="ai-subtitle">SMARTER MINING • BIGGER REWARDS</div>
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+.nx-cat{
+  font-family:Inter,system-ui,sans-serif;
+  padding-bottom:95px;
+}
+.nx-cat-head{
+  padding:7px 1px 18px;
+}
+.nx-tag{
+  font-size:10px;
+  color:#39ff88;
+  font-weight:800;
+  letter-spacing:2px;
+}
+.nx-cat-head h1{
+  font-size:30px;
+  margin:8px 0 6px;
+}
+.nx-cat-head p{
+  font-size:11px;
+  color:#789382;
+  line-height:1.55;
+  margin:0;
+}
+.nx-disclosure{
+  padding:13px 15px;
+  border-radius:17px;
+  background:#061009;
+  border:1px solid #164d2c;
+  color:#789584;
+  font-size:10px;
+  line-height:1.55;
+  margin-bottom:15px;
+}
+.nx-list{
+  display:grid;
+  gap:11px;
+}
+.nx-product{
+  padding:17px;
+  border-radius:21px;
+  background:linear-gradient(145deg,#091a0f,#040906);
+  border:1px solid #165a34;
+  box-shadow:0 10px 27px rgba(0,0,0,.35);
+}
+.nx-product-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.nx-code{
+  color:#39ff88;
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:1.4px;
+}
+.nx-status{
+  font-size:9px;
+  color:#83d69e;
+  border:1px solid #1a5a34;
+  padding:5px 8px;
+  border-radius:20px;
+}
+.nx-product h3{
+  font-size:18px;
+  margin:13px 0 4px;
+}
+.nx-product-desc{
+  font-size:10px;
+  color:#708a79;
+  margin-bottom:14px;
+}
+.nx-data{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.nx-data div{
+  padding:10px 11px;
+  border-radius:13px;
+  background:#061009;
+  border:1px solid #103b22;
+}
+.nx-data small{
+  display:block;
+  font-size:8px;
+  color:#62806d;
+  letter-spacing:.7px;
+}
+.nx-data b{
+  display:block;
+  font-size:12px;
+  margin-top:4px;
+}
+.nx-open{
+  display:block;
+  text-align:center;
+  text-decoration:none;
+  margin-top:12px;
+  padding:12px;
+  border-radius:13px;
+  background:#18d66b;
+  color:#031008;
+  font-size:12px;
+  font-weight:900;
+}
+</style>
+
+<div class="nx-cat">
+
+  <div class="nx-cat-head">
+    <div class="nx-tag">NEXORA CATALOGUE</div>
+    <h1>Digital Products</h1>
+    <p>Browse the products currently configured on the platform.</p>
   </div>
-  <div class="live-pill"><span></span> CATALOGUE</div>
+
+  <div class="nx-disclosure">
+    Independent platform notice: displayed totals and figures are configured/projected figures for this platform. They are not guarantees of financial returns.
+  </div>
+
+  <div class="nx-list">
+
+    {% for code,p in plans.items() %}
+
+    <article class="nx-product">
+
+      <div class="nx-product-head">
+        <span class="nx-code">{{ code }}</span>
+        <span class="nx-status">AVAILABLE</span>
+      </div>
+
+      <h3>{{ p.get('series','NEXORA DIGITAL') }}</h3>
+
+      <div class="nx-product-desc">
+        NEXORA digital product model
+      </div>
+
+      <div class="nx-data">
+
+        <div>
+          <small>ENTRY PRICE</small>
+          <b>UGX {{ "{:,.0f}".format(p["price"]) }}</b>
+        </div>
+
+        <div>
+          <small>TERM</small>
+          <b>{{ p["days"] }} DAYS</b>
+        </div>
+
+        <div>
+          <small>DAILY FIGURE</small>
+          <b>UGX {{ "{:,.0f}".format(p["daily"]) }}</b>
+        </div>
+
+        <div>
+          <small>PROJECTED TOTAL</small>
+          <b>UGX {{ "{:,.0f}".format(p["total"]) }}</b>
+        </div>
+
+      </div>
+
+      <a class="nx-open" href="/product?p={{ code }}">View product</a>
+
+    </article>
+
+    {% endfor %}
+
+  </div>
 </div>
 
-<section class="ai-live-hero">
-  <img src="/static/ai_mining_scene.png" alt="AI mining robots and excavators">
-  <div class="scanline"></div>
-  <div class="wave-layer" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-  <div class="live-caption"><b>AI MINING ROBOTS</b><small>Robots • Excavators • Control Center</small></div>
-</section>
-
-<section class="live-panel">
-  <div class="section-heading"><span class="pulse-dot"></span><b>Live Products Activity</b><span class="online">PRODUCTS AVAILABLE</span></div>
-  <div class="live-feeds">
-    <div class="live-feed">
-      <div class="feed-image excavator-feed"></div>
-      <div class="feed-label">⛏ Excavators <span>● MOVING</span></div>
-    </div>
-    <div class="live-feed">
-      <div class="feed-image robot-feed"></div>
-      <div class="feed-label">🤖 Products Robots <span>● ACTIVE</span></div>
-    </div>
-    <div class="live-feed">
-      <div class="feed-image computer-feed"></div>
-      <div class="feed-label">▣ Robot Control <span>● ONLINE</span></div>
-    </div>
-  </div>
-</section>
-
-<a class="button" href="/ai-mining" style="display:block;text-align:center;margin-bottom:16px">OPEN AI ROBOT & MINING DIMENSION</a>
-<section class="machine-section">
-  <div class="section-heading"><b>AI Machines</b><span class="muted">Activate a machine</span></div>
-  <div class="grid">
-    {% for code,p in plans.items() %}
-    <div class="card machine-card">
-      <div class="machine-photo"><img src="/static/ai_mining_scene.png" alt="{{code}} AI machine"></div>
-      <h2>{{code}}</h2><div class="muted">{{p.series}}</div>
-      <div>Amount required</div><div class="value">UGX {{'{:,.0f}'.format(p.price)}}</div>
-      <p>Duration: {{p.days}} days<br>Daily income: UGX {{'{:,.0f}'.format(p.daily)}}<br>Total income: UGX {{'{:,.0f}'.format(p.total)}}</p>
-      <a class="button" style="display:block;text-align:center" href="/product?p={{code}}">Activate Machine</a>
-    </div>
-    {% endfor %}
-  </div>
-</section>
-
-<section class="how-ai">
-  <h2>How AI Products Works</h2>
-  <div class="how-row"><b>01</b><span>Choose a machine</span><b>02</b><span>AI robots operate</span><b>03</b><span>Income is recorded</span></div>
-</section>
 {% endblock %}
