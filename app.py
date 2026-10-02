@@ -2290,7 +2290,7 @@ def admin():
     activity=con.execute("SELECT a.*,u.phone FROM admin_activity a LEFT JOIN users u ON u.id=a.admin_uid ORDER BY a.id DESC LIMIT 100").fetchall()
     announcements=con.execute("SELECT * FROM announcements ORDER BY id DESC LIMIT 20").fetchall()
     con.close()
-    return render_template("admin.html",users=users,tx=tx,withdrawals=withdrawals,deposits=deposits,requests=requests,messages=messages,gifts=gifts,managers=managers,activity=activity,announcements=announcements)
+    return render_template("admin.html",users=users,tx=tx,withdrawals=withdrawals,deposits=deposits,requests=requests,messages=messages,gifts=gifts,managers=managers,activity=activity,announcements=announcements,plans=PLANS)
 
 @app.route("/admin/transaction/<int:tid>/<action>",methods=["POST"])
 @admin_required
