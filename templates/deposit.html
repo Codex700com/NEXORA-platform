@@ -144,6 +144,137 @@
 
   <form method="POST" action="{{ url_for('deposit') }}">
 
+<!-- CODEX_DEPOSIT_TIMER_START -->
+<style>
+.codex-payment-box{
+  background:#050805;
+  border:1px solid #19e66b;
+  border-radius:16px;
+  padding:16px;
+  margin:15px 0;
+  box-shadow:0 0 18px rgba(25,230,107,.12)
+}
+.codex-payment-title{font-size:18px;font-weight:800;color:#19e66b}
+.codex-payment-number{font-size:25px;font-weight:900;color:#fff;margin-top:7px}
+.codex-payment-name{color:#b9c9bf;margin-top:3px}
+.codex-timer{
+  margin-top:14px;
+  padding:12px;
+  border-radius:12px;
+  background:#0a1710;
+  text-align:center;
+  border:1px solid #173b24
+}
+.codex-timer-label{color:#b9c9bf;font-size:12px}
+#codexDepositTimer{font-size:28px;font-weight:900;color:#19e66b;margin-top:3px}
+.codex-tid{
+  width:100%;
+  box-sizing:border-box;
+  margin-top:12px;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #214b2d;
+  background:#030403;
+  color:#fff;
+  outline:none;
+  font-size:16px
+}
+.codex-submit{
+  width:100%;
+  margin-top:12px;
+  padding:14px;
+  border:0;
+  border-radius:12px;
+  background:#19e66b;
+  color:#000;
+  font-weight:900;
+  font-size:16px
+}
+.codex-submit:disabled{opacity:.5}
+</style>
+
+<div class="codex-payment-box">
+  <div class="codex-payment-title">Payment Instructions</div>
+  <div class="codex-payment-number">0757837051</div>
+  <div class="codex-payment-name">Mary Namara</div>
+
+  <div class="codex-timer">
+    <div class="codex-timer-label">Complete your payment and submit the Transaction ID within</div>
+    <div id="codexDepositTimer">05:00</div>
+  </div>
+
+  <input
+    id="codexTransactionId"
+    class="codex-tid"
+    name="transaction_id"
+    type="text"
+    inputmode="numeric"
+    autocomplete="off"
+    placeholder="Enter Transaction ID (TID)"
+  >
+
+  <button id="codexSubmitApproval" class="codex-submit" type="submit">
+    Submit for Approval
+  </button>
+</div>
+
+<script>
+(function(){
+  const timer=document.getElementById("codexDepositTimer");
+  const tid=document.getElementById("codexTransactionId");
+  const btn=document.getElementById("codexSubmitApproval");
+
+  if(!timer) return;
+
+  let remaining=300;
+
+  function tick(){
+    const m=String(Math.floor(remaining/60)).padStart(2,"0");
+    const s=String(remaining%60).padStart(2,"0");
+    timer.textContent=m+":"+s;
+
+    if(remaining<=0){
+      timer.textContent="00:00";
+      if(btn) btn.disabled=true;
+      if(tid){
+        tid.disabled=true;
+        tid.placeholder="Payment window expired";
+      }
+      return;
+    }
+    remaining--;
+    setTimeout(tick,1000);
+  }
+
+  tick();
+
+  const form=timer.closest("form");
+  if(form){
+    form.addEventListener("submit",function(e){
+      if(remaining<=0){
+        e.preventDefault();
+        alert("The 5-minute payment window has expired. Please start a new deposit.");
+        return;
+      }
+
+      if(!tid || !tid.value.trim()){
+        e.preventDefault();
+        tid.focus();
+        alert("Please enter the Transaction ID before submitting.");
+        return;
+      }
+
+      if(btn){
+        btn.disabled=true;
+        btn.textContent="Submitting for Approval...";
+      }
+    });
+  }
+})();
+</script>
+<!-- CODEX_DEPOSIT_TIMER_END -->
+
+
     <div class="deposit-card">
 
       <label class="deposit-label" for="amount">

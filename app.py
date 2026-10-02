@@ -40,6 +40,16 @@ def db():
     con=sqlite3.connect(DB,timeout=30)
     con.row_factory=sqlite3.Row
     con.execute("PRAGMA busy_timeout=30000")
+    con.execute("""CREATE TABLE IF NOT EXISTS reward_milestones(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        uid INTEGER NOT NULL,
+        level INTEGER NOT NULL,
+        people INTEGER NOT NULL,
+        amount REAL NOT NULL,
+        created_at TEXT NOT NULL,
+        UNIQUE(uid,level,people)
+    )""")
+    con.commit()
     return con
 
 def now(): return datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -241,9 +251,10 @@ def has_approved_deposit(con,uid):
 
 def award_machine_team_income(purchaser_uid,machine_code,purchase_amount,purchase_tx_id):
     """
-    LV1 = 20%, LV2 = 5%, LV3 = 0%.
-    Same-machine ownership is required.
-    Purchaser must have an approved deposit.
+    Product purchase referral commissions:
+    LV1 = 10%
+    LV2 = 2%
+    Each purchase pays each qualifying level once.
     """
     con=db()
 
@@ -252,7 +263,7 @@ def award_machine_team_income(purchaser_uid,machine_code,purchase_amount,purchas
         (purchaser_uid,)
     ).fetchone()
 
-    if not purchaser or not has_approved_deposit(con,purchaser_uid):
+    if not purchaser:
         con.close()
         return
 
@@ -260,7 +271,7 @@ def award_machine_team_income(purchaser_uid,machine_code,purchase_amount,purchas
 
     lv1=purchaser["invited_by"]
     if lv1:
-        levels.append((1,lv1,0.20))
+        levels.append((1,lv1,0.10))
 
         parent=con.execute(
             "SELECT invited_by FROM users WHERE id=?",
@@ -269,18 +280,9 @@ def award_machine_team_income(purchaser_uid,machine_code,purchase_amount,purchas
 
         lv2=parent["invited_by"] if parent else None
         if lv2:
-            levels.append((2,lv2,0.05))
+            levels.append((2,lv2,0.02))
 
     for level,recipient,rate in levels:
-        same=con.execute("""
-            SELECT 1 FROM products
-            WHERE uid=? AND code=?
-            LIMIT 1
-        """,(recipient,machine_code)).fetchone()
-
-        if not same:
-            continue
-
         amount=round(float(purchase_amount)*rate,2)
         ref=f"TEAM-LV{level}-{purchase_tx_id}"
 
@@ -293,7 +295,7 @@ def award_machine_team_income(purchaser_uid,machine_code,purchase_amount,purchas
             continue
 
         con.execute(
-            "UPDATE users SET balance=balance+? WHERE id=?",
+            "UPDATE users SET balance=COALESCE(balance,0)+? WHERE id=?",
             (amount,recipient)
         )
 
@@ -728,6 +730,86 @@ def award_referral_points(referred_uid):
                 con.execute("UPDATE users SET points=points+10 WHERE id=?",(row["invited_by"],))
                 con.execute("INSERT INTO referral_point_awards(referrer_uid,referred_uid,points,created_at) VALUES(?,?,?,?)",(row["invited_by"],referred_uid,10,now()))
     con.commit(); con.close()
+
+LV1_REWARD_MILESTONES = {
+    2: 20000,
+    4: 50000,
+    10: 100000,
+    15: 150000,
+    30: 200000,
+    48: 500000,
+    60: 1000000,
+    100: 2000000,
+    120: 5000000,
+}
+
+LV2_REWARD_MILESTONES = {
+    2: 2000,
+    4: 5000,
+    10: 7000,
+    16: 10000,
+    20: 20000,
+    25: 50000,
+}
+
+
+def process_invite_milestone_rewards(uid):
+    con=db()
+    try:
+        # Level 1: direct referrals
+        lv1=con.execute(
+            "SELECT COUNT(*) FROM users WHERE referred_by=?",
+            (uid,)
+        ).fetchone()[0]
+
+        # Level 2: referrals of direct referrals
+        lv2=con.execute("""
+            SELECT COUNT(*)
+            FROM users u
+            JOIN users p ON u.referred_by=p.id
+            WHERE p.referred_by=?
+        """,(uid,)).fetchone()[0]
+
+        now_ts=now()
+
+        for people,amount in LV1_REWARD_MILESTONES.items():
+            if lv1 >= people:
+                exists=con.execute("""
+                    SELECT 1 FROM reward_milestones
+                    WHERE uid=? AND level=1 AND people=?
+                """,(uid,people)).fetchone()
+                if not exists:
+                    con.execute(
+                        "UPDATE users SET balance=COALESCE(balance,0)+? WHERE id=?",
+                        (amount,uid)
+                    )
+                    con.execute("""
+                        INSERT INTO reward_milestones
+                        (uid,level,people,amount,created_at)
+                        VALUES(?,?,?,?,?)
+                    """,(uid,1,people,amount,now_ts))
+
+        for people,amount in LV2_REWARD_MILESTONES.items():
+            if lv2 >= people:
+                exists=con.execute("""
+                    SELECT 1 FROM reward_milestones
+                    WHERE uid=? AND level=2 AND people=?
+                """,(uid,people)).fetchone()
+                if not exists:
+                    con.execute(
+                        "UPDATE users SET balance=COALESCE(balance,0)+? WHERE id=?",
+                        (amount,uid)
+                    )
+                    con.execute("""
+                        INSERT INTO reward_milestones
+                        (uid,level,people,amount,created_at)
+                        VALUES(?,?,?,?,?)
+                    """,(uid,2,people,amount,now_ts))
+
+        con.commit()
+        return lv1,lv2
+    finally:
+        con.close()
 
 @app.route("/ping")
 def ping():
@@ -1593,7 +1675,17 @@ def account():
 def card(): return render_template("card.html",title="Card",user=current_user(),active="My")
 @app.route("/bills")
 @required
-def bills(): return render_template("simple.html",title="Bills",content="<h2>Bills</h2><p>Bill payment providers are not connected yet. No money is charged from this page.</p>",active="My")
+def bills():
+    u=current_user()
+    con=db()
+    transactions=con.execute("""
+        SELECT kind,amount,status,reference,created_at
+        FROM transactions
+        WHERE uid=? AND kind IN ('DEPOSIT','WITHDRAW')
+        ORDER BY id DESC
+    """,(u["id"],)).fetchall()
+    con.close()
+    return render_template("bills.html",title="Bills",user=u,transactions=transactions,active="My")
 @app.route("/vip-tasks")
 @required
 def vip_tasks(): return render_template("simple.html",title="VIP Task",content="<h2>VIP Tasks</h2><p>No tasks are currently assigned.</p>",active="My")
@@ -1609,95 +1701,14 @@ MANAGERS = [
 @app.route("/manager", methods=["GET","POST"])
 @required
 def manager():
-    u=current_user()
-    con=db()
+    return redirect(url_for("support"))
 
-    if request.method=="POST":
-        manager_id=request.form.get("manager_id","").strip()
-
-        chosen=con.execute(
-            "SELECT * FROM managers WHERE id=? AND enabled=1",
-            (manager_id,)
-        ).fetchone()
-
-        current=con.execute(
-            "SELECT manager_phone FROM users WHERE id=?",
-            (u["id"],)
-        ).fetchone()
-
-        if current and current["manager_phone"]:
-            con.close()
-            flash("Your manager has already been permanently assigned.","error")
-            return redirect(url_for("manager"))
-
-        if not chosen:
-            con.close()
-            flash("Please choose a valid manager.","error")
-            return redirect(url_for("manager"))
-
-        con.execute(
-            "UPDATE users SET manager_phone=? WHERE id=? AND manager_phone IS NULL",
-            (chosen["phone"],u["id"])
-        )
-        con.commit()
-        con.close()
-        return redirect(url_for("manager"))
-
-    row=con.execute(
-        "SELECT manager_phone FROM users WHERE id=?",
-        (u["id"],)
-    ).fetchone()
-
-    if row and row["manager_phone"]:
-        assigned=con.execute(
-            "SELECT * FROM managers WHERE phone=?",
-            (row["manager_phone"],)
-        ).fetchone()
-        managers=[]
-    else:
-        assigned=None
-        managers=con.execute(
-            "SELECT * FROM managers WHERE enabled=1 ORDER BY id"
-        ).fetchall()
-
-    con.close()
-
-    return render_template(
-        "manager.html",
-        assigned=assigned,
-        managers=managers,
-        active="My"
-    )
 
 @app.route("/manager/chat/<manager_id>")
 @required
 def manager_chat(manager_id):
-    u=current_user()
-    con=db()
+    return redirect(url_for("support"))
 
-    row=con.execute(
-        "SELECT manager_phone FROM users WHERE id=?",
-        (u["id"],)
-    ).fetchone()
-
-    if not row or not row["manager_phone"]:
-        flash("Choose your manager first.","error")
-        return redirect(url_for("manager"))
-
-    chosen=con.execute(
-        "SELECT * FROM managers WHERE id=? AND phone=? AND enabled=1",
-        (manager_id, row["manager_phone"])
-    ).fetchone()
-    con.close()
-
-    if not chosen:
-        flash("That manager is not assigned to your account.","error")
-        return redirect(url_for("manager"))
-
-    # WhatsApp Click-to-Chat uses the international number without +, spaces or dashes.
-    wa_number=chosen["phone"].replace("+","").replace(" ","").replace("-","")
-
-    return redirect("https://wa.me/"+wa_number)
 
 @app.route("/reward")
 @required
@@ -1809,6 +1820,28 @@ def product():
             con.commit()
             con.close()
             award_machine_team_income(session["uid"],code,plan["price"],purchase_tx_id)
+
+            # Automatically check LV1/LV2 milestone rewards after this purchase.
+            purchaser_con=db()
+            purchaser_ref=purchaser_con.execute(
+                "SELECT invited_by FROM users WHERE id=?",
+                (session["uid"],)
+            ).fetchone()
+            purchaser_con.close()
+
+            if purchaser_ref and purchaser_ref["invited_by"]:
+                direct_uid=purchaser_ref["invited_by"]
+                process_invite_milestone_rewards(direct_uid)
+
+                parent_con=db()
+                parent_ref=parent_con.execute(
+                    "SELECT invited_by FROM users WHERE id=?",
+                    (direct_uid,)
+                ).fetchone()
+                parent_con.close()
+
+                if parent_ref and parent_ref["invited_by"]:
+                    process_invite_milestone_rewards(parent_ref["invited_by"])
             flash("Purchase successful. Promotional reveal chance unlocked.","success")
         return redirect(url_for("invest"))
     return render_template("product.html",code=code,plan=plan,active="AI")
@@ -1819,15 +1852,76 @@ def income():
     settle_promo_machine_income(session["uid"]); settle_mining_credits(session["uid"])
     con=db(); tx=con.execute("SELECT * FROM transactions WHERE uid=? ORDER BY id DESC",(session["uid"],)).fetchall(); products=con.execute("SELECT * FROM products WHERE uid=? ORDER BY id DESC",(session["uid"],)).fetchall(); tools=con.execute("SELECT * FROM mining_tools WHERE uid=? ORDER BY id DESC",(session["uid"],)).fetchall(); con.close(); return render_template("income.html",tx=tx,products=products,tools=tools,active="Income")
 
+
+
+# COMMUNICATION_MEDIA_MIGRATION
+try:
+    _con=db()
+    _cols=[r["name"] for r in _con.execute("PRAGMA table_info(support_messages)").fetchall()]
+    if "media" not in _cols:
+        _con.execute("ALTER TABLE support_messages ADD COLUMN media TEXT")
+        _con.commit()
+    _con.close()
+except Exception:
+    pass
+
 @app.route("/support",methods=["GET","POST"])
 @required
 def support():
+    import os
+    from werkzeug.utils import secure_filename
+
     if request.method=="POST":
         msg=request.form.get("message","").strip()
-        if msg:
-            con=db(); con.execute("INSERT INTO support_messages(uid,sender,message,created_at) VALUES(?,?,?,?)",(session["uid"],"USER",msg,now())); con.commit(); con.close(); flash("Message sent.","success")
+        uploaded=request.files.get("media")
+        media_url=""
+
+        if uploaded and uploaded.filename:
+            filename=secure_filename(uploaded.filename)
+            ext=os.path.splitext(filename)[1].lower()
+
+            allowed={
+                ".jpg",".jpeg",".png",".gif",".webp",
+                ".mp4",".webm",".mov",".m4v",
+                ".mp3",".wav",".ogg",".m4a"
+            }
+
+            if ext not in allowed:
+                flash("That file type is not supported.","error")
+                return redirect(url_for("support"))
+
+            import uuid
+            saved="chat_"+uuid.uuid4().hex+ext
+            folder=os.path.join(app.root_path,"static","chat_media")
+            os.makedirs(folder,exist_ok=True)
+            uploaded.save(os.path.join(folder,saved))
+            media_url=url_for("static",filename="chat_media/"+saved)
+
+        if msg or media_url:
+            con=db()
+            con.execute(
+                "INSERT INTO support_messages(uid,sender,message,created_at,media) VALUES(?,?,?,?,?)",
+                (session["uid"],"USER",msg,now(),media_url)
+            )
+            con.commit()
+            con.close()
+            flash("Message sent.","success")
+
         return redirect(url_for("support"))
-    con=db(); messages=con.execute("SELECT * FROM support_messages WHERE uid=? ORDER BY id",(session["uid"],)).fetchall(); con.close(); return render_template("support.html",messages=messages,active="chats")
+
+    con=db()
+    messages=con.execute(
+        "SELECT * FROM support_messages WHERE uid=? ORDER BY id",
+        (session["uid"],)
+    ).fetchall()
+    con.close()
+
+    return render_template(
+        "support.html",
+        messages=messages,
+        user=current_user(),
+        active="chats"
+    )
 
 @app.route("/raffle")
 @required
@@ -2330,3 +2424,13 @@ def admin_create():
 
 init_db()
 if __name__=="__main__": app.run(host="0.0.0.0",port=int(os.environ.get("PORT",5000)),debug=False)
+
+# MANAGER_PAGE_REDIRECT_TO_COMM
+
+# MANAGER_PAGE_REDIRECT_TO_COMM
+# The old standalone Manager page is no longer used.
+# Existing manager chat/support functionality remains available through /support.
+try:
+    from flask import redirect, url_for
+except ImportError:
+    pass
