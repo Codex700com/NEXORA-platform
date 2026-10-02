@@ -4,17 +4,15 @@
 <div class="bolt"></div><div class="bolt"></div><div class="bolt"></div><div class="bolt"></div>
 <div class="bolt"></div><div class="bolt"></div><div class="bolt"></div><div class="bolt"></div>
 <div class="flash"></div><div class="flash"></div>
-</div><div class="nexora-green-waves" aria-hidden="true">
-<div class="green-wave wave-1"></div>
-<div class="green-wave wave-2"></div>
-<div class="green-wave wave-3"></div>
-<div class="green-wave wave-4"></div>
-<div class="green-wave wave-5"></div>
-<div class="green-wave wave-6"></div>
-<div class="green-wave wave-7"></div>
-<div class="green-wave wave-8"></div>
-<div class="green-wave wave-9"></div>
-<div class="green-wave wave-10"></div>
-<div class="green-wave wave-11"></div>
-<div class="green-wave wave-12"></div>
+</div>
+
+
+
+
+
+
+
+
+
+
 </div><div class="page"><div class="box">{% with messages=get_flashed_messages(with_categories=true) %}{% for cat,msg in messages %}<div class="flash {{cat}}">{{msg}}</div>{% endfor %}{% endwith %}{% block content %}{% endblock %}</div></div>{% include 'nav.html' %}{% if show_announcement|default(false) %}<div class="announcement-backdrop" id="announcementPopup"><div class="announcement-modal" role="dialog" aria-modal="true" aria-labelledby="announcementTitle"><button class="announcement-close" type="button" onclick="closeAnnouncement()" aria-label="Close">×</button><div class="announcement-icon">♧</div><div class="announcement-kicker">NEXORA</div><h2 id="announcementTitle">{{ announcement_popup.title }}</h2><div class="announcement-line"><b>{{ announcement_popup.title }}</b><span>{{ announcement_popup.message }}</span></div><button class="button announcement-btn" type="button" onclick="closeAnnouncement()">CONTINUE</button></div></div><script>function closeAnnouncement(){var p=document.getElementById('announcementPopup');if(p)p.classList.add('hidden')}document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAnnouncement()});</script>{% endif %}</body></html>
