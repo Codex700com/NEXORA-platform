@@ -1,263 +1,75 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="title">NEXORA ADMIN</div>
+<style>
+body{background:#000!important}
+.ac{min-height:100vh;background:#000;color:#f2fff6;padding:18px 12px 90px;font-family:Inter,system-ui,sans-serif}
+.wrap{max-width:900px;margin:auto}
+.hero{padding:24px;border:1px solid #173b24;border-radius:24px;background:linear-gradient(145deg,#061009,#010201);margin-bottom:14px}
+.tag{color:#39ff72;font-size:10px;font-weight:900;letter-spacing:2px}
+.hero h1{margin:7px 0;font-size:29px}
+.hero p{margin:0;color:#8ca596;font-size:13px}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.mode{padding:18px;border-radius:18px;background:#050805;border:1px solid #173b24;color:#fff;text-decoration:none}
+.mode b{display:block;margin-top:8px}
+.mode span{font-size:12px;color:#83988a}
+.panel{background:#050805;border:1px solid #173b24;border-radius:20px;padding:15px;margin-bottom:14px}
+.title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.title h2{font-size:17px;margin:0}.green{color:#39ff72}
+textarea{width:100%;min-height:105px;background:#020402;color:#fff;border:1px solid #173b24;border-radius:14px;padding:13px;resize:vertical}
+.tools{display:flex;gap:8px;margin-top:10px}
+.tool,.send{border-radius:12px;padding:12px 14px;font-weight:900;cursor:pointer}
+.tool{background:#071009;color:#39ff72;border:1px solid #173b24}
+.send{margin-left:auto;background:#39ff72;color:#001507;border:0}
+.users{display:grid;gap:8px}
+.user{display:flex;align-items:center;gap:12px;padding:13px;background:#020402;border:1px solid #12331e;border-radius:15px;color:#fff;text-decoration:none}
+.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#092412;color:#39ff72;font-weight:900}
+.info{flex:1}.info b{display:block}.info small{color:#718778}.open{color:#39ff72;font-size:12px;font-weight:900}
+@media(max-width:600px){.modes{grid-template-columns:1fr}.hero h1{font-size:25px}}
+</style>
 
-{% with msgs=get_flashed_messages(with_categories=true) %}
-{% for cat,msg in msgs %}<div class="section"><b>{{msg}}</b></div>{% endfor %}
-{% endwith %}
+<div class="ac"><div class="wrap">
 
-<div class="section">
-<h2>Send Announcement</h2>
-<form method="post" action="/admin/announcement">
-<input name="title" placeholder="Announcement title" required>
-<textarea name="message" rows="4" placeholder="Write announcement..." required></textarea>
-<button type="submit">SEND ANNOUNCEMENT</button>
-</form>
-
-{% for a in announcements %}
-<div class="row" style="display:block;margin-top:10px">
-<strong>{{a.title}}</strong><br>
-<small>{{a.created_at}}</small><br>
-{{a.message}}
-</div>
-{% endfor %}
-</div>
-
-<div class="section">
-<h2>Send Message To Registered User</h2>
-<form method="post" action="/admin/support/send">
-<select name="uid" required>
-<option value="">Select registered user</option>
-{% for u in users %}
-<option value="{{u.id}}">{{u.display_name or u.phone}} — {{u.phone}}</option>
-{% endfor %}
-</select>
-<textarea name="message" rows="4" placeholder="Welcome to NEXORA..." required></textarea>
-<button type="submit">SEND MESSAGE</button>
-</form>
+<div class="hero">
+ <div class="tag">PRIVATE ADMIN SYSTEM</div>
+ <h1>Communication Center</h1>
+ <p>Broadcast announcements or open a private user inbox.</p>
 </div>
 
-<div class="section">
-<h2>Users</h2>
-{% for u in users %}
-<div class="row" style="display:block;margin-bottom:12px">
-<b>{{u.display_name or u.phone}}</b><br>
-<small>{{u.phone}} | ID {{u.id}} | Last seen: {{u.last_seen or "Never"}}</small><br>
-<b>UGX {{'%.0f'|format(u.balance or 0)}}</b>
-{% if u.is_blocked %}<span style="color:red"> BLOCKED</span>{% endif %}
-{% if u.is_admin %}<span> ADMIN</span>{% endif %}
-
-<form method="post" action="/admin/user/{{u.id}}/balance" style="margin-top:6px">
-<input name="amount" type="number" step="0.01" value="{{u.balance or 0}}" placeholder="Balance">
-<button>Set Balance</button>
-</form>
-
-<form method="post" action="/admin/user/{{u.id}}/reset-password" style="margin-top:6px">
-<input name="password" type="password" placeholder="New password" required>
-<button>Reset Password</button>
-</form>
-
-<form method="post" action="/admin/user/{{u.id}}/{{"unblock" if u.is_blocked else "block"}}" style="display:inline">
-<button>{{"Unblock" if u.is_blocked else "Block"}}</button>
-</form>
-
-<form method="post" action="/admin/user/{{u.id}}/admin" style="display:inline">
-<input type="hidden" name="value" value="{{0 if u.is_admin else 1}}">
-<button>{{"Remove Admin" if u.is_admin else "Make Admin"}}</button>
-</form>
-</div>
-{% else %}<p>No users.</p>{% endfor %}
+<div class="modes">
+ <a class="mode" href="#broadcast">📢<b>Broadcast</b><span>Send to every registered user</span></a>
+ <a class="mode" href="#inboxes">✉️<b>Inbox Users</b><span>Open one private conversation</span></a>
 </div>
 
-<div class="section">
-<h2>Deposits</h2>
-{% for t in deposits %}
-<div class="row">
-<div>
-<strong>{{t.phone}}</strong> — UGX {{'%.0f'|format(t.amount)}} — {{t.status or t.deposit_status}}
-
-{% if t.deposit_method %}
-<br><small><b>Method:</b> {{t.deposit_method}}</small>
-{% endif %}
-
-{% if t.deposit_agent %}
-<br><small><b>Payment Agent:</b> {{t.deposit_agent}}</small>
-{% endif %}
-
-{% if t.deposit_proof %}
-<br><small><b>Transaction ID:</b> {{t.deposit_proof}}</small>
-{% endif %}
-
-{% if t.deposit_payer_number %}
-<br><small><b>Number that paid:</b> {{t.deposit_payer_number}}</small>
-{% endif %}
-</div>
-
-{% if t.status=="PENDING" %}
-<span>
-<form method="post" action="/admin/transaction/{{t.id}}/approve" style="display:inline">
-<button>Approve</button>
-</form>
-
-<form method="post" action="/admin/transaction/{{t.id}}/reject" style="display:inline">
-<button>Reject</button>
-</form>
-</span>
-{% endif %}
-</div>
-{% else %}
-<p>No deposits.</p>
-{% endfor %}
-</div>
-
-<div class="section">
-<h2>Withdraw Requests</h2>
-{% for w in withdrawals %}
-<div class="row" style="display:block;margin-bottom:10px">
-<strong>{{w.phone}}</strong>
-— UGX {{'%.0f'|format(w.amount)}}
-— {{w.status}}
-
-{% if w.reference %}
-<br><small><b>Reference:</b> {{w.reference}}</small>
-{% endif %}
-
-{% if w.mtn_number %}
-<br><small><b>MTN:</b> {{w.mtn_number}}</small>
-{% endif %}
-
-{% if w.airtel_number %}
-<br><small><b>Airtel:</b> {{w.airtel_number}}</small>
-{% endif %}
-
-{% if w.usdt_wallet %}
-<br><small><b>USDT TRC20:</b> {{w.usdt_wallet}}</small>
-{% endif %}
-
-{% if w.status=="PENDING" %}
-<div style="margin-top:8px">
-<form method="post" action="/admin/transaction/{{w.id}}/approve" style="display:inline">
-<button>Approve</button>
-</form>
-<form method="post" action="/admin/transaction/{{w.id}}/reject" style="display:inline">
-<button>Reject</button>
-</form>
-</div>
-{% endif %}
-</div>
-{% else %}
-<p>No withdrawal requests.</p>
-{% endfor %}
-</div>
-
-<div class="section">
-<h2>All Transactions</h2>
-{% for t in tx %}
-<div class="row"><span>{{t.phone}} — {{t.kind}} — UGX {{'%.0f'|format(t.amount)}}</span><span>{{t.status}}</span></div>
-{% else %}<p>No transactions.</p>{% endfor %}
-</div>
-
-<div class="section">
-<h2>Gift Codes</h2>
-<form method="post" action="/admin/gift/create">
-<input name="code" placeholder="Code (optional)">
-<input name="amount" type="number" step="0.01" placeholder="Reward UGX" required>
-<input name="max_uses" type="number" min="1" value="1" placeholder="Claim limit">
-<button>Create Gift Code</button>
-</form>
-{% for g in gifts %}
-<div class="row" style="display:block;margin-top:10px">
-<b>{{g.code}}</b> — UGX {{'%.0f'|format(g.amount)}} — {{g.claims}}/{{g.max_uses}} claims
-{% if g.enabled %} ACTIVE{% else %} EXPIRED/DISABLED{% endif %}
-<form method="post" action="/admin/gift/{{g.code}}/edit" style="margin-top:5px">
-<input name="amount" type="number" value="{{g.amount}}" required>
-<input name="max_uses" type="number" min="1" value="{{g.max_uses}}" required>
-<button>Save</button>
-</form>
-<form method="post" action="/admin/gift/{{g.code}}/toggle" style="display:inline">
-<button>{{"Disable" if g.enabled else "Enable"}}</button>
-</form>
-<a href="/admin/gift/{{g.code}}/claims"><button type="button">Claims</button></a>
-</div>
-{% else %}<p>No gift codes.</p>{% endfor %}
-</div>
-
-<div class="section">
-
-{% for m in managers %}
-<div class="row" style="display:block;margin-bottom:10px">
-<b>{{m.name}}</b> — {{m.role}} — {{m.phone}}
-{% if m.enabled %} ACTIVE{% else %} DISABLED{% endif %}
-
-
-</div>
-{% endfor %}
-</div>
-
-<div class="section">
-<h2>Admin Access</h2>
-<p>Admin permissions can be changed from the Users section above.</p>
-</div>
-
-<div class="section">
-<h2>Password Requests</h2>
-{% for r in requests %}
-<div class="row"><span>User {{r.uid}} — {{r.status}}</span></div>
-{% else %}<p>No password requests.</p>{% endfor %}
-</div>
-
-<div class="section">
-<h2>Support Messages</h2>
-{% for m in messages %}
-<div class="row" style="display:block;margin-bottom:8px">
-<b>User {{m.uid}}</b>: {{m.message}}
-<form method="post" action="/admin/support/{{m.uid}}">
-<input name="message" placeholder="Reply">
-<button>Send</button>
-</form>
-</div>
-{% else %}<p>No messages.</p>{% endfor %}
-</div>
-
-<div class="section">
-<h2>Admin Activity</h2>
-<a href="/admin/activity"><button>View Full Activity Log</button></a>
-{% for a in activity %}
-<div class="row"><span>{{a.action}} — {{a.details}}</span><small>{{a.created_at}}</small></div>
-{% endfor %}
-</div>
-
-
-<div style="margin:18px 0;padding:16px;background:#050805;border:1px solid #173b24;border-radius:16px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-    <div>
-      <div style="font-size:18px;font-weight:900;color:#39ff72;">ADMIN COMMUNICATION</div>
-      <div style="font-size:12px;color:#9bb5a3;margin-top:4px;">
-        Direct communication with real platform users
-      </div>
-    </div>
-    <span style="font-size:12px;color:#39ff72;">ADMIN ONLY</span>
+<section class="panel" id="broadcast">
+ <div class="title"><h2>Broadcast to all users</h2><b class="green">{{ users|length }}</b></div>
+ <form method="post" action="{{ url_for('admin_broadcast') }}" enctype="multipart/form-data">
+  <textarea name="message" placeholder="Write a message or paste a link..."></textarea>
+  <div class="tools">
+   <label class="tool">📎 Attach
+    <input name="media" type="file" accept="image/*,video/*,audio/*" hidden>
+   </label>
+   <button class="send" type="submit">SEND TO ALL</button>
   </div>
+ </form>
+</section>
 
-  {% if users %}
-    <div style="display:grid;gap:9px;margin-top:14px;">
-      {% for u in users %}
-        <a href="{{ url_for('admin_support',uid=u['id']) }}"
-           style="display:block;text-decoration:none;background:#071009;border:1px solid #173b24;border-radius:13px;padding:12px;color:#f2fff6;">
-          <div style="font-weight:800;">
-            {{ u['phone'] or ('User #' ~ u['id']) }}
-          </div>
-          <div style="font-size:12px;color:#9bb5a3;margin-top:3px;">
-            Open user conversation →
-          </div>
-        </a>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div style="padding:14px;color:#9bb5a3;">
-      No platform users found.
-    </div>
-  {% endif %}
-</div>
+<section class="panel" id="inboxes">
+ <div class="title"><h2>Inbox Users</h2><b class="green">REAL USERS</b></div>
+ <div class="users">
+ {% for u in users %}
+ <a class="user" href="{{ url_for('admin_support',uid=u['id']) }}">
+  <div class="avatar">{{ ((u['display_name'] or u['phone'] or 'U')[0])|upper }}</div>
+  <div class="info">
+   <b>{{ u['display_name'] or u['phone'] or ('User #'~u['id']) }}</b>
+   <small>{{ u['phone'] or ('User ID #'~u['id']) }}</small>
+  </div>
+  <div class="open">OPEN →</div>
+ </a>
+ {% else %}
+ <div style="padding:20px;color:#789080;text-align:center">No users found.</div>
+ {% endfor %}
+ </div>
+</section>
 
+</div></div>
 {% endblock %}

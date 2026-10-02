@@ -2307,6 +2307,54 @@ def admin_transaction(tid,action):
         award_referral_points(t["uid"])
     return redirect(url_for("admin"))
 
+
+@app.route("/admin/broadcast",methods=["POST"])
+@admin_required
+def admin_broadcast():
+    import os, uuid
+    from werkzeug.utils import secure_filename
+
+    msg=request.form.get("message","").strip()
+    uploaded=request.files.get("media")
+    media_url=""
+
+    if uploaded and uploaded.filename:
+        ext=os.path.splitext(secure_filename(uploaded.filename))[1].lower()
+        allowed={".jpg",".jpeg",".png",".gif",".webp",".mp4",".webm",".mov",".m4v",".mp3",".wav",".ogg",".m4a"}
+
+        if ext not in allowed:
+            flash("Unsupported media type.","error")
+            return redirect(url_for("admin"))
+
+        folder=os.path.join(app.root_path,"static","chat_media")
+        os.makedirs(folder,exist_ok=True)
+        name="broadcast_"+uuid.uuid4().hex+ext
+        uploaded.save(os.path.join(folder,name))
+        media_url=url_for("static",filename="chat_media/"+name)
+
+    if not msg and not media_url:
+        flash("Write a message or attach media.","error")
+        return redirect(url_for("admin"))
+
+    con=db()
+    users=con.execute("SELECT id FROM users ORDER BY id").fetchall()
+
+    cols=[r[1] for r in con.execute("PRAGMA table_info(support_messages)").fetchall()]
+    if "media" not in cols:
+        con.execute("ALTER TABLE support_messages ADD COLUMN media TEXT")
+
+    for u in users:
+        con.execute(
+            "INSERT INTO support_messages(uid,sender,message,created_at,media) VALUES(?,?,?,?,?)",
+            (u["id"],"ADMIN",msg,now(),media_url)
+        )
+
+    con.commit()
+    con.close()
+
+    flash(f"Message sent to {len(users)} users.","success")
+    return redirect(url_for("admin"))
+
 @app.route("/admin/support/<int:uid>",methods=["GET","POST"])
 @admin_required
 def admin_support(uid):
@@ -2388,6 +2436,8 @@ def admin_support_send():
         con.commit()
         con.close()
 
+    if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
+        return jsonify({"ok":True})
     return redirect(url_for("admin_support",uid=uid))
 
 @app.route("/admin/gift",methods=["POST"])
