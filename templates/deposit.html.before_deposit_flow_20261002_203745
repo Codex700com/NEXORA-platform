@@ -1,0 +1,357 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+.deposit-page{
+  padding:18px 4px 100px;
+  color:#eefaf2;
+}
+.deposit-head{
+  margin-bottom:18px;
+}
+.deposit-kicker{
+  color:#39ff88;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:2px;
+}
+.deposit-title{
+  margin:7px 0 5px;
+  font-size:27px;
+  font-weight:900;
+}
+.deposit-sub{
+  color:#789382;
+  font-size:11px;
+  line-height:1.55;
+}
+.deposit-card{
+  background:#07130b;
+  border:1px solid #154b2c;
+  border-radius:19px;
+  padding:17px;
+  margin-bottom:12px;
+}
+.deposit-label{
+  display:block;
+  color:#789382;
+  font-size:10px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+.deposit-input{
+  width:100%;
+  box-sizing:border-box;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #174b2c;
+  background:#030806;
+  color:#fff;
+  font-size:17px;
+  outline:none;
+}
+.deposit-input:focus{
+  border-color:#18d66b;
+}
+.quick-title{
+  color:#789382;
+  font-size:10px;
+  font-weight:800;
+  margin:17px 0 9px;
+}
+.amount-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.amount-btn{
+  height:48px;
+  border-radius:11px;
+  border:1px solid #154b2c;
+  background:#030806;
+  color:#b9d9c4;
+  font-weight:900;
+  font-size:11px;
+}
+.amount-btn.active{
+  background:#18d66b;
+  color:#031008;
+  border-color:#18d66b;
+}
+.method-title{
+  color:#789382;
+  font-size:10px;
+  font-weight:800;
+  margin-bottom:9px;
+}
+.method-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+.method{
+  position:relative;
+}
+.method input{
+  position:absolute;
+  opacity:0;
+}
+.method-box{
+  display:block;
+  text-align:center;
+  padding:16px 8px;
+  border-radius:13px;
+  background:#030806;
+  border:1px solid #154b2c;
+  color:#b9d9c4;
+  font-size:11px;
+  font-weight:900;
+}
+.method input:checked + .method-box{
+  background:#18d66b;
+  border-color:#18d66b;
+  color:#031008;
+}
+.deposit-submit{
+  width:100%;
+  border:0;
+  border-radius:13px;
+  padding:14px;
+  background:#18d66b;
+  color:#031008;
+  font-size:12px;
+  font-weight:900;
+  margin-top:15px;
+}
+.deposit-note{
+  color:#668071;
+  font-size:9px;
+  line-height:1.5;
+  text-align:center;
+  margin-top:12px;
+}
+</style>
+
+<div class="deposit-page">
+
+  <div class="deposit-head">
+    <div class="deposit-kicker">NEXORA WALLET</div>
+    <div class="deposit-title">Deposit</div>
+    <div class="deposit-sub">
+      Add funds to your NEXORA balance using mobile money.
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('deposit') }}">
+
+<!-- CODEX_DEPOSIT_TIMER_START -->
+<style>
+.codex-payment-box{
+  background:#050805;
+  border:1px solid #19e66b;
+  border-radius:16px;
+  padding:16px;
+  margin:15px 0;
+  box-shadow:0 0 18px rgba(25,230,107,.12)
+}
+.codex-payment-title{font-size:18px;font-weight:800;color:#19e66b}
+.codex-payment-number{font-size:25px;font-weight:900;color:#fff;margin-top:7px}
+.codex-payment-name{color:#b9c9bf;margin-top:3px}
+.codex-timer{
+  margin-top:14px;
+  padding:12px;
+  border-radius:12px;
+  background:#0a1710;
+  text-align:center;
+  border:1px solid #173b24
+}
+.codex-timer-label{color:#b9c9bf;font-size:12px}
+#codexDepositTimer{font-size:28px;font-weight:900;color:#19e66b;margin-top:3px}
+.codex-tid{
+  width:100%;
+  box-sizing:border-box;
+  margin-top:12px;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #214b2d;
+  background:#030403;
+  color:#fff;
+  outline:none;
+  font-size:16px
+}
+.codex-submit{
+  width:100%;
+  margin-top:12px;
+  padding:14px;
+  border:0;
+  border-radius:12px;
+  background:#19e66b;
+  color:#000;
+  font-weight:900;
+  font-size:16px
+}
+.codex-submit:disabled{opacity:.5}
+</style>
+
+<div class="codex-payment-box">
+  <div class="codex-payment-title">Payment Instructions</div>
+  <div class="codex-payment-number">0757837051</div>
+  <div class="codex-payment-name">Mary Namara</div>
+
+  <div class="codex-timer">
+    <div class="codex-timer-label">Complete your payment and submit the Transaction ID within</div>
+    <div id="codexDepositTimer">05:00</div>
+  </div>
+
+  <input
+    id="codexTransactionId"
+    class="codex-tid"
+    name="transaction_id"
+    type="text"
+    inputmode="numeric"
+    autocomplete="off"
+    placeholder="Enter Transaction ID (TID)"
+  >
+
+  <button id="codexSubmitApproval" class="codex-submit" type="submit">
+    Submit for Approval
+  </button>
+</div>
+
+<script>
+(function(){
+  const timer=document.getElementById("codexDepositTimer");
+  const tid=document.getElementById("codexTransactionId");
+  const btn=document.getElementById("codexSubmitApproval");
+
+  if(!timer) return;
+
+  let remaining=300;
+
+  function tick(){
+    const m=String(Math.floor(remaining/60)).padStart(2,"0");
+    const s=String(remaining%60).padStart(2,"0");
+    timer.textContent=m+":"+s;
+
+    if(remaining<=0){
+      timer.textContent="00:00";
+      if(btn) btn.disabled=true;
+      if(tid){
+        tid.disabled=true;
+        tid.placeholder="Payment window expired";
+      }
+      return;
+    }
+    remaining--;
+    setTimeout(tick,1000);
+  }
+
+  tick();
+
+  const form=timer.closest("form");
+  if(form){
+    form.addEventListener("submit",function(e){
+      if(remaining<=0){
+        e.preventDefault();
+        alert("The 5-minute payment window has expired. Please start a new deposit.");
+        return;
+      }
+
+      if(!tid || !tid.value.trim()){
+        e.preventDefault();
+        tid.focus();
+        alert("Please enter the Transaction ID before submitting.");
+        return;
+      }
+
+      if(btn){
+        btn.disabled=true;
+        btn.textContent="Submitting for Approval...";
+      }
+    });
+  }
+})();
+</script>
+<!-- CODEX_DEPOSIT_TIMER_END -->
+
+
+    <div class="deposit-card">
+
+      <label class="deposit-label" for="amount">
+        ENTER AMOUNT
+      </label>
+
+      <input
+        class="deposit-input"
+        id="amount"
+        name="amount"
+        type="number"
+        min="20000"
+        step="1000"
+        placeholder="Enter amount in UGX"
+        required
+      >
+
+      <div class="quick-title">QUICK AMOUNT</div>
+
+      <div class="amount-grid">
+        <button type="button" class="amount-btn" data-value="20000">20K</button>
+        <button type="button" class="amount-btn" data-value="50000">50K</button>
+        <button type="button" class="amount-btn" data-value="100000">100K</button>
+        <button type="button" class="amount-btn" data-value="250000">250K</button>
+        <button type="button" class="amount-btn" data-value="500000">500K</button>
+        <button type="button" class="amount-btn" data-value="1000000">1M</button>
+        <button type="button" class="amount-btn" data-value="2000000">2M</button>
+        <button type="button" class="amount-btn" data-value="3000000">3M</button>
+        <button type="button" class="amount-btn" data-value="5000000">5M</button>
+      </div>
+
+    </div>
+
+    <div class="deposit-card">
+
+      <div class="method-title">CHOOSE PAYMENT METHOD</div>
+
+      <div class="method-grid">
+
+        <label class="method">
+          <input type="radio" name="method" value="MTN UG" required>
+          <span class="method-box">MTN MONEY</span>
+        </label>
+
+        <label class="method">
+          <input type="radio" name="method" value="Airtel UG" required>
+          <span class="method-box">AIRTEL MONEY</span>
+        </label>
+
+      </div>
+
+      <button class="deposit-submit" type="submit">
+        CONTINUE
+      </button>
+
+      <div class="deposit-note">
+        Minimum deposit: UGX 20,000
+      </div>
+
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+document.querySelectorAll(".amount-btn").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    document.getElementById("amount").value=this.dataset.value;
+
+    document.querySelectorAll(".amount-btn").forEach(function(b){
+      b.classList.remove("active");
+    });
+
+    this.classList.add("active");
+  });
+});
+</script>
+
+{% endblock %}

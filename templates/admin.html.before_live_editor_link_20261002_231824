@@ -1,0 +1,480 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+*{box-sizing:border-box}
+body{background:#000!important;color:#f2fff6!important}
+.admin-shell{
+  min-height:100vh;background:#000;color:#f2fff6;
+  padding:14px 10px 100px;font-family:Inter,system-ui,sans-serif
+}
+.admin-wrap{max-width:1100px;margin:auto}
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px;border:1px solid #183b24;border-radius:20px;
+  background:#030703;margin-bottom:12px
+}
+.brand small{display:block;color:#39ff72;font-size:9px;font-weight:900;letter-spacing:2px}
+.brand h1{margin:4px 0 0;font-size:24px}
+.admin-badge{
+  padding:8px 10px;border:1px solid #39ff72;border-radius:12px;
+  color:#39ff72;font-size:10px;font-weight:900
+}
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px
+}
+.stat{
+  background:#050805;border:1px solid #173b24;border-radius:16px;
+  padding:13px
+}
+.stat span{display:block;color:#789080;font-size:10px}
+.stat b{display:block;margin-top:5px;font-size:19px}
+.nav{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+  margin-bottom:14px;position:sticky;top:0;z-index:20;
+  background:#000;padding:6px 0
+}
+.nav a{
+  text-align:center;text-decoration:none;color:#dfffe8;
+  background:#050805;border:1px solid #173b24;border-radius:12px;
+  padding:11px 5px;font-size:11px;font-weight:900
+}
+.nav a:hover{border-color:#39ff72;color:#39ff72}
+.section{
+  background:#030503;border:1px solid #173b24;border-radius:20px;
+  padding:14px;margin-bottom:14px;scroll-margin-top:70px
+}
+.section-head{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:10px;margin-bottom:12px
+}
+.section-head h2{font-size:18px;margin:0}
+.section-head span{font-size:10px;color:#708879}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{
+  background:#050805;border:1px solid #173b24;border-radius:16px;
+  padding:13px
+}
+.card h3{margin:0 0 6px;font-size:14px}
+.meta{font-size:11px;color:#829589;line-height:1.65}
+.green{color:#39ff72}
+.yellow{color:#ffd84d}
+.red{color:#ff6262}
+.btn{
+  border:0;border-radius:10px;padding:10px 12px;
+  font-weight:900;font-size:11px;cursor:pointer
+}
+.btn-green{background:#39ff72;color:#001507}
+.btn-dark{background:#0a110c;color:#dfffe8;border:1px solid #20482b}
+.btn-red{background:#ff4545;color:#180000}
+.btn-yellow{background:#ffd84d;color:#171200}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+form{margin:0}
+input,textarea,select{
+  width:100%;background:#020402;color:#fff;
+  border:1px solid #20482b;border-radius:10px;padding:10px;
+  outline:none;margin-top:6px
+}
+input:focus,textarea:focus,select:focus{border-color:#39ff72}
+label{font-size:10px;color:#849889;font-weight:800}
+.user-row,.tx-row,.deposit-row{
+  background:#050805;border:1px solid #173b24;border-radius:15px;
+  padding:12px;margin-bottom:8px
+}
+.row-top{display:flex;justify-content:space-between;gap:10px}
+.row-top b{font-size:13px}
+.pill{
+  display:inline-block;padding:4px 7px;border-radius:8px;
+  background:#0a150d;color:#8effad;font-size:9px;font-weight:900
+}
+.empty{
+  text-align:center;padding:25px;color:#657568;
+  border:1px dashed #173b24;border-radius:14px
+}
+.chat-link{
+  display:block;text-decoration:none;color:#39ff72;
+  font-weight:900;font-size:12px;margin-top:8px
+}
+.broadcast textarea{min-height:90px}
+@media(max-width:700px){
+ .stats{grid-template-columns:repeat(2,1fr)}
+ .grid{grid-template-columns:1fr}
+ .nav{grid-template-columns:repeat(2,1fr)}
+ .topbar{align-items:flex-start}
+}
+</style>
+
+<div class="admin-shell">
+<div class="admin-wrap">
+
+<div class="topbar">
+  <div class="brand">
+    <small>PRIVATE ADMINISTRATION</small>
+    <h1>CONTROL CENTER</h1>
+  </div>
+  <div class="admin-badge">ADMIN</div>
+</div>
+
+<div class="stats">
+  <div class="stat"><span>USERS</span><b>{{ users|length }}</b></div>
+  <div class="stat"><span>TRANSACTIONS</span><b>{{ tx|length }}</b></div>
+  <div class="stat"><span>DEPOSITS</span><b>{{ deposits|length }}</b></div>
+  <div class="stat"><span>WITHDRAWALS</span><b>{{ withdrawals|length }}</b></div>
+</div>
+
+<div class="nav">
+  <a href="#money">💰 MONEY</a>
+  <a href="#users">👥 USERS</a>
+  <a href="#products">📦 PRODUCTS</a>
+  <a href="#communication">💬 COMMUNICATION</a>
+  <a href="#gifts">🎁 GIFT CODES</a>
+  <a href="#transactions">🧾 TRANSACTIONS</a>
+  <a href="#broadcast">📢 BROADCAST</a>
+  <a href="#system">⚙️ SYSTEM</a>
+</div>
+
+<!-- MONEY -->
+<section class="section" id="money">
+<div class="section-head">
+  <h2>💰 Money Operations</h2>
+  <span>REAL TRANSACTION CONTROLS</span>
+</div>
+
+<div class="grid">
+
+<div class="card">
+<h3>Deposits</h3>
+<div class="meta">Review submitted deposits and approve or reject pending transactions.</div>
+{% for d in deposits[:20] %}
+<div class="deposit-row">
+  <div class="row-top">
+    <b>{{ d["display_name"] or d["phone"] or ("User "+d["uid"]|string) }}</b>
+    <span class="pill">{{ d["status"] or d["deposit_status"] }}</span>
+  </div>
+  <div class="meta">
+    UGX {{ "{:,.0f}".format(d["amount"] or 0) }}
+    {% if d["deposit_method"] %} · {{ d["deposit_method"] }}{% endif %}
+    {% if d["deposit_agent"] %} · {{ d["deposit_agent"] }}{% endif %}
+    {% if d["reference"] %}<br>Ref: {{ d["reference"] }}{% endif %}
+    {% if d["deposit_proof"] %}<br>Proof: {{ d["deposit_proof"] }}{% endif %}
+  </div>
+  {% if d["id"] and d["status"]=="PENDING" %}
+  <div class="actions">
+    <form method="post" action="{{ url_for('admin_transaction',tid=d['id'],action='approve') }}">
+      <button class="btn btn-green">APPROVE</button>
+    </form>
+    <form method="post" action="{{ url_for('admin_transaction',tid=d['id'],action='reject') }}">
+      <button class="btn btn-red">REJECT</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="empty">No submitted deposits.</div>
+{% endfor %}
+</div>
+
+<div class="card">
+<h3>Withdrawals</h3>
+<div class="meta">Review withdrawal requests and process their status.</div>
+{% for w in withdrawals[:20] %}
+<div class="withdraw-row" style="margin-top:9px">
+  <div class="row-top">
+    <b>{{ w["display_name"] or w["phone"] or ("User "+w["uid"]|string) }}</b>
+    <span class="pill">{{ w["status"] }}</span>
+  </div>
+  <div class="meta">
+    UGX {{ "{:,.0f}".format(w["amount"] or 0) }}
+    {% if w["withdraw_method"] %} · {{ w["withdraw_method"] }}{% endif %}
+    {% if w["withdraw_destination"] %}<br>Destination: {{ w["withdraw_destination"] }}{% endif %}
+    {% if w["reference"] %}<br>{{ w["reference"] }}{% endif %}
+  </div>
+  {% if w["status"]=="PENDING" %}
+  <div class="actions">
+    <form method="post" action="{{ url_for('admin_transaction',tid=w['id'],action='approve') }}">
+      <button class="btn btn-green">APPROVE</button>
+    </form>
+    <form method="post" action="{{ url_for('admin_transaction',tid=w['id'],action='reject') }}">
+      <button class="btn btn-red">REJECT</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="empty">No withdrawals.</div>
+{% endfor %}
+</div>
+
+</div>
+</section>
+
+<!-- USERS -->
+<section class="section" id="users">
+<div class="section-head">
+  <h2>👥 User Management</h2>
+  <span>ACCOUNT CONTROL</span>
+</div>
+
+{% for u in users[:100] %}
+<div class="user-row">
+ <div class="row-top">
+   <b>{{ u["display_name"] or "User #"+u["id"]|string }}</b>
+   {% if u["is_blocked"] %}<span class="pill red">BLOCKED</span>{% else %}<span class="pill">ACTIVE</span>{% endif %}
+ </div>
+ <div class="meta">
+   ID: {{ u["id"] }} · {{ u["phone"] }}<br>
+   Balance: UGX {{ "{:,.2f}".format(u["balance"] or 0) }}<br>
+   Wallet: UGX {{ "{:,.2f}".format(u["wallet"] or 0) if "wallet" in u.keys() else "0.00" }}
+ </div>
+
+ <div class="actions">
+   {% if u["is_blocked"] %}
+   <form method="post" action="{{ url_for('admin_user_unblock',uid=u['id']) }}">
+     <button class="btn btn-green">UNBLOCK</button>
+   </form>
+   {% else %}
+   <form method="post" action="{{ url_for('admin_user_block',uid=u['id']) }}">
+     <button class="btn btn-red">BLOCK</button>
+   </form>
+   {% endif %}
+
+   <a class="btn btn-dark" href="{{ url_for('admin_support',uid=u['id']) }}">OPEN INBOX</a>
+ </div>
+
+ <form method="post" action="{{ url_for('admin_user_balance',uid=u['id']) }}" style="margin-top:9px">
+   <label>SET BALANCE</label>
+   <input type="number" step="0.01" name="amount" value="{{ u['balance'] or 0 }}">
+   <button class="btn btn-green" style="margin-top:7px">UPDATE BALANCE</button>
+ </form>
+
+ <form method="post" action="{{ url_for('admin_reset_password',uid=u['id']) }}" style="margin-top:8px">
+   <label>RESET PASSWORD</label>
+   <input type="password" name="password" placeholder="New password">
+   <button class="btn btn-dark" style="margin-top:7px">RESET PASSWORD</button>
+ </form>
+</div>
+{% else %}
+<div class="empty">No users found.</div>
+{% endfor %}
+</section>
+
+<!-- PRODUCTS -->
+<section class="section" id="products">
+<div class="section-head">
+  <h2>📦 Products & AI Machines</h2>
+  <span>LIVE CATALOG</span>
+</div>
+
+<div class="grid">
+{% for code,plan in plans.items() %}
+<div class="card">
+ <h3 class="green">{{ code }}</h3>
+ <div class="meta">
+   Price: UGX {{ "{:,.0f}".format(plan.price) }}<br>
+   Daily income: UGX {{ "{:,.0f}".format(plan.daily) }}<br>
+   Duration: {{ plan.days }} days<br>
+   Total: UGX {{ "{:,.0f}".format(plan.total) }}
+ </div>
+ <div class="pill" style="margin-top:9px">ACTIVE PRODUCT</div>
+</div>
+{% else %}
+<div class="empty">No products configured.</div>
+{% endfor %}
+</div>
+
+<div class="card" style="margin-top:10px">
+<h3>Product Administration</h3>
+<div class="meta">
+The live purchase system uses the application's configured product catalog.
+Existing purchase logic has not been replaced or duplicated here.
+</div>
+</div>
+</section>
+
+<!-- COMMUNICATION -->
+<section class="section" id="communication">
+<div class="section-head">
+  <h2>💬 Private Communication</h2>
+  <span>USER INBOXES</span>
+</div>
+
+<div class="grid">
+{% for u in users[:100] %}
+<div class="card">
+ <h3>{{ u["display_name"] or u["phone"] }}</h3>
+ <div class="meta">User #{{ u["id"] }} · {{ u["phone"] }}</div>
+ <a class="chat-link" href="{{ url_for('admin_support',uid=u['id']) }}">
+   OPEN PRIVATE CHAT →
+ </a>
+</div>
+{% else %}
+<div class="empty">No users available.</div>
+{% endfor %}
+</div>
+</section>
+
+<!-- GIFTS -->
+<section class="section" id="gifts">
+<div class="section-head">
+  <h2>🎁 Gift Codes</h2>
+  <span>CREATE · EDIT · ENABLE</span>
+</div>
+
+<div class="card">
+<form method="post" action="{{ url_for('admin_gift_create') }}">
+ <label>CUSTOM CODE (OPTIONAL)</label>
+ <input name="code" placeholder="HUT9-XXXXXXXX">
+
+ <label>REWARD AMOUNT</label>
+ <input type="number" step="0.01" name="amount" placeholder="50000" required>
+
+ <label>MAXIMUM CLAIMS</label>
+ <input type="number" name="max_uses" value="1" min="1" required>
+
+ <button class="btn btn-green" style="margin-top:9px;width:100%">
+ CREATE GIFT CODE
+ </button>
+</form>
+</div>
+
+{% for g in gifts[:100] %}
+<div class="card" style="margin-top:9px">
+ <div class="row-top">
+   <b class="green">{{ g["code"] }}</b>
+   {% if g["enabled"] %}<span class="pill">ENABLED</span>{% else %}<span class="pill red">DISABLED</span>{% endif %}
+ </div>
+ <div class="meta">
+   Reward: UGX {{ "{:,.0f}".format(g["amount"] or 0) }} ·
+   Claims: {{ g["claims"] or 0 }}/{{ g["max_uses"] or 1 }}
+ </div>
+
+ <form method="post" action="{{ url_for('admin_gift_edit',code=g['code']) }}" style="margin-top:8px">
+   <div class="grid">
+     <input type="number" step="0.01" name="amount" value="{{ g['amount'] }}">
+     <input type="number" name="max_uses" value="{{ g['max_uses'] or 1 }}" min="1">
+   </div>
+   <div class="actions">
+     <button class="btn btn-green">SAVE EDIT</button>
+   </div>
+ </form>
+
+ <div class="actions">
+   <form method="post" action="{{ url_for('admin_gift_toggle',code=g['code']) }}">
+     <button class="btn btn-dark">
+       {% if g["enabled"] %}DISABLE{% else %}ENABLE{% endif %}
+     </button>
+   </form>
+   <a class="btn btn-dark" href="{{ url_for('admin_gift_claims',code=g['code']) }}">CLAIMS</a>
+ </div>
+</div>
+{% else %}
+<div class="empty" style="margin-top:10px">No gift codes.</div>
+{% endfor %}
+</section>
+
+<!-- TRANSACTIONS -->
+<section class="section" id="transactions">
+<div class="section-head">
+  <h2>🧾 Transactions</h2>
+  <span>RECENT ACTIVITY</span>
+</div>
+
+{% for t in tx[:100] %}
+<div class="tx-row">
+ <div class="row-top">
+   <b>{{ t["kind"] }}</b>
+   <span class="pill">{{ t["status"] }}</span>
+ </div>
+ <div class="meta">
+   User: {{ t["display_name"] or t["phone"] or t["uid"] }}<br>
+   Amount: UGX {{ "{:,.2f}".format(t["amount"] or 0) }}<br>
+   {% if t["reference"] %}Reference: {{ t["reference"] }}<br>{% endif %}
+   {{ t["created_at"] }}
+ </div>
+ {% if t["status"]=="PENDING" %}
+ <div class="actions">
+   <form method="post" action="{{ url_for('admin_transaction',tid=t['id'],action='approve') }}">
+     <button class="btn btn-green">APPROVE</button>
+   </form>
+   <form method="post" action="{{ url_for('admin_transaction',tid=t['id'],action='reject') }}">
+     <button class="btn btn-red">REJECT</button>
+   </form>
+ </div>
+ {% endif %}
+</div>
+{% else %}
+<div class="empty">No transactions.</div>
+{% endfor %}
+</section>
+
+<!-- BROADCAST -->
+<section class="section" id="broadcast">
+<div class="section-head">
+  <h2>📢 Broadcast</h2>
+  <span>ALL USERS</span>
+</div>
+
+<div class="card broadcast">
+<form method="post" action="{{ url_for('admin_broadcast') }}" enctype="multipart/form-data">
+ <label>MESSAGE TO ALL USERS</label>
+ <textarea name="message" placeholder="Write your announcement..."></textarea>
+
+ <label>IMAGE / VIDEO / AUDIO</label>
+ <input type="file" name="media" accept="image/*,video/*,audio/*">
+
+ <div class="meta" style="margin-top:8px">
+   You can also include a normal clickable URL in the message.
+ </div>
+
+ <button class="btn btn-green" style="width:100%;margin-top:10px">
+   SEND TO ALL USERS
+ </button>
+</form>
+</div>
+
+<div class="card" style="margin-top:10px">
+<h3>Announcements</h3>
+{% for a in announcements %}
+<div class="meta" style="padding:8px 0;border-bottom:1px solid #102416">
+ {{ a["message"] if "message" in a.keys() else a["title"] if "title" in a.keys() else a }}
+</div>
+{% else %}
+<div class="empty">No announcements.</div>
+{% endfor %}
+</div>
+</section>
+
+<!-- SYSTEM -->
+<section class="section" id="system">
+<div class="section-head">
+  <h2>⚙️ Administration</h2>
+  <span>SECURITY & RECORDS</span>
+</div>
+
+<div class="grid">
+ <a class="card" href="{{ url_for('admin_activity') }}" style="text-decoration:none;color:inherit">
+   <h3>📝 Admin Activity</h3>
+   <div class="meta">Review administrative actions and audit records.</div>
+ </a>
+
+ <div class="card">
+   <h3>🔐 Access</h3>
+   <div class="meta">Admin access is protected by the existing admin authorization system.</div>
+ </div>
+
+ <div class="card">
+   <h3>💬 Communication</h3>
+   <div class="meta">Private conversations are opened directly against the selected user. Managers are not displayed in this panel.</div>
+ </div>
+
+ <div class="card">
+   <h3>🛡️ Financial Safety</h3>
+   <div class="meta">Deposit and withdrawal approval continues through the existing transaction backend.</div>
+ </div>
+</div>
+</section>
+
+</div>
+</div>
+
+{% endblock %}

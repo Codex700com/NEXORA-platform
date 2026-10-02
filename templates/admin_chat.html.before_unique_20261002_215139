@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+*{box-sizing:border-box}
+body{background:#000!important}
+
+.admin-chat-page{
+    min-height:100vh;
+    background:#000;
+    color:#f2fff6;
+    font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    padding-bottom:90px
+}
+
+.chat-top{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(0,0,0,.96);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid #173b24;
+    padding:13px
+}
+.chat-top-inner{
+    max-width:850px;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    gap:11px
+}
+.back{
+    color:#39ff72;
+    text-decoration:none;
+    font-size:22px;
+    width:35px
+}
+.user-avatar{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:#092412;
+    color:#39ff72;
+    font-weight:900
+}
+.user-info{min-width:0}
+.user-info strong{display:block}
+.user-info small{color:#789080}
+
+.messages{
+    max-width:850px;
+    margin:auto;
+    padding:18px 12px 30px;
+    display:flex;
+    flex-direction:column;
+    gap:9px
+}
+.msg{
+    max-width:82%;
+    padding:10px 12px;
+    border-radius:17px;
+    border:1px solid #14351f;
+    background:#060906;
+    overflow-wrap:anywhere
+}
+.msg.admin{
+    align-self:flex-end;
+    background:#092412;
+    border-color:#39ff72
+}
+.msg.user{align-self:flex-start}
+.msg-text{line-height:1.45}
+.msg img,.msg video{
+    display:block;
+    max-width:100%;
+    border-radius:12px;
+    margin-top:8px
+}
+.msg audio{
+    display:block;
+    width:100%;
+    margin-top:8px
+}
+.msg a{
+    color:#39ff72;
+    word-break:break-all
+}
+.time{
+    font-size:9px;
+    color:#668071;
+    margin-top:5px
+}
+
+.composer{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:30;
+    background:rgba(0,0,0,.97);
+    border-top:1px solid #173b24;
+    padding:8px
+}
+.composer-inner{
+    max-width:850px;
+    margin:auto;
+    display:flex;
+    align-items:flex-end;
+    gap:7px
+}
+.composer textarea{
+    flex:1;
+    min-height:42px;
+    max-height:120px;
+    resize:none;
+    background:#050805;
+    color:#fff;
+    border:1px solid #173b24;
+    border-radius:14px;
+    padding:11px
+}
+.tool{
+    width:43px;
+    height:43px;
+    border-radius:13px;
+    background:#071009;
+    color:#39ff72;
+    border:1px solid #173b24;
+    cursor:pointer;
+    font-size:18px
+}
+.send{
+    width:55px;
+    height:43px;
+    border:0;
+    border-radius:13px;
+    background:#39ff72;
+    color:#001507;
+    font-weight:900;
+    cursor:pointer
+}
+.recording{
+    border-color:#ff4040!important;
+    color:#ff4040!important
+}
+.selected{
+    font-size:10px;
+    color:#39ff72;
+    padding:4px 2px
+}
+</style>
+
+<div class="admin-chat-page">
+
+    <div class="chat-top">
+        <div class="chat-top-inner">
+
+            <a class="back"
+               href="{{ url_for('admin') }}"
+               onclick="sessionStorage.setItem('adminChatScroll',window.scrollY)">
+                ‹
+            </a>
+
+            <div class="user-avatar">
+                {{ ((user['display_name'] or user['phone'] or 'U')[0])|upper }}
+            </div>
+
+            <div class="user-info">
+                <strong>{{ user['display_name'] or user['phone'] or ('User #' ~ uid) }}</strong>
+                <small>{{ user['phone'] or ('User ID #' ~ uid) }}</small>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="messages" id="messages">
+
+        {% for m in messages %}
+        <div class="msg {{ 'admin' if m['sender']=='ADMIN' else 'user' }}">
+
+            {% if m['message'] %}
+            <div class="msg-text message-content">
+                {{ m['message']|e|replace('\n','<br>')|safe }}
+            </div>
+            {% endif %}
+
+            {% if m['media'] %}
+                {% set media=m['media'] %}
+
+                {% if media.lower().endswith(('.jpg','.jpeg','.png','.gif','.webp')) %}
+                    <img src="{{ media }}">
+                {% elif media.lower().endswith(('.mp4','.mov','.m4v')) %}
+                    <video controls src="{{ media }}"></video>
+                {% elif media.lower().endswith(('.mp3','.wav','.ogg','.m4a','.webm')) %}
+                    <audio controls src="{{ media }}"></audio>
+                {% else %}
+                    <a href="{{ media }}" target="_blank">{{ media }}</a>
+                {% endif %}
+            {% endif %}
+
+            <div class="time">{{ m['created_at'] }}</div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <form class="composer"
+          id="chatForm"
+          method="post"
+          action="{{ url_for('admin_support_send') }}"
+          enctype="multipart/form-data">
+
+        <input type="hidden" name="uid" value="{{ uid }}">
+
+        <div class="composer-inner">
+
+            <button class="tool"
+                    type="button"
+                    id="voiceBtn"
+                    title="Record voice">🎤</button>
+
+            <label class="tool"
+                   title="Image / video / audio">
+                📎
+                <input id="media"
+                       name="media"
+                       type="file"
+                       accept="image/*,video/*,audio/*"
+                       hidden>
+            </label>
+
+            <textarea name="message"
+                      id="message"
+                      rows="1"
+                      placeholder="Message or paste a link..."></textarea>
+
+            <button class="send"
+                    id="sendBtn"
+                    type="submit">➤</button>
+        </div>
+
+        <div id="selectedFile"></div>
+    </form>
+
+</div>
+
+<script>
+const box=document.getElementById("messages");
+const form=document.getElementById("chatForm");
+const media=document.getElementById("media");
+const message=document.getElementById("message");
+const voiceBtn=document.getElementById("voiceBtn");
+const selectedFile=document.getElementById("selectedFile");
+
+function goBottom(){
+    requestAnimationFrame(()=>{
+        window.scrollTo(0,document.body.scrollHeight);
+    });
+}
+
+goBottom();
+
+media.addEventListener("change",()=>{
+    if(media.files.length){
+        selectedFile.textContent="Attached: "+media.files[0].name;
+    }else{
+        selectedFile.textContent="";
+    }
+});
+
+message.addEventListener("input",()=>{
+    message.style.height="auto";
+    message.style.height=Math.min(message.scrollHeight,120)+"px";
+});
+
+let recorder=null;
+let chunks=[];
+
+voiceBtn.onclick=async()=>{
+    if(recorder && recorder.state==="recording"){
+        recorder.stop();
+        voiceBtn.classList.remove("recording");
+        voiceBtn.textContent="🎤";
+        return;
+    }
+
+    try{
+        const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+
+        recorder=new MediaRecorder(stream);
+        chunks=[];
+
+        recorder.ondataavailable=e=>{
+            if(e.data.size) chunks.push(e.data);
+        };
+
+        recorder.onstop=()=>{
+            const blob=new Blob(chunks,{type:recorder.mimeType||"audio/webm"});
+            const file=new File([blob],"admin_voice.webm",{type:blob.type});
+            const dt=new DataTransfer();
+            dt.items.add(file);
+            media.files=dt.files;
+            selectedFile.textContent="Voice recording attached";
+            stream.getTracks().forEach(t=>t.stop());
+        };
+
+        recorder.start();
+        voiceBtn.classList.add("recording");
+        voiceBtn.textContent="⏹";
+    }catch(e){
+        alert("Microphone permission is required.");
+    }
+};
+
+form.addEventListener("submit",async(e)=>{
+    e.preventDefault();
+
+    const btn=document.getElementById("sendBtn");
+    btn.disabled=true;
+
+    const fd=new FormData(form);
+    fd.append("ajax","1");
+
+    try{
+        const r=await fetch(form.action,{
+            method:"POST",
+            body:fd,
+            headers:{"X-Requested-With":"XMLHttpRequest"}
+        });
+
+        if(!r.ok) throw new Error("send failed");
+
+        message.value="";
+        message.style.height="auto";
+        media.value="";
+        selectedFile.textContent="";
+
+        /*
+         Reload only the conversation itself.
+         The scroll is restored to the bottom, so the admin
+         never gets thrown back to the admin dashboard.
+        */
+        sessionStorage.setItem("stayInAdminChat","1");
+        location.reload();
+
+    }catch(err){
+        alert("Message could not be sent.");
+    }finally{
+        btn.disabled=false;
+    }
+});
+
+window.addEventListener("load",goBottom);
+</script>
+
+{% endblock %}

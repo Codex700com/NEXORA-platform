@@ -29,55 +29,9 @@ textarea{min-height:100px;resize:vertical}
 
 <div class="head">
 <small>PLATFORM CONFIGURATION</small>
-<div style="color:#39ff72;font-weight:900;margin-bottom:8px">PRODUCTS & RAFFLE ARE EDITABLE</div><h1>PAGE & MACHINE EDITOR</h1>
+<h1>PAGE & MACHINE EDITOR</h1>
 <p>Edit platform content and machine configuration from one dedicated administration screen.</p>
 </div>
-
-<!-- CONNECTED_GLOBAL_DESIGN_EDITOR -->
-<section class="section">
-<h2>🎨 Global Platform Design</h2>
-<p class="note">These settings apply across the platform through the main layout.</p>
-
-<form method="post" action="{{ url_for('admin_editor_design') }}">
-
-<label>PLATFORM NAME</label>
-<input name="platform_name"
-       value="{{ platform_name|default('NEXORA') }}">
-
-<label>ACCENT COLOUR</label>
-<input name="accent_color"
-       value="{{ platform_accent|default('#39ff72') }}"
-       placeholder="#39ff72">
-
-<label>BACKGROUND COLOUR</label>
-<input name="background_color"
-       value="{{ platform_bg|default('#000000') }}"
-       placeholder="#000000">
-
-<label>CARD COLOUR</label>
-<input name="card_color"
-       value="{{ platform_card|default('#071009') }}"
-       placeholder="#071009">
-
-<label>TEXT COLOUR</label>
-<input name="text_color"
-       value="{{ platform_text|default('#ffffff') }}"
-       placeholder="#ffffff">
-
-<label>CARD CORNER RADIUS</label>
-<input type="number"
-       name="card_radius"
-       min="0"
-       max="40"
-       value="{{ platform_radius|default('16') }}">
-
-<button class="save" type="submit">
-SAVE GLOBAL DESIGN
-</button>
-
-</form>
-</section>
-<!-- END_CONNECTED_GLOBAL_DESIGN_EDITOR -->
 
 <section class="section">
 <h2>🤖 Machine Editor</h2>
@@ -158,79 +112,6 @@ SAVE GLOBAL DESIGN
 </div>
 </section>
 
-<!-- CONNECTED_MANAGER_EDITOR -->
-<section class="section">
-<h2>👥 Manager Editor</h2>
-
-<form method="post"
-      action="{{ url_for('admin_editor_manager_create') }}"
-      class="card">
-
-<h3>Add Manager</h3>
-
-<label>NAME</label>
-<input name="name" required>
-
-<label>PHONE</label>
-<input name="phone" required>
-
-<label>ROLE</label>
-<input name="role" value="NEXORA Manager">
-
-<label>AVATAR</label>
-<input name="avatar" value="👤">
-
-<button class="save" type="submit">ADD MANAGER</button>
-
-</form>
-
-<div class="grid" style="margin-top:12px">
-
-{% for m in managers %}
-
-<div class="card">
-
-<h3>{{ m["name"] }}</h3>
-
-<form method="post"
-      action="{{ url_for('admin_editor_manager',mid=m['id']) }}">
-
-<label>NAME</label>
-<input name="name" value="{{ m['name'] }}" required>
-
-<label>PHONE</label>
-<input name="phone" value="{{ m['phone'] }}" required>
-
-<label>ROLE</label>
-<input name="role" value="{{ m['role']|default('NEXORA Manager') }}">
-
-<label>AVATAR</label>
-<input name="avatar" value="{{ m['avatar']|default('👤') }}">
-
-<button class="save" type="submit">SAVE MANAGER</button>
-
-</form>
-
-<form method="post"
-      action="{{ url_for('admin_editor_manager_disable',mid=m['id']) }}"
-      style="margin-top:8px">
-
-<button class="save"
-        type="submit"
-        onclick="return confirm('Disable this manager?')">
-DISABLE MANAGER
-</button>
-
-</form>
-
-</div>
-
-{% endfor %}
-
-</div>
-</section>
-<!-- END_CONNECTED_MANAGER_EDITOR -->
-
 <section class="section">
 <h2>⚙️ Platform Settings</h2>
 <div class="grid">
@@ -252,14 +133,4 @@ DISABLE MANAGER
 </section>
 
 </div>
-<section style="margin-top:18px;padding:16px;border:1px solid #173b24;border-radius:16px;background:#050805">
-<h2 style="color:#39ff72">Raffle Editor</h2>
-<form method="post" action="{{ url_for('admin_editor_page',page='raffle') }}">
-<input name="title" placeholder="Raffle title">
-<input name="subtitle" placeholder="Raffle subtitle">
-<textarea name="content" placeholder="Raffle instructions/content"></textarea>
-<label><input type="checkbox" name="enabled" value="1" checked> Show editable section</label>
-<button type="submit">SAVE RAFFLE</button>
-</form>
-</section>
 {% endblock %}

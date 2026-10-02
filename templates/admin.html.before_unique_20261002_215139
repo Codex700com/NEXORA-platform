@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+*{box-sizing:border-box}
+body{background:#000!important}
+.admin-center{
+    min-height:100vh;
+    background:#000;
+    color:#f2fff6;
+    padding:18px 12px 100px;
+    font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+}
+.admin-wrap{max-width:900px;margin:auto}
+
+.admin-brand{
+    padding:22px;
+    border-radius:24px;
+    background:
+      radial-gradient(circle at top right,rgba(57,255,114,.13),transparent 35%),
+      #050805;
+    border:1px solid #173b24;
+    margin-bottom:14px
+}
+.admin-brand .eyebrow{
+    color:#39ff72;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:2px
+}
+.admin-brand h1{
+    margin:7px 0 4px;
+    font-size:30px;
+    letter-spacing:-1px
+}
+.admin-brand p{
+    margin:0;
+    color:#91a99a;
+    font-size:13px
+}
+
+.mode-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:14px
+}
+.mode{
+    display:block;
+    text-decoration:none;
+    color:#fff;
+    padding:17px;
+    border-radius:18px;
+    background:#050805;
+    border:1px solid #173b24
+}
+.mode.active{
+    border-color:#39ff72;
+    box-shadow:0 0 20px rgba(57,255,114,.08)
+}
+.mode-icon{font-size:22px}
+.mode strong{display:block;margin-top:8px}
+.mode small{display:block;color:#8fa99a;margin-top:4px}
+
+.panel{
+    background:#050805;
+    border:1px solid #173b24;
+    border-radius:22px;
+    padding:15px;
+    margin-bottom:14px
+}
+.panel-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px
+}
+.panel-title h2{
+    margin:0;
+    font-size:17px
+}
+.count{
+    color:#39ff72;
+    font-size:12px;
+    font-weight:900
+}
+
+.broadcast textarea{
+    width:100%;
+    min-height:100px;
+    resize:vertical;
+    background:#020402;
+    color:#fff;
+    border:1px solid #173b24;
+    border-radius:15px;
+    padding:13px;
+    outline:none
+}
+.broadcast textarea:focus{border-color:#39ff72}
+.broadcast-tools{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    flex-wrap:wrap
+}
+.file-btn,.send-btn{
+    border:0;
+    border-radius:12px;
+    padding:12px 15px;
+    font-weight:900;
+    cursor:pointer
+}
+.file-btn{
+    background:#071009;
+    color:#39ff72;
+    border:1px solid #173b24
+}
+.send-btn{
+    background:#39ff72;
+    color:#001507;
+    margin-left:auto
+}
+.user-list{display:grid;gap:8px}
+.user-card{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:13px;
+    background:#020402;
+    border:1px solid #12331e;
+    border-radius:16px;
+    text-decoration:none;
+    color:#fff;
+    transition:.15s
+}
+.user-card:hover{
+    border-color:#39ff72;
+    transform:translateY(-1px)
+}
+.avatar{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:#092412;
+    color:#39ff72;
+    font-weight:900;
+    flex:none
+}
+.user-main{min-width:0;flex:1}
+.user-phone{font-weight:800}
+.user-id{font-size:11px;color:#708778;margin-top:3px}
+.open{
+    color:#39ff72;
+    font-size:12px;
+    font-weight:900
+}
+.empty{
+    padding:25px;
+    text-align:center;
+    color:#789080
+}
+
+@media(max-width:600px){
+    .mode-grid{grid-template-columns:1fr}
+    .admin-brand h1{font-size:25px}
+}
+</style>
+
+<div class="admin-center">
+<div class="admin-wrap">
+
+    <div class="admin-brand">
+        <div class="eyebrow">PRIVATE ADMIN SYSTEM</div>
+        <h1>Communication Center</h1>
+        <p>Direct control of platform messaging. No manager layer.</p>
+    </div>
+
+    <div class="mode-grid">
+        <a class="mode active" href="#broadcast">
+            <div class="mode-icon">📢</div>
+            <strong>Broadcast</strong>
+            <small>Send one message to every registered user.</small>
+        </a>
+
+        <a class="mode" href="#inboxes">
+            <div class="mode-icon">✉️</div>
+            <strong>Inbox Users</strong>
+            <small>Open a private conversation with one user.</small>
+        </a>
+    </div>
+
+    <section class="panel broadcast" id="broadcast">
+        <div class="panel-title">
+            <h2>Broadcast to all users</h2>
+            <span class="count">{{ users|length }} users</span>
+        </div>
+
+        <form method="post"
+              action="{{ url_for('admin_broadcast') }}"
+              enctype="multipart/form-data">
+
+            <textarea name="message"
+                      placeholder="Write an announcement, paste a link, or send a message..."></textarea>
+
+            <div class="broadcast-tools">
+                <label class="file-btn">
+                    📎 Attach
+                    <input name="media"
+                           type="file"
+                           accept="image/*,video/*,audio/*"
+                           hidden>
+                </label>
+
+                <button class="send-btn" type="submit">
+                    SEND TO ALL
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section class="panel" id="inboxes">
+        <div class="panel-title">
+            <h2>User Inboxes</h2>
+            <span class="count">REAL USERS</span>
+        </div>
+
+        {% if users %}
+        <div class="user-list">
+            {% for u in users %}
+            <a class="user-card"
+               href="{{ url_for('admin_support',uid=u['id']) }}">
+
+                <div class="avatar">
+                    {{ ((u['display_name'] or u['phone'] or 'U')[0])|upper }}
+                </div>
+
+                <div class="user-main">
+                    <div class="user-phone">
+                        {{ u['display_name'] or u['phone'] or ('User #' ~ u['id']) }}
+                    </div>
+                    <div class="user-id">
+                        {{ u['phone'] or ('User ID #' ~ u['id']) }}
+                    </div>
+                </div>
+
+                <div class="open">OPEN →</div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">No registered users found.</div>
+        {% endif %}
+    </section>
+
+</div>
+</div>
+
+{% endblock %}

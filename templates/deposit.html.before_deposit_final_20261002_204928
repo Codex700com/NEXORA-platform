@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.deposit-page{padding:18px 4px 110px;color:#eefaf2;max-width:620px;margin:auto}
+.deposit-head{margin-bottom:18px}.deposit-kicker{color:#39ff88;font-size:9px;font-weight:900;letter-spacing:2px}
+.deposit-title{margin:7px 0 5px;font-size:27px;font-weight:900}.deposit-sub{color:#789382;font-size:11px;line-height:1.55}
+.deposit-card,.payment-box,.success-box{background:#050805;border:1px solid #154b2c;border-radius:18px;padding:17px;margin-bottom:12px}
+.deposit-label,.method-title,.quick-title,.tid-label{display:block;color:#789382;font-size:10px;font-weight:800;margin-bottom:9px}
+.deposit-input,.tid-input{width:100%;box-sizing:border-box;padding:14px;border-radius:12px;border:1px solid #174b2c;background:#030806;color:#fff;font-size:17px;outline:none}
+.quick-title{margin-top:17px}.amount-grid,.method-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.method-grid{grid-template-columns:1fr 1fr}.amount-btn{height:48px;border-radius:11px;border:1px solid #154b2c;background:#030806;color:#b9d9c4;font-weight:900}
+.amount-btn.active,.method input:checked+.method-box,.deposit-submit,.submit-btn,.modal-close{background:#18d66b;color:#031008;border-color:#18d66b}
+.method{position:relative}.method input{position:absolute;opacity:0}.method-box{display:block;text-align:center;padding:16px 8px;border-radius:13px;background:#030806;border:1px solid #154b2c;color:#b9d9c4;font-size:11px;font-weight:900}
+.deposit-submit,.submit-btn{width:100%;border:0;border-radius:13px;padding:14px;font-size:12px;font-weight:900;margin-top:15px}
+.deposit-note,.success-text{color:#789382;font-size:10px;line-height:1.6;text-align:center;margin-top:12px}
+.error-box{background:#160706;border:1px solid #71352d;color:#ffb5ab;border-radius:12px;padding:12px;margin-bottom:12px;font-size:11px}
+.payment-box{border-color:#19e66b;box-shadow:0 0 18px rgba(25,230,107,.12)}
+.payment-title{font-size:18px;font-weight:900;color:#19e66b}.payment-amount{margin-top:10px;color:#fff;font-weight:800}
+.payment-number{margin-top:16px;font-size:27px;font-weight:900;color:#fff}.payment-name{color:#b9c9bf;margin-top:3px}
+.payment-method{display:inline-block;margin-top:12px;padding:6px 9px;border-radius:8px;background:#0b2113;color:#39ff88;font-size:10px;font-weight:900}
+.timer-box{margin-top:16px;padding:13px;border-radius:13px;background:#0a1710;text-align:center;border:1px solid #173b24}
+.timer-label{color:#b9c9bf;font-size:11px}#depositTimer{font-size:32px;font-weight:900;color:#19e66b;margin-top:3px}
+.tid-label{margin-top:15px}.submit-btn:disabled{opacity:.45}.success-box{text-align:center;border-color:#19e66b}
+.success-icon{font-size:34px;color:#19e66b}.success-title{margin-top:8px;font-size:18px;font-weight:900}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999}
+.modal-card{width:100%;max-width:390px;background:#050805;border:1px solid #19e66b;border-radius:20px;padding:20px}
+.modal-title{color:#19e66b;font-size:18px;font-weight:900}.modal-text{color:#c7d9cd;font-size:12px;line-height:1.6;margin-top:10px}
+.modal-close{width:100%;margin-top:15px;padding:13px;border:0;border-radius:12px;font-weight:900}
+</style>
+<div class="deposit-page">
+<div class="deposit-head"><div class="deposit-kicker">NEXORA WALLET</div><div class="deposit-title">Deposit</div><div class="deposit-sub">Add funds to your NEXORA balance using mobile money.</div></div>
+{% if error %}<div class="error-box">{{ error }}</div>{% endif %}
+
+{% if stage=="amount" %}
+<form method="POST" action="{{ url_for("deposit") }}">
+<input type="hidden" name="action" value="start">
+<div class="deposit-card">
+<label class="deposit-label">ENTER AMOUNT</label>
+<input class="deposit-input" id="amount" name="amount" type="number" min="20000" step="1000" placeholder="Enter amount in UGX" required>
+<div class="quick-title">QUICK AMOUNT</div>
+<div class="amount-grid">
+<button type="button" class="amount-btn" data-value="20000">20K</button><button type="button" class="amount-btn" data-value="50000">50K</button><button type="button" class="amount-btn" data-value="100000">100K</button><button type="button" class="amount-btn" data-value="250000">250K</button><button type="button" class="amount-btn" data-value="500000">500K</button><button type="button" class="amount-btn" data-value="1000000">1M</button><button type="button" class="amount-btn" data-value="2000000">2M</button><button type="button" class="amount-btn" data-value="3000000">3M</button><button type="button" class="amount-btn" data-value="5000000">5M</button>
+</div>
+<button class="deposit-submit" type="submit">CONTINUE</button>
+<div class="deposit-note">Minimum deposit: UGX 20,000</div>
+</div></form>
+
+{% elif stage=="method" %}
+<form method="POST" action="{{ url_for("deposit") }}">
+<input type="hidden" name="action" value="method">
+<div class="deposit-card"><div class="method-title">CHOOSE PAYMENT METHOD</div>
+<div class="method-grid">
+<label class="method"><input type="radio" name="method" value="MTN" required><span class="method-box">MTN MONEY</span></label>
+<label class="method"><input type="radio" name="method" value="Airtel" required><span class="method-box">AIRTEL MONEY</span></label>
+</div>
+<button class="deposit-submit" type="submit">CONTINUE</button>
+</div></form>
+
+{% elif stage=="agent" %}
+<div class="payment-box">
+<div class="payment-title">Payment Instructions</div>
+<div class="payment-amount">Send UGX {{ "{:,.0f}".format(deposit.amount) }}</div>
+<div class="payment-number">{{ deposit.agent.split(" (")[0] }}</div>
+<div class="payment-name">{{ deposit.agent.split(" (")[1].replace(")","") if " (" in deposit.agent else "" }}</div>
+<div class="payment-method">{{ deposit.payment_method }} MONEY</div>
+<div class="timer-box"><div class="timer-label">Complete payment and submit your Transaction ID within</div><div id="depositTimer">05:00</div></div>
+<form id="depositProofForm" method="POST" action="{{ url_for("deposit") }}">
+<input type="hidden" name="action" value="proof">
+<label class="tid-label">TRANSACTION ID</label>
+<input id="transactionId" class="tid-input" name="transaction_id" type="text" inputmode="numeric" autocomplete="off" placeholder="Enter Transaction ID" required>
+<button id="submitApproval" class="submit-btn" type="submit">SUBMIT FOR APPROVAL</button>
+</form></div>
+<script>
+(function(){
+const t=document.getElementById("depositTimer"),b=document.getElementById("submitApproval"),i=document.getElementById("transactionId"),f=document.getElementById("depositProofForm");
+const expiry=new Date({{ deposit.expires_at|tojson }});
+function tick(){let r=Math.max(0,Math.floor((expiry.getTime()-Date.now())/1000));t.textContent=String(Math.floor(r/60)).padStart(2,"0")+":"+String(r%60).padStart(2,"0");if(r<=0){b.disabled=true;i.disabled=true;i.placeholder="Payment window expired";return}setTimeout(tick,1000)}tick();
+f.addEventListener("submit",function(e){if(Date.now()>=expiry.getTime()){e.preventDefault();alert("The 5-minute payment window has expired. Please start a new deposit.");location.reload();return}if(!i.value.trim()){e.preventDefault();i.focus();return}b.disabled=true;b.textContent="SUBMITTING..."});
+})();
+</script>
+<div class="modal" id="paymentNotice"><div class="modal-card"><div class="modal-title">Payment Required</div><div class="modal-text">Send the exact amount to <strong>{{ deposit.agent }}</strong> using {{ deposit.payment_method }} Money.<br><br>You have 5 minutes to complete payment and submit the Transaction ID.</div><button class="modal-close" onclick="document.getElementById("paymentNotice").style.display="none" type="button">OK, I WILL PAY</button></div></div>
+
+{% elif stage=="review" %}
+<div class="success-box"><div class="success-icon">✓</div><div class="success-title">Deposit Submitted</div><div class="success-text">Your deposit request has been submitted for approval.<br><br>Amount: <strong>UGX {{ "{:,.0f}".format(deposit.amount) }}</strong><br>Payment method: <strong>{{ deposit.payment_method }}</strong><br>Transaction ID: <strong>{{ deposit.proof }}</strong><br><br>Approval can take up to 24 hours.</div></div>
+{% endif %}
+</div>
+<script>document.querySelectorAll(".amount-btn").forEach(function(b){b.onclick=function(){document.getElementById("amount").value=b.dataset.value;document.querySelectorAll(".amount-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active")}});</script>
+{% endblock %}

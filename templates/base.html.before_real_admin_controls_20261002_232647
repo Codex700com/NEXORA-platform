@@ -71,47 +71,4 @@ input,select,textarea{
 
 
 
-</div><div class="page"><div class="box">{% with messages=get_flashed_messages(with_categories=true) %}{% for cat,msg in messages %}<div class="flash {{cat}}">{{msg}}</div>{% endfor %}{% endwith %}<!-- CONNECTED_GLOBAL_PLATFORM_THEME -->
-<style>
-:root{
-  --platform-accent:{{ platform_accent|default("#39ff72") }};
-  --platform-bg:{{ platform_bg|default("#000000") }};
-  --platform-card:{{ platform_card|default("#071009") }};
-  --platform-text:{{ platform_text|default("#ffffff") }};
-  --platform-radius:{{ platform_radius|default("16") }}px;
-}
-
-html,body{
-  background:var(--platform-bg)!important;
-  color:var(--platform-text)!important;
-}
-
-a{
-  color:var(--platform-accent);
-}
-
-button,
-.btn,
-.action,
-.primary{
-  border-radius:var(--platform-radius)!important;
-}
-
-.card,
-.box,
-.panel,
-.section-card{
-  border-radius:var(--platform-radius)!important;
-}
-</style>
-<!-- END_CONNECTED_GLOBAL_PLATFORM_THEME -->
-
-{% block content %}
-<!-- ADMIN_EDITABLE_PAGE_BANNER -->
-{% if page_settings is defined and page_settings and page_settings.get('enabled',1) and (page_settings.get('title') or page_settings.get('subtitle') or page_settings.get('content')) %}
-<section style="margin:10px auto;max-width:900px;padding:16px;border:1px solid #39ff72;border-radius:16px;background:#030603;color:#fff">
-  {% if page_settings.get('title') %}<div style="font-size:20px;font-weight:900;color:#39ff72">{{ page_settings.get('title') }}</div>{% endif %}
-  {% if page_settings.get('subtitle') %}<div style="margin-top:5px;color:#b8c8bd;font-size:12px">{{ page_settings.get('subtitle') }}</div>{% endif %}
-  {% if page_settings.get('content') %}<div style="margin-top:10px;white-space:pre-line;font-size:13px">{{ page_settings.get('content') }}</div>{% endif %}
-</section>
-{% endif %}{% endblock %}</div></div>{% if request.endpoint not in ['login','register'] %}{% include 'nav.html' %}{% endif %}{% if show_announcement|default(false) %}<div class="announcement-backdrop" id="announcementPopup"><div class="announcement-modal" role="dialog" aria-modal="true" aria-labelledby="announcementTitle"><button class="announcement-close" type="button" onclick="closeAnnouncement()" aria-label="Close">×</button><div class="announcement-icon">♧</div><div class="announcement-kicker">NEXORA</div><h2 id="announcementTitle">{{ announcement_popup.title }}</h2><div class="announcement-line"><b>{{ announcement_popup.title }}</b><span>{{ announcement_popup.message }}</span></div><button class="button announcement-btn" type="button" onclick="closeAnnouncement()">CONTINUE</button></div></div><script>function closeAnnouncement(){var p=document.getElementById('announcementPopup');if(p)p.classList.add('hidden')}document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAnnouncement()});</script>{% endif %}</body></html>
+</div><div class="page"><div class="box">{% with messages=get_flashed_messages(with_categories=true) %}{% for cat,msg in messages %}<div class="flash {{cat}}">{{msg}}</div>{% endfor %}{% endwith %}{% block content %}{% endblock %}</div></div>{% if request.endpoint not in ['login','register'] %}{% include 'nav.html' %}{% endif %}{% if show_announcement|default(false) %}<div class="announcement-backdrop" id="announcementPopup"><div class="announcement-modal" role="dialog" aria-modal="true" aria-labelledby="announcementTitle"><button class="announcement-close" type="button" onclick="closeAnnouncement()" aria-label="Close">×</button><div class="announcement-icon">♧</div><div class="announcement-kicker">NEXORA</div><h2 id="announcementTitle">{{ announcement_popup.title }}</h2><div class="announcement-line"><b>{{ announcement_popup.title }}</b><span>{{ announcement_popup.message }}</span></div><button class="button announcement-btn" type="button" onclick="closeAnnouncement()">CONTINUE</button></div></div><script>function closeAnnouncement(){var p=document.getElementById('announcementPopup');if(p)p.classList.add('hidden')}document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAnnouncement()});</script>{% endif %}</body></html>

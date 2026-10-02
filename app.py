@@ -924,7 +924,7 @@ def home():
         con2.commit()
         con2.close()
 
-    return render_template("home.html",user=current_user(),products=products,ai_income=ai_income,today=today,invite_count=invite_count,team_count=team_count,team_income=team_income,announcement=announcement,pending_withdrawal=pending_withdrawal,latest_deposit=latest_deposit,show_announcement=show_announcement,announcement_popup=popup)
+    return render_template("home.html",user=current_user(),products=products,ai_income=ai_income,today=today,invite_count=invite_count,team_count=team_count,team_income=team_income,announcement=announcement,pending_withdrawal=pending_withdrawal,latest_deposit=latest_deposit,show_announcement=show_announcement,announcement_popup=popup,home_settings=get_admin_page_setting('home'),page_settings=get_admin_page_setting('home'))
 
 @app.route("/my")
 @required
@@ -1915,7 +1915,7 @@ def buy_mining_tool(idx):
 
 @app.route("/invest")
 @required
-def invest(): return render_template("invest.html",plans=PLANS,active="AI")
+def invest(): return render_template("invest.html",plans=get_effective_plans(),active="AI")
 
 @app.route("/product",methods=["GET","POST"])
 @required
@@ -2236,6 +2236,116 @@ def reveal_promo(chance_id,box_id):
 
 
 # ============================================================
+# REAL ADMIN CHAT + PLATFORM EDITOR SUPPORT
+import os, uuid, mimetypes
+from werkzeug.utils import secure_filename
+
+ADMIN_CHAT_UPLOAD_DIR=os.path.join(BASE,"static","uploads","admin_chat")
+os.makedirs(ADMIN_CHAT_UPLOAD_DIR,exist_ok=True)
+
+ADMIN_CHAT_ALLOWED_EXT={
+    "jpg","jpeg","png","gif","webp",
+    "mp4","webm","mov","m4v",
+    "mp3","wav","ogg","m4a","aac","webm"
+}
+
+def admin_chat_save_upload(upload):
+    if not upload or not getattr(upload,"filename",""):
+        return None
+
+    original=secure_filename(upload.filename or "")
+    ext=os.path.splitext(original)[1].lower().lstrip(".")
+    if ext not in ADMIN_CHAT_ALLOWED_EXT:
+        return None
+
+    filename=f"admin_{uuid.uuid4().hex}.{ext}"
+    path=os.path.join(ADMIN_CHAT_UPLOAD_DIR,filename)
+    upload.save(path)
+    return "/static/uploads/admin_chat/"+filename
+
+def ensure_admin_platform_tables():
+    con=db()
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS admin_platform_settings(
+            key TEXT PRIMARY KEY,
+            value TEXT,
+            updated_at TEXT
+        )
+    """)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS admin_machine_settings(
+            code TEXT PRIMARY KEY,
+            name TEXT,
+            price REAL,
+            daily REAL,
+            days INTEGER,
+            total REAL,
+            enabled INTEGER DEFAULT 1,
+            updated_at TEXT
+        )
+    """)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS admin_page_settings(
+            page TEXT PRIMARY KEY,
+            title TEXT,
+            subtitle TEXT,
+            content TEXT,
+            enabled INTEGER DEFAULT 1,
+            updated_at TEXT
+        )
+    """)
+    try:
+        cols=[r["name"] for r in con.execute("PRAGMA table_info(support_messages)").fetchall()]
+        if "media" not in cols:
+            con.execute("ALTER TABLE support_messages ADD COLUMN media TEXT")
+    except Exception:
+        pass
+    con.commit()
+    con.close()
+
+def get_admin_page_setting(page):
+    defaults={
+        "title":"",
+        "subtitle":"",
+        "content":"",
+        "enabled":1
+    }
+    try:
+        con=db()
+        row=con.execute(
+            "SELECT title,subtitle,content,enabled FROM admin_page_settings WHERE page=?",
+            (page,)
+        ).fetchone()
+        con.close()
+        if row:
+            return {
+                "title":row["title"] or "",
+                "subtitle":row["subtitle"] or "",
+                "content":row["content"] or "",
+                "enabled":int(row["enabled"] if row["enabled"] is not None else 1)
+            }
+    except Exception:
+        pass
+    return defaults
+
+def get_effective_plans():
+    result={k:dict(v) for k,v in PLANS.items()}
+    try:
+        con=db()
+        rows=con.execute("SELECT * FROM admin_machine_settings").fetchall()
+        con.close()
+        for r in rows:
+            code=str(r["code"]).upper()
+            if code in result:
+                result[code]["name"]=r["name"] or result[code].get("name",code)
+                result[code]["price"]=float(r["price"])
+                result[code]["daily"]=float(r["daily"])
+                result[code]["days"]=int(r["days"])
+                result[code]["total"]=float(r["total"])
+    except Exception:
+        pass
+    return result
+
 # ADMIN PLATFORM EDITOR
 # ============================================================
 def ensure_admin_editor_tables():
@@ -2286,6 +2396,42 @@ def ensure_admin_editor_tables():
     con.commit()
     con.close()
 
+
+def get_platform_setting(key, default=""):
+    try:
+        con=db()
+        row=con.execute(
+            "SELECT value FROM admin_platform_settings WHERE key=?",
+            (key,)
+        ).fetchone()
+        con.close()
+        return row["value"] if row and row["value"] is not None else default
+    except Exception:
+        return default
+
+def save_platform_setting(key,value):
+    con=db()
+    con.execute("""
+        INSERT INTO admin_platform_settings(key,value,updated_at)
+        VALUES(?,?,?)
+        ON CONFLICT(key) DO UPDATE SET
+        value=excluded.value,
+        updated_at=excluded.updated_at
+    """,(key,str(value),now()))
+    con.commit()
+    con.close()
+
+@app.context_processor
+def platform_editor_context():
+    return {
+        "platform_name":get_platform_setting("platform_name","NEXORA"),
+        "platform_accent":get_platform_setting("accent_color","#39ff72"),
+        "platform_bg":get_platform_setting("background_color","#000000"),
+        "platform_card":get_platform_setting("card_color","#071009"),
+        "platform_text":get_platform_setting("text_color","#ffffff"),
+        "platform_radius":get_platform_setting("card_radius","16")
+    }
+
 ensure_admin_editor_tables()
 
 @app.route("/admin/editor")
@@ -2293,21 +2439,31 @@ ensure_admin_editor_tables()
 def admin_editor():
     ensure_admin_editor_tables()
     con=db()
+
     machines=con.execute(
         "SELECT * FROM admin_machine_settings ORDER BY code"
     ).fetchall()
+
     pages=con.execute(
         "SELECT * FROM admin_page_settings ORDER BY page"
     ).fetchall()
+
     settings=con.execute(
         "SELECT * FROM admin_platform_settings ORDER BY key"
     ).fetchall()
+
+    managers=con.execute(
+        "SELECT * FROM managers ORDER BY id"
+    ).fetchall()
+
     con.close()
+
     return render_template(
         "admin_editor.html",
         machines=machines,
         pages=pages,
-        settings=settings
+        settings=settings,
+        managers=managers
     )
 
 @app.route("/admin/editor/machine/<code>",methods=["POST"])
@@ -2394,6 +2550,127 @@ def admin_editor_setting(key):
     flash("Setting saved.","success")
     return redirect(url_for("admin_editor"))
 
+
+@app.route("/admin/editor/design",methods=["POST"])
+@admin_required
+def admin_editor_design():
+    values={
+        "platform_name":request.form.get("platform_name","NEXORA").strip()[:80],
+        "accent_color":request.form.get("accent_color","#39ff72").strip(),
+        "background_color":request.form.get("background_color","#000000").strip(),
+        "card_color":request.form.get("card_color","#071009").strip(),
+        "text_color":request.form.get("text_color","#ffffff").strip(),
+        "card_radius":request.form.get("card_radius","16").strip()
+    }
+
+    color_re=re.compile(r"^#[0-9a-fA-F]{6}$")
+
+    for key in ("accent_color","background_color","card_color","text_color"):
+        if not color_re.fullmatch(values[key]):
+            flash("Invalid colour value.","error")
+            return redirect(url_for("admin_editor"))
+
+    try:
+        radius=max(0,min(40,int(values["card_radius"])))
+    except Exception:
+        radius=16
+
+    values["card_radius"]=str(radius)
+
+    for key,value in values.items():
+        save_platform_setting(key,value)
+
+    flash("Platform design updated.","success")
+    return redirect(url_for("admin_editor"))
+
+@app.route("/admin/editor/manager/<mid>",methods=["POST"])
+@admin_required
+def admin_editor_manager(mid):
+    name=request.form.get("name","").strip()
+    phone=request.form.get("phone","").strip()
+    role=request.form.get("role","NEXORA Manager").strip()
+    avatar=request.form.get("avatar","👤").strip() or "👤"
+
+    if not name or not phone:
+        flash("Manager name and phone are required.","error")
+        return redirect(url_for("admin_editor"))
+
+    con=db()
+
+    old=con.execute(
+        "SELECT phone FROM managers WHERE id=?",(mid,)
+    ).fetchone()
+
+    if not old:
+        con.close()
+        flash("Manager not found.","error")
+        return redirect(url_for("admin_editor"))
+
+    con.execute(
+        "UPDATE managers SET name=?,phone=?,role=?,avatar=? WHERE id=?",
+        (name,phone,role,avatar,mid)
+    )
+
+    if old["phone"] and old["phone"]!=phone:
+        con.execute(
+            "UPDATE users SET manager_phone=? WHERE manager_phone=?",
+            (phone,old["phone"])
+        )
+
+    con.commit()
+    con.close()
+
+    flash("Manager updated.","success")
+    return redirect(url_for("admin_editor"))
+
+@app.route("/admin/editor/manager/create",methods=["POST"])
+@admin_required
+def admin_editor_manager_create():
+    name=request.form.get("name","").strip()
+    phone=request.form.get("phone","").strip()
+    role=request.form.get("role","NEXORA Manager").strip()
+    avatar=request.form.get("avatar","👤").strip() or "👤"
+
+    if not name or not phone:
+        flash("Manager name and phone are required.","error")
+        return redirect(url_for("admin_editor"))
+
+    con=db()
+
+    cols=[x["name"] for x in con.execute(
+        "PRAGMA table_info(managers)"
+    ).fetchall()]
+
+    if "role" in cols and "avatar" in cols:
+        con.execute(
+            "INSERT INTO managers(name,phone,role,avatar,enabled) VALUES(?,?,?,?,1)",
+            (name,phone,role,avatar)
+        )
+    else:
+        con.execute(
+            "INSERT INTO managers(name,phone,enabled) VALUES(?,?,1)",
+            (name,phone)
+        )
+
+    con.commit()
+    con.close()
+
+    flash("Manager created.","success")
+    return redirect(url_for("admin_editor"))
+
+@app.route("/admin/editor/manager/<mid>/disable",methods=["POST"])
+@admin_required
+def admin_editor_manager_disable(mid):
+    con=db()
+    con.execute(
+        "UPDATE managers SET enabled=0 WHERE id=?",
+        (mid,)
+    )
+    con.commit()
+    con.close()
+
+    flash("Manager disabled.","success")
+    return redirect(url_for("admin_editor"))
 
 @app.route("/admin/control-center")
 @admin_required
@@ -2592,37 +2869,35 @@ def admin_announcement():
 @app.route("/admin/support/send",methods=["POST"])
 @admin_required
 def admin_support_send():
-    import os, uuid
-    from werkzeug.utils import secure_filename
+    try:
+        ensure_admin_platform_tables()
 
-    uid=int(request.form.get("uid",0))
-    msg=request.form.get("message","").strip()
-    uploaded=request.files.get("media")
-    media_url=""
+        uid=int(request.form.get("uid","0") or 0)
+        msg=(request.form.get("message") or "").strip()
+        upload=request.files.get("media")
 
-    if uploaded and uploaded.filename:
-        filename=secure_filename(uploaded.filename)
-        ext=os.path.splitext(filename)[1].lower()
-        allowed={
-            ".jpg",".jpeg",".png",".gif",".webp",
-            ".mp4",".webm",".mov",".m4v",
-            ".mp3",".wav",".ogg",".m4a"
-        }
+        if not uid:
+            if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
+                return jsonify({"ok":False,"error":"Invalid user"}),400
+            flash("Invalid user.","error")
+            return redirect(url_for("admin"))
 
-        if ext not in allowed:
-            return ("Unsupported media type",400)
+        media_url=None
+        if upload and upload.filename:
+            media_url=admin_chat_save_upload(upload)
+            if not media_url:
+                if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
+                    return jsonify({"ok":False,"error":"Unsupported media file"}),400
+                flash("Unsupported media file.","error")
+                return redirect(url_for("admin_support",uid=uid))
 
-        folder=os.path.join(app.root_path,"static","chat_media")
-        os.makedirs(folder,exist_ok=True)
-        saved="admin_"+uuid.uuid4().hex+ext
-        uploaded.save(os.path.join(folder,saved))
-        media_url=url_for("static",filename="chat_media/"+saved)
+        if not msg and not media_url:
+            if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
+                return jsonify({"ok":False,"error":"Write a message or attach media"}),400
+            flash("Write a message or attach media.","error")
+            return redirect(url_for("admin_support",uid=uid))
 
-    if uid and (msg or media_url):
         con=db()
-        cols=[r[1] for r in con.execute("PRAGMA table_info(support_messages)").fetchall()]
-        if "media" not in cols:
-            con.execute("ALTER TABLE support_messages ADD COLUMN media TEXT")
         con.execute(
             "INSERT INTO support_messages(uid,sender,message,created_at,media) VALUES(?,?,?,?,?)",
             (uid,"ADMIN",msg,now(),media_url)
@@ -2630,9 +2905,19 @@ def admin_support_send():
         con.commit()
         con.close()
 
-    if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
-        return jsonify({"ok":True})
-    return redirect(url_for("admin_support",uid=uid))
+        if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
+            return jsonify({"ok":True})
+
+        return redirect(url_for("admin_support",uid=uid))
+
+    except Exception as e:
+        try:
+            if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
+                return jsonify({"ok":False,"error":"Message could not be sent"}),500
+        except Exception:
+            pass
+        flash("Message could not be sent.","error")
+        return redirect(url_for("admin"))
 
 @app.route("/admin/gift",methods=["POST"])
 @admin_required

@@ -71,42 +71,7 @@ input,select,textarea{
 
 
 
-</div><div class="page"><div class="box">{% with messages=get_flashed_messages(with_categories=true) %}{% for cat,msg in messages %}<div class="flash {{cat}}">{{msg}}</div>{% endfor %}{% endwith %}<!-- CONNECTED_GLOBAL_PLATFORM_THEME -->
-<style>
-:root{
-  --platform-accent:{{ platform_accent|default("#39ff72") }};
-  --platform-bg:{{ platform_bg|default("#000000") }};
-  --platform-card:{{ platform_card|default("#071009") }};
-  --platform-text:{{ platform_text|default("#ffffff") }};
-  --platform-radius:{{ platform_radius|default("16") }}px;
-}
-
-html,body{
-  background:var(--platform-bg)!important;
-  color:var(--platform-text)!important;
-}
-
-a{
-  color:var(--platform-accent);
-}
-
-button,
-.btn,
-.action,
-.primary{
-  border-radius:var(--platform-radius)!important;
-}
-
-.card,
-.box,
-.panel,
-.section-card{
-  border-radius:var(--platform-radius)!important;
-}
-</style>
-<!-- END_CONNECTED_GLOBAL_PLATFORM_THEME -->
-
-{% block content %}
+</div><div class="page"><div class="box">{% with messages=get_flashed_messages(with_categories=true) %}{% for cat,msg in messages %}<div class="flash {{cat}}">{{msg}}</div>{% endfor %}{% endwith %}{% block content %}
 <!-- ADMIN_EDITABLE_PAGE_BANNER -->
 {% if page_settings is defined and page_settings and page_settings.get('enabled',1) and (page_settings.get('title') or page_settings.get('subtitle') or page_settings.get('content')) %}
 <section style="margin:10px auto;max-width:900px;padding:16px;border:1px solid #39ff72;border-radius:16px;background:#030603;color:#fff">

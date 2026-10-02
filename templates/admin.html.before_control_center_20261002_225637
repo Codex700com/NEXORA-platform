@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+body{background:#000!important}
+.ac{min-height:100vh;background:#000;color:#f2fff6;padding:18px 12px 90px;font-family:Inter,system-ui,sans-serif}
+.wrap{max-width:900px;margin:auto}
+.hero{padding:24px;border:1px solid #173b24;border-radius:24px;background:linear-gradient(145deg,#061009,#010201);margin-bottom:14px}
+.tag{color:#39ff72;font-size:10px;font-weight:900;letter-spacing:2px}
+.hero h1{margin:7px 0;font-size:29px}
+.hero p{margin:0;color:#8ca596;font-size:13px}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.mode{padding:18px;border-radius:18px;background:#050805;border:1px solid #173b24;color:#fff;text-decoration:none}
+.mode b{display:block;margin-top:8px}
+.mode span{font-size:12px;color:#83988a}
+.panel{background:#050805;border:1px solid #173b24;border-radius:20px;padding:15px;margin-bottom:14px}
+.title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.title h2{font-size:17px;margin:0}.green{color:#39ff72}
+textarea{width:100%;min-height:105px;background:#020402;color:#fff;border:1px solid #173b24;border-radius:14px;padding:13px;resize:vertical}
+.tools{display:flex;gap:8px;margin-top:10px}
+.tool,.send{border-radius:12px;padding:12px 14px;font-weight:900;cursor:pointer}
+.tool{background:#071009;color:#39ff72;border:1px solid #173b24}
+.send{margin-left:auto;background:#39ff72;color:#001507;border:0}
+.users{display:grid;gap:8px}
+.user{display:flex;align-items:center;gap:12px;padding:13px;background:#020402;border:1px solid #12331e;border-radius:15px;color:#fff;text-decoration:none}
+.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#092412;color:#39ff72;font-weight:900}
+.info{flex:1}.info b{display:block}.info small{color:#718778}.open{color:#39ff72;font-size:12px;font-weight:900}
+@media(max-width:600px){.modes{grid-template-columns:1fr}.hero h1{font-size:25px}}
+</style>
+
+<div class="ac"><div class="wrap">
+
+<div class="hero">
+ <div class="tag">PRIVATE ADMIN SYSTEM</div>
+ <h1>Communication Center</h1>
+ <p>Broadcast announcements or open a private user inbox.</p>
+</div>
+
+<div class="modes">
+ <a class="mode" href="#broadcast">📢<b>Broadcast</b><span>Send to every registered user</span></a>
+ <a class="mode" href="#inboxes">✉️<b>Inbox Users</b><span>Open one private conversation</span></a>
+</div>
+
+<section class="panel" id="broadcast">
+ <div class="title"><h2>Broadcast to all users</h2><b class="green">{{ users|length }}</b></div>
+ <form method="post" action="{{ url_for('admin_broadcast') }}" enctype="multipart/form-data">
+  <textarea name="message" placeholder="Write a message or paste a link..."></textarea>
+  <div class="tools">
+   <label class="tool">📎 Attach
+    <input name="media" type="file" accept="image/*,video/*,audio/*" hidden>
+   </label>
+   <button class="send" type="submit">SEND TO ALL</button>
+  </div>
+ </form>
+</section>
+
+<section class="panel" id="inboxes">
+ <div class="title"><h2>Inbox Users</h2><b class="green">REAL USERS</b></div>
+ <div class="users">
+ {% for u in users %}
+ <a class="user" href="{{ url_for('admin_support',uid=u['id']) }}">
+  <div class="avatar">{{ ((u['display_name'] or u['phone'] or 'U')[0])|upper }}</div>
+  <div class="info">
+   <b>{{ u['display_name'] or u['phone'] or ('User #'~u['id']) }}</b>
+   <small>{{ u['phone'] or ('User ID #'~u['id']) }}</small>
+  </div>
+  <div class="open">OPEN →</div>
+ </a>
+ {% else %}
+ <div style="padding:20px;color:#789080;text-align:center">No users found.</div>
+ {% endfor %}
+ </div>
+</section>
+
+</div></div>
+{% endblock %}
