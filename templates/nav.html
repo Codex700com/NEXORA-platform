@@ -1,3 +1,50 @@
+
+<style id="NEXORA_ARTISTIC_NAV">
+.nx-nav,.bottom-nav,.nav-bar,.navigation-bar{
+  position:fixed!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  z-index:9999!important;
+  transform:none!important;
+}
+
+.nx-nav{
+  padding:8px 10px!important;
+  background:rgba(2,7,17,.94)!important;
+  border-top:1px solid rgba(0,229,255,.35)!important;
+  box-shadow:0 -8px 30px rgba(0,0,0,.45),0 -2px 20px rgba(0,229,255,.08)!important;
+  backdrop-filter:blur(14px)!important;
+  -webkit-backdrop-filter:blur(14px)!important;
+}
+
+.nx-nav .nx-link{
+  position:relative!important;
+  border-radius:18px!important;
+  transition:transform .18s ease,box-shadow .18s ease!important;
+}
+
+.nx-nav .nx-link.active{
+  background:linear-gradient(135deg,rgba(0,229,255,.18),rgba(123,44,255,.22))!important;
+  box-shadow:inset 0 0 18px rgba(0,229,255,.08),0 0 16px rgba(123,44,255,.12)!important;
+}
+
+.nx-nav .nx-link.active::after{
+  content:""!important;
+  position:absolute!important;
+  left:25%!important;
+  right:25%!important;
+  bottom:2px!important;
+  height:3px!important;
+  border-radius:99px!important;
+  background:linear-gradient(90deg,#00e5ff,#7b2cff,#ff2d75)!important;
+  box-shadow:0 0 10px rgba(0,229,255,.8)!important;
+}
+
+body{
+  padding-bottom:82px!important;
+}
+</style>
 <style>
 .nx-nav{
 position:fixed;

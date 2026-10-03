@@ -1,3 +1,94 @@
+
+<style id="NEXORA_ARTISTIC_RAFFLE_NAV_FIX">
+.nx-service{
+  padding-bottom:110px!important;
+}
+
+.matrix-grid{
+  position:relative!important;
+  z-index:20!important;
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px!important;
+  margin:18px auto!important;
+  max-width:430px!important;
+}
+
+.matrix-box{
+  position:relative!important;
+  min-height:92px!important;
+  overflow:hidden!important;
+  border-radius:22px!important;
+  isolation:isolate!important;
+}
+
+.matrix-box::before{
+  content:""!important;
+  position:absolute!important;
+  inset:-2px!important;
+  z-index:-2!important;
+  background:conic-gradient(from 0deg,#00e5ff,#7b2cff,#ff2d75,#00e5ff)!important;
+  animation:nxMatrixSpin 5s linear infinite!important;
+}
+
+.matrix-box::after{
+  content:""!important;
+  position:absolute!important;
+  inset:2px!important;
+  z-index:-1!important;
+  border-radius:20px!important;
+  background:linear-gradient(145deg,#071a27,#050810 55%,#111326)!important;
+}
+
+.matrix-pick{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  width:100%!important;
+  min-height:92px!important;
+  border:0!important;
+  background:transparent!important;
+  color:#fff!important;
+  cursor:pointer!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  position:relative!important;
+  z-index:5!important;
+  font-weight:900!important;
+}
+
+.matrix-pick span{
+  width:48px!important;
+  height:48px!important;
+  border-radius:50%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:27px!important;
+  background:radial-gradient(circle at 35% 30%,#ffffff,#66eaff 20%,#253bff 55%,#7b00ff 100%)!important;
+  box-shadow:0 0 18px rgba(0,229,255,.65),inset 0 0 12px rgba(255,255,255,.35)!important;
+  transition:transform .18s ease,box-shadow .18s ease!important;
+}
+
+.matrix-pick:hover span,
+.matrix-pick:focus span{
+  transform:scale(1.12) rotate(8deg)!important;
+  box-shadow:0 0 30px rgba(0,229,255,.95),0 0 55px rgba(123,44,255,.5)!important;
+}
+
+.matrix-pick:active span{
+  transform:scale(.92)!important;
+}
+
+@keyframes nxMatrixSpin{
+  to{transform:rotate(360deg)}
+}
+
+@media(max-width:380px){
+  .matrix-grid{gap:8px!important}
+  .matrix-box,.matrix-pick{min-height:82px!important}
+}
+</style>
 {% extends 'base.html' %}
 {% block content %}
 
@@ -682,12 +773,12 @@
           {% if chances %}
           <form method="post"
                 action="{{ url_for('reveal_promo',chance_id=chances[0].id,box_id=n) }}">
-            <button type="submit" aria-label="Choose Matrix box {{ n }}"></button>
+            <button type="submit" class="matrix-pick" aria-label="Choose Matrix box {{ n }}"><span>?</span></button>
           </form>
           {% else %}
           <form method="post"
                 action="{{ url_for('raffle_no_chance') }}">
-            <button type="submit" aria-label="Matrix box {{ n }}"></button>
+            <button type="submit" class="matrix-pick" aria-label="Matrix box {{ n }}"><span>?</span></button>
           </form>
           {% endif %}
 
@@ -734,41 +825,5 @@
 {% endblock %}
 
 
-<script>
-(function(){
-  const grid=document.querySelector('.matrix-grid');
-  if(!grid) return;
 
-  const boxes=Array.from(grid.querySelectorAll('.matrix-box'));
-  if(boxes.length<2) return;
-
-  function shuffleVisuals(){
-    const order=boxes.slice();
-
-    for(let i=order.length-1;i>0;i--){
-      const j=Math.floor(Math.random()*(i+1));
-      [order[i],order[j]]=[order[j],order[i]];
-    }
-
-    grid.classList.add('matrix-live-shuffle');
-
-    order.forEach((box,index)=>{
-      box.style.transform =
-        'translateY('+(Math.random()*8-4)+'px) rotate('+
-        (Math.random()*3-1.5)+'deg)';
-      grid.appendChild(box);
-    });
-
-    setTimeout(()=>{
-      boxes.forEach(box=>{
-        box.style.transform='';
-      });
-      grid.classList.remove('matrix-live-shuffle');
-    },650);
-  }
-
-  shuffleVisuals();
-  setInterval(shuffleVisuals,3200);
-})();
-</script>
 
