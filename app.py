@@ -84,12 +84,6 @@ def init_db():
     con.executescript("""
     CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,phone TEXT UNIQUE NOT NULL,password TEXT NOT NULL,invite_code TEXT UNIQUE NOT NULL,invited_by INTEGER,balance REAL NOT NULL DEFAULT 0,wallet REAL NOT NULL DEFAULT 0,points INTEGER NOT NULL DEFAULT 0,display_name TEXT NOT NULL DEFAULT '',mtn_number TEXT NOT NULL DEFAULT '',airtel_number TEXT NOT NULL DEFAULT '',usdt_wallet TEXT NOT NULL DEFAULT '',notifications_enabled INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL,is_admin INTEGER NOT NULL DEFAULT 0,salary_claimed_month TEXT,reward_claimed_month TEXT,manager_phone TEXT);
     CREATE TABLE IF NOT EXISTS transactions(id INTEGER PRIMARY KEY AUTOINCREMENT,uid INTEGER NOT NULL,kind TEXT NOT NULL,amount REAL NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT 'PENDING',reference TEXT,created_at TEXT NOT NULL);
-    # Safe schema migration for withdrawal fields
-    existing_columns = {row[1] for row in con.execute("PRAGMA table_info(transactions)").fetchall()}
-    if "withdraw_method" not in existing_columns:
-        con.execute("ALTER TABLE transactions ADD COLUMN withdraw_method TEXT")
-    if "withdraw_destination" not in existing_columns:
-        con.execute("ALTER TABLE transactions ADD COLUMN withdraw_destination TEXT")
 
     CREATE TABLE IF NOT EXISTS announcements(id INTEGER PRIMARY KEY AUTOINCREMENT,title TEXT NOT NULL,message TEXT NOT NULL,created_at TEXT NOT NULL,enabled INTEGER NOT NULL DEFAULT 1);
     CREATE TABLE IF NOT EXISTS deposit_sessions(id INTEGER PRIMARY KEY AUTOINCREMENT,uid INTEGER NOT NULL,amount REAL NOT NULL DEFAULT 0,payment_method TEXT,agent TEXT NOT NULL,expires_at TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'WAITING_PROOF',proof TEXT,payer_number TEXT,created_at TEXT NOT NULL);
@@ -104,6 +98,13 @@ def init_db():
     CREATE TABLE IF NOT EXISTS mining_tools(id INTEGER PRIMARY KEY AUTOINCREMENT,uid INTEGER NOT NULL,tool_name TEXT NOT NULL,points_cost INTEGER NOT NULL,rate REAL NOT NULL,capacity REAL NOT NULL DEFAULT 0,purchased_at TEXT NOT NULL,last_credit_at TEXT NOT NULL,earned REAL NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT 'ACTIVE');
     CREATE TABLE IF NOT EXISTS referral_point_awards(id INTEGER PRIMARY KEY AUTOINCREMENT,referrer_uid INTEGER NOT NULL,referred_uid INTEGER UNIQUE NOT NULL,points INTEGER NOT NULL DEFAULT 10,created_at TEXT NOT NULL);
     """)
+
+    # Safe schema migration for withdrawal fields
+    existing_columns = {row[1] for row in con.execute("PRAGMA table_info(transactions)").fetchall()}
+    if "withdraw_method" not in existing_columns:
+        con.execute("ALTER TABLE transactions ADD COLUMN withdraw_method TEXT")
+    if "withdraw_destination" not in existing_columns:
+        con.execute("ALTER TABLE transactions ADD COLUMN withdraw_destination TEXT")
 
     con.execute("""
         CREATE TABLE IF NOT EXISTS promo_matrix_boxes(
