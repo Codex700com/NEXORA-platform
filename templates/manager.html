@@ -1,8 +1,218 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="background:#000;color:#f2fff6;min-height:70vh;padding:40px 20px;text-align:center">
-  <h2>Communication</h2>
-  <p style="color:#718078">Manager communication has moved to the Communication page.</p>
-  <a href="{{ url_for('support') }}" style="display:inline-block;background:#19e66b;color:#001b09;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:800">OPEN COMMUNICATION</a>
+<style>
+.manager-page{
+  min-height:70vh;
+  background:#000;
+  color:#f2fff6;
+  padding:24px 14px 150px;
+}
+.manager-card{
+  max-width:680px;
+  margin:0 auto;
+  background:#07100b;
+  border:1px solid #173522;
+  border-radius:18px;
+  padding:20px;
+}
+.manager-card h2{margin:0 0 8px}
+.manager-card p{color:#8b9b91}
+.manager-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:18px;
+}
+.manager-btn{
+  border:0;
+  border-radius:12px;
+  padding:13px 17px;
+  font-weight:800;
+  text-decoration:none;
+  cursor:pointer;
+}
+.manager-open{
+  background:#19e66b;
+  color:#001b09;
+}
+.manager-record{
+  background:#16251b;
+  color:#f2fff6;
+  border:1px solid #294a34;
+}
+.manager-record.recording{
+  background:#a40000;
+  border-color:#ff4545;
+}
+.manager-status{
+  margin-top:14px;
+  min-height:22px;
+  color:#8bffb0;
+  font-size:14px;
+}
+.manager-audio{
+  width:100%;
+  margin-top:12px;
+}
+.manager-form{
+  margin-top:18px;
+  display:none;
+}
+.manager-form input[type=file]{
+  width:100%;
+  margin-bottom:10px;
+}
+.manager-send{
+  background:#19e66b;
+  color:#001b09;
+  border:0;
+  border-radius:12px;
+  padding:13px 18px;
+  font-weight:900;
+  cursor:pointer;
+}
+</style>
+
+<div class="manager-page">
+  <div class="manager-card">
+    <h2>Manager Communication</h2>
+    <p>Contact Customer Service and send text, images, videos or voice messages.</p>
+
+    <div class="manager-actions">
+      <a class="manager-btn manager-open" href="{{ url_for('support') }}">
+        OPEN COMMUNICATION
+      </a>
+
+      <button class="manager-btn manager-record" type="button" id="managerVoiceBtn">
+        🎙️ RECORD VOICE
+      </button>
+    </div>
+
+    <div class="manager-status" id="managerVoiceStatus" aria-live="polite"></div>
+    <audio class="manager-audio" id="managerVoicePreview" controls style="display:none"></audio>
+
+    <form class="manager-form"
+          id="managerVoiceForm"
+          method="post"
+          action="{{ url_for('support') }}"
+          enctype="multipart/form-data">
+      <input type="hidden" name="message" value="">
+      <input type="file"
+             id="managerVoiceFile"
+             name="media"
+             accept="audio/*">
+      <button class="manager-send" type="submit">SEND VOICE MESSAGE</button>
+    </form>
+  </div>
 </div>
+
+<script>
+(function(){
+  const btn = document.getElementById("managerVoiceBtn");
+  const status = document.getElementById("managerVoiceStatus");
+  const preview = document.getElementById("managerVoicePreview");
+  const form = document.getElementById("managerVoiceForm");
+  const fileInput = document.getElementById("managerVoiceFile");
+
+  if(!btn || !status || !preview || !form || !fileInput) return;
+
+  let recorder = null;
+  let stream = null;
+  let chunks = [];
+
+  function stopTracks(){
+    if(stream){
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
+  }
+
+  function pickMime(){
+    const types = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/ogg;codecs=opus",
+      "audio/ogg"
+    ];
+
+    if(window.MediaRecorder && MediaRecorder.isTypeSupported){
+      for(const type of types){
+        if(MediaRecorder.isTypeSupported(type)) return type;
+      }
+    }
+
+    return "";
+  }
+
+  btn.addEventListener("click", async function(){
+    if(recorder && recorder.state === "recording"){
+      recorder.stop();
+      btn.classList.remove("recording");
+      btn.textContent = "🎙️ RECORD VOICE";
+      status.textContent = "Finishing recording...";
+      return;
+    }
+
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      status.textContent = "Voice recording is not supported by this browser.";
+      return;
+    }
+
+    if(!window.MediaRecorder){
+      status.textContent = "This browser does not support voice recording.";
+      return;
+    }
+
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      chunks = [];
+
+      const mime = pickMime();
+      recorder = mime ? new MediaRecorder(stream,{mimeType:mime}) : new MediaRecorder(stream);
+
+      recorder.addEventListener("dataavailable", function(e){
+        if(e.data && e.data.size > 0) chunks.push(e.data);
+      });
+
+      recorder.addEventListener("stop", function(){
+        const type = recorder.mimeType || mime || "audio/webm";
+        const blob = new Blob(chunks,{type:type});
+        const ext = type.includes("ogg") ? "ogg" : "webm";
+        const file = new File(
+          [blob],
+          "voice_message_" + Date.now() + "." + ext,
+          {type:type}
+        );
+
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        fileInput.files = transfer.files;
+
+        preview.src = URL.createObjectURL(blob);
+        preview.style.display = "block";
+        form.style.display = "block";
+
+        status.textContent = "Voice recording ready. Press SEND VOICE MESSAGE.";
+        stopTracks();
+      });
+
+      recorder.start();
+      btn.classList.add("recording");
+      btn.textContent = "⏹️ STOP RECORDING";
+      status.textContent = "Recording... tap again to stop.";
+    }catch(err){
+      stopTracks();
+      status.textContent = "Microphone permission was denied or unavailable.";
+    }
+  });
+
+  form.addEventListener("submit", function(){
+    if(!fileInput.files || !fileInput.files.length){
+      status.textContent = "Please record a voice message first.";
+      return;
+    }
+    status.textContent = "Sending voice message...";
+  });
+})();
+</script>
 {% endblock %}
