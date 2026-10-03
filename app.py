@@ -855,6 +855,23 @@ except Exception as e:
     print("SUPPORT MEDIA MIGRATION STARTUP:",e)
 
 
+
+@app.route("/electricity", methods=["GET","POST"])
+@required
+def electricity():
+    if request.method == "POST":
+        meter_number=request.form.get("meter_number","").strip()
+        amount=request.form.get("amount","").strip()
+
+        if not meter_number or not amount:
+            flash("Enter your meter number and electricity amount.","error")
+            return redirect(url_for("electricity"))
+
+        flash("Electricity purchase request prepared. Payment processing is not connected yet.","success")
+        return redirect(url_for("electricity"))
+
+    return render_template("electricity.html", user=current_user())
+
 @app.route("/ping")
 def ping():
     return "OK NEXORA Alive - 200", 200

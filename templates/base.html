@@ -919,3 +919,41 @@ body::after,
   }
 }
 </style>
+
+
+<style id="NEXORA_ELECTRIC_WAVES">
+.nexora-global-background{
+  overflow:hidden!important;
+}
+.nexora-global-background::before,
+.nexora-global-background::after{
+  content:"";
+  position:absolute;
+  left:-15vw;
+  width:130vw;
+  height:32vh;
+  border-top:2px solid rgba(0,191,255,.55);
+  border-radius:50%;
+  pointer-events:none;
+  filter:drop-shadow(0 0 8px rgba(0,191,255,.8));
+}
+.nexora-global-background::before{
+  bottom:8vh;
+  transform:rotate(-4deg);
+  animation:nxElectricWave1 7s ease-in-out infinite alternate;
+}
+.nexora-global-background::after{
+  bottom:2vh;
+  opacity:.45;
+  transform:rotate(3deg);
+  animation:nxElectricWave2 10s ease-in-out infinite alternate;
+}
+@keyframes nxElectricWave1{
+  from{transform:translateX(-5%) rotate(-4deg) scaleY(.8);}
+  to{transform:translateX(5%) rotate(3deg) scaleY(1.2);}
+}
+@keyframes nxElectricWave2{
+  from{transform:translateX(4%) rotate(3deg) scaleY(1);}
+  to{transform:translateX(-4%) rotate(-3deg) scaleY(.75);}
+}
+</style>
