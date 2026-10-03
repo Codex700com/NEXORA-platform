@@ -859,18 +859,122 @@ except Exception as e:
 @app.route("/electricity", methods=["GET","POST"])
 @required
 def electricity():
-    if request.method == "POST":
-        meter_number=request.form.get("meter_number","").strip()
-        amount=request.form.get("amount","").strip()
+    con=db()
+    u=con.execute(
+        "SELECT * FROM users WHERE id=?",
+        (session["uid"],)
+    ).fetchone()
 
-        if not meter_number or not amount:
-            flash("Enter your meter number and electricity amount.","error")
+    if not u:
+        con.close()
+        return redirect(url_for("login"))
+
+    if request.method=="POST":
+        meter_number=request.form.get("meter_number","").strip()
+        amount_text=request.form.get("amount","").strip()
+
+        try:
+            amount=float(amount_text)
+        except (TypeError,ValueError):
+            amount=0
+
+        if not meter_number:
+            con.close()
+            flash("Enter your electricity meter number.","error")
             return redirect(url_for("electricity"))
 
-        flash("Electricity purchase request prepared. Payment processing is not connected yet.","success")
+        if amount < 1000:
+            con.close()
+            flash("Minimum electricity purchase is UGX 1,000.","error")
+            return redirect(url_for("electricity"))
+
+        balance=float(u["balance"] or 0)
+
+        if balance < amount:
+            con.close()
+            flash(
+                f"Insufficient balance. Available: UGX {balance:,.0f}.",
+                "error"
+            )
+            return redirect(url_for("electricity"))
+
+        previous=con.execute(
+            """SELECT COUNT(*) AS n
+               FROM transactions
+               WHERE uid=?
+                 AND kind='ELECTRICITY_PURCHASE'
+                 AND status='APPROVED'""",
+            (u["id"],)
+        ).fetchone()["n"]
+
+        if previous == 0:
+            level="SILVER"
+        else:
+            level="GOLD"
+
+        reference=f"ELECTRIC-{u['id']}-{int(__import__('time').time())}"
+
+        cur=con.execute(
+            """UPDATE users
+               SET balance=COALESCE(balance,0)-?
+               WHERE id=? AND COALESCE(balance,0)>=?""",
+            (amount,u["id"],amount)
+        )
+
+        if cur.rowcount != 1:
+            con.rollback()
+            con.close()
+            flash("Purchase could not be completed. Please try again.","error")
+            return redirect(url_for("electricity"))
+
+        con.execute(
+            """INSERT INTO transactions
+               (uid,kind,amount,status,reference,created_at)
+               VALUES(?,?,?,?,?,?)""",
+            (
+                u["id"],
+                "ELECTRICITY_PURCHASE",
+                amount,
+                "APPROVED",
+                reference,
+                now()
+            )
+        )
+
+        con.commit()
+
+        new_balance=balance-amount
+        con.close()
+
+        flash(
+            f"Electricity purchase successful. "
+            f"{level} level activated. "
+            f"UGX {amount:,.0f} deducted. "
+            f"Remaining balance: UGX {new_balance:,.0f}.",
+            "success"
+        )
         return redirect(url_for("electricity"))
 
-    return render_template("electricity.html", user=current_user())
+    purchases=con.execute(
+        """SELECT *
+           FROM transactions
+           WHERE uid=? AND kind='ELECTRICITY_PURCHASE'
+           ORDER BY id DESC""",
+        (u["id"],)
+    ).fetchall()
+
+    purchase_count=len(purchases)
+    level="NONE" if purchase_count==0 else ("SILVER" if purchase_count==1 else "GOLD")
+
+    con.close()
+
+    return render_template(
+        "electricity.html",
+        user=u,
+        purchases=purchases,
+        electricity_level=level,
+        active="Electricity"
+    )
 
 @app.route("/ping")
 def ping():
