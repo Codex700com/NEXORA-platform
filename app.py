@@ -1708,13 +1708,29 @@ def withdraw():
         ref="WD-"+__import__("uuid").uuid4().hex[:12].upper()
 
         try:
-            con.execute("""
-                UPDATE users
-                SET balance=COALESCE(balance,0)-?
-                WHERE id=? AND COALESCE(balance,0)>=?
-            """,(amount,u["id"],amount))
+            current=con.execute(
+                "SELECT balance FROM users WHERE id=?",
+                (u["id"],)
+            ).fetchone()
 
-            changed=con.execute("SELECT changes()").fetchone()[0]
+            if not current:
+                con.rollback()
+                con.close()
+                flash("User account could not be found.","error")
+                return redirect(url_for("withdraw"))
+
+            current_balance=float(current["balance"] or 0)
+
+            if amount > current_balance:
+                con.rollback()
+                con.close()
+                flash("Insufficient balance for this withdrawal.","error")
+                return redirect(url_for("withdraw"))
+
+            changed=con.execute(
+                "UPDATE users SET balance=COALESCE(balance,0)-? WHERE id=?",
+                (amount,u["id"])
+            ).rowcount
 
             if changed != 1:
                 con.rollback()
