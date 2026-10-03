@@ -204,3 +204,106 @@ textarea{
 .nx-card:active,.nx-feature:active,.nx-product:active{
   transform:scale(.985);
 }
+
+/* =========================================================
+   NEXORA GLOBAL WHITE DOTS + RED WAVES BACKGROUND
+   ========================================================= */
+
+html, body {
+    min-height: 100%;
+    background:
+        radial-gradient(circle, rgba(255,255,255,.85) 1px, transparent 1.5px) 0 0 / 28px 28px,
+        radial-gradient(circle, rgba(255,255,255,.45) 1px, transparent 1.5px) 14px 14px / 36px 36px,
+        #05070d !important;
+    background-attachment: fixed !important;
+}
+
+/* Moving red wave layers across the entire platform */
+body {
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    left: -15%;
+    width: 130%;
+    height: 42vh;
+    pointer-events: none;
+    z-index: -1;
+    border-radius: 50%;
+    transform-origin: center;
+}
+
+body::before {
+    top: 18%;
+    background:
+        radial-gradient(
+            ellipse at center,
+            transparent 38%,
+            rgba(255, 0, 45, .10) 42%,
+            rgba(255, 0, 45, .45) 43%,
+            transparent 44%
+        );
+    filter: blur(1px);
+    animation: nexoraRedWaveOne 9s ease-in-out infinite alternate;
+}
+
+body::after {
+    top: 42%;
+    background:
+        radial-gradient(
+            ellipse at center,
+            transparent 38%,
+            rgba(255, 25, 55, .08) 42%,
+            rgba(255, 0, 45, .38) 43%,
+            transparent 44%
+        );
+    filter: blur(2px);
+    animation: nexoraRedWaveTwo 12s ease-in-out infinite alternate;
+}
+
+@keyframes nexoraRedWaveOne {
+    0% {
+        transform: translateX(-8%) translateY(-4%) rotate(-3deg) scaleY(.85);
+    }
+    50% {
+        transform: translateX(4%) translateY(3%) rotate(2deg) scaleY(1.05);
+    }
+    100% {
+        transform: translateX(10%) translateY(-2%) rotate(-2deg) scaleY(.9);
+    }
+}
+
+@keyframes nexoraRedWaveTwo {
+    0% {
+        transform: translateX(9%) translateY(4%) rotate(3deg) scaleY(.9);
+    }
+    50% {
+        transform: translateX(-5%) translateY(-3%) rotate(-2deg) scaleY(1.08);
+    }
+    100% {
+        transform: translateX(-12%) translateY(2%) rotate(2deg) scaleY(.92);
+    }
+}
+
+/* Keep platform content above the background */
+body > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Don't let large opaque containers hide the effect */
+.page,
+.main,
+main,
+.content,
+.container,
+.app,
+.dashboard,
+section {
+    position: relative;
+}
+
