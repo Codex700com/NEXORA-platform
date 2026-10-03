@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.electricity-page{
+  max-width:560px;
+  margin:0 auto;
+  padding:18px 14px 110px;
+}
+.electric-hero{
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(80,210,255,.28);
+  border-radius:28px;
+  padding:24px 18px;
+  background:rgba(3,12,28,.48);
+  backdrop-filter:blur(14px);
+  box-shadow:0 0 35px rgba(0,170,255,.15);
+}
+.electric-icon{
+  font-size:46px;
+  filter:drop-shadow(0 0 12px #00bfff);
+}
+.electric-title{
+  margin:5px 0;
+  font-size:30px;
+  font-weight:900;
+  letter-spacing:1px;
+}
+.electric-sub{
+  color:#a9c8dc;
+  font-size:14px;
+}
+.electric-form{
+  margin-top:16px;
+  padding:20px;
+  border-radius:24px;
+  background:rgba(5,15,32,.58);
+  border:1px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(14px);
+}
+.electric-form label{
+  display:block;
+  margin:13px 0 7px;
+  color:#cfeeff;
+  font-weight:700;
+}
+.electric-form input{
+  width:100%;
+  box-sizing:border-box;
+  padding:15px;
+  border-radius:15px;
+  border:1px solid rgba(70,200,255,.28);
+  background:rgba(0,0,0,.35);
+  color:white;
+  outline:none;
+  font-size:16px;
+}
+.quick-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:9px;
+  margin-top:10px;
+}
+.quick-grid button{
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(0,191,255,.25);
+  background:rgba(0,130,255,.12);
+  color:#fff;
+  font-weight:800;
+}
+.electric-submit{
+  width:100%;
+  margin-top:18px;
+  padding:16px;
+  border:0;
+  border-radius:17px;
+  color:white;
+  font-size:17px;
+  font-weight:900;
+  background:linear-gradient(90deg,#007cff,#00d9ff);
+  box-shadow:0 0 25px rgba(0,190,255,.35);
+}
+.electric-note{
+  margin-top:14px;
+  font-size:12px;
+  color:#8faabd;
+  text-align:center;
+}
+.e-wave{
+  position:absolute;
+  left:-15%;
+  width:130%;
+  height:90px;
+  border-top:2px solid rgba(0,200,255,.8);
+  border-radius:50%;
+  pointer-events:none;
+  filter:drop-shadow(0 0 8px #00bfff);
+  animation:electricWave 4s ease-in-out infinite alternate;
+}
+.e-wave.one{bottom:-35px;transform:rotate(-4deg);}
+.e-wave.two{bottom:-55px;opacity:.5;animation-delay:1s;}
+@keyframes electricWave{
+  from{transform:translateX(-4%) rotate(-4deg) scaleY(.85);}
+  to{transform:translateX(4%) rotate(3deg) scaleY(1.15);}
+}
+</style>
+
+<div class="electricity-page">
+  <section class="electric-hero">
+    <div class="electric-icon">⚡</div>
+    <div class="electric-title">Electricity</div>
+    <div class="electric-sub">Buy electricity using your meter number</div>
+    <div class="e-wave one"></div>
+    <div class="e-wave two"></div>
+  </section>
+
+  <section class="electric-form">
+    <form method="post">
+      <label>Meter Number</label>
+      <input name="meter_number" inputmode="numeric"
+             placeholder="Enter meter number" required>
+
+      <label>Amount (UGX)</label>
+      <input id="electric_amount" name="amount" type="number"
+             min="1000" step="1" placeholder="Enter amount" required>
+
+      <label>Quick Amount</label>
+      <div class="quick-grid">
+        <button type="button" onclick="setElectric(5000)">UGX 5,000</button>
+        <button type="button" onclick="setElectric(10000)">UGX 10,000</button>
+        <button type="button" onclick="setElectric(20000)">UGX 20,000</button>
+        <button type="button" onclick="setElectric(50000)">UGX 50,000</button>
+      </div>
+
+      <button class="electric-submit" type="submit">
+        ⚡ Continue
+      </button>
+    </form>
+
+    <div class="electric-note">
+      Payment processing is not connected yet. This page prepares the electricity purchase request.
+    </div>
+  </section>
+</div>
+
+<script>
+function setElectric(amount){
+  document.getElementById("electric_amount").value=amount;
+}
+</script>
+
+{% endblock %}
