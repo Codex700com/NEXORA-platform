@@ -254,48 +254,4 @@
   setTimeout(bottom,100);
 })();
 </script>
-
-<style id="nexora-admin-final-nav-fix">
-html,body{overflow-x:hidden!important}
-
-.nxa-messages{
-  padding-bottom:190px!important;
-  overflow-y:auto!important;
-}
-
-.nxa-composer,
-.admin-chat-composer,
-.chat-composer{
-  position:fixed!important;
-  left:10px!important;
-  right:10px!important;
-  bottom:125px!important;
-  margin:0!important;
-  transform:none!important;
-  z-index:99999!important;
-  width:auto!important;
-}
-
-.nxa-composer button,
-.nxa-composer textarea,
-.nxa-composer input,
-.admin-chat-composer button,
-.admin-chat-composer textarea,
-.admin-chat-composer input,
-.chat-composer button,
-.chat-composer textarea,
-.chat-composer input{
-  position:relative!important;
-  z-index:100000!important;
-}
-
-@supports(padding-bottom:env(safe-area-inset-bottom)){
-  .nxa-composer,
-  .admin-chat-composer,
-  .chat-composer{
-    bottom:calc(125px + env(safe-area-inset-bottom))!important;
-  }
-}
-</style>
-
 {% endblock %}
