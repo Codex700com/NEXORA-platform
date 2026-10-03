@@ -81,6 +81,13 @@ def _ensure_ai_machines_table(con):
 
 def init_db():
     con=db()
+    # Safe schema migration for withdrawal fields
+    existing_columns = {row[1] for row in con.execute("PRAGMA table_info(transactions)").fetchall()}
+    if "withdraw_method" not in existing_columns:
+        con.execute("ALTER TABLE transactions ADD COLUMN withdraw_method TEXT")
+    if "withdraw_destination" not in existing_columns:
+        con.execute("ALTER TABLE transactions ADD COLUMN withdraw_destination TEXT")
+
     con.executescript("""
     CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,phone TEXT UNIQUE NOT NULL,password TEXT NOT NULL,invite_code TEXT UNIQUE NOT NULL,invited_by INTEGER,balance REAL NOT NULL DEFAULT 0,wallet REAL NOT NULL DEFAULT 0,points INTEGER NOT NULL DEFAULT 0,display_name TEXT NOT NULL DEFAULT '',mtn_number TEXT NOT NULL DEFAULT '',airtel_number TEXT NOT NULL DEFAULT '',usdt_wallet TEXT NOT NULL DEFAULT '',notifications_enabled INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL,is_admin INTEGER NOT NULL DEFAULT 0,salary_claimed_month TEXT,reward_claimed_month TEXT,manager_phone TEXT);
     CREATE TABLE IF NOT EXISTS transactions(id INTEGER PRIMARY KEY AUTOINCREMENT,uid INTEGER NOT NULL,kind TEXT NOT NULL,amount REAL NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT 'PENDING',reference TEXT,created_at TEXT NOT NULL);
