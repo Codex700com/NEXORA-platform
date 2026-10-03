@@ -1090,6 +1090,16 @@ def register():
             if con.execute("SELECT 1 FROM users WHERE phone=?",(phone,)).fetchone(): flash("Phone already registered.","error")
             else:
                 inviter=con.execute("SELECT id FROM users WHERE invite_code=?",(invite,)).fetchone() if invite else None
+                con.execute(
+                    "INSERT INTO users(phone,password,invite_code,invited_by,created_at) VALUES(?,?,?,?,?)",
+                    (
+                        phone,
+                        pw_hash(password),
+                        make_code(con),
+                        inviter["id"] if inviter else None,
+                        now()
+                    )
+                )
                 new_user_id=con.execute("SELECT last_insert_rowid()").fetchone()[0]
                 if inviter:
                     process_electricity_referral_bonus(con,new_user_id,inviter["id"])
