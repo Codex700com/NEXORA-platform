@@ -1696,17 +1696,6 @@ def withdraw():
             flash("Save your payout details on the Card page before withdrawing.","error")
             return redirect(url_for("withdraw"))
 
-        active_machine=con.execute("""
-            SELECT 1 FROM ai_machines
-            WHERE uid=? AND status IN ('ACTIVE','RUNNING')
-            LIMIT 1
-        """,(u["id"],)).fetchone()
-
-        if not active_machine:
-            con.close()
-            flash("You need an active AI machine before you can withdraw.","error")
-            return redirect(url_for("withdraw"))
-
         balance=float(fresh["balance"] or 0)
 
         if amount > balance:
