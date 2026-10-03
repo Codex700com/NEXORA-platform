@@ -1802,7 +1802,7 @@ def withdraw():
     return render_template(
         "withdraw.html",
         title="Withdraw",
-        user=user,
+        user=u,
         pending=pending,
         history=history
     )

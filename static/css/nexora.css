@@ -396,3 +396,83 @@ footer {
     position: relative;
     z-index: 2;
 }
+
+
+/* =========================================================
+   NEXORA GLOBAL OCEAN DOTS + RED ANIMATED WAVES
+   ========================================================= */
+
+html {
+    background: #020711 !important;
+}
+
+body {
+    background: #020711 !important;
+}
+
+/* Permanent visual background */
+body::before {
+    content: "";
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+    background-image:
+        radial-gradient(circle, rgba(255,255,255,.95) 1.3px, transparent 1.8px),
+        radial-gradient(circle, rgba(255,255,255,.65) 1px, transparent 1.6px) !important;
+    background-size: 28px 28px, 55px 55px !important;
+    background-position: 0 0, 14px 17px !important;
+    animation: nexoraDotsMove 12s linear infinite !important;
+}
+
+/* Red animated wave layer */
+body::after {
+    content: "";
+    position: fixed !important;
+    left: -15vw !important;
+    bottom: 8vh !important;
+    width: 130vw !important;
+    height: 190px !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    border-top: 4px solid rgba(255,0,0,.9) !important;
+    border-radius: 50% !important;
+    box-shadow:
+        0 -22px 0 rgba(255,0,0,.22),
+        0 22px 0 rgba(255,0,0,.15),
+        0 -44px 0 rgba(255,0,0,.08) !important;
+    animation: nexoraRedOceanWave 6s ease-in-out infinite alternate !important;
+}
+
+@keyframes nexoraDotsMove {
+    from {
+        background-position: 0 0, 14px 17px;
+    }
+    to {
+        background-position: 28px 18px, -14px 35px;
+    }
+}
+
+@keyframes nexoraRedOceanWave {
+    0% {
+        transform: translateX(-5vw) translateY(0) rotate(-1deg);
+    }
+    50% {
+        transform: translateX(3vw) translateY(-25px) rotate(1deg);
+    }
+    100% {
+        transform: translateX(7vw) translateY(12px) rotate(-1deg);
+    }
+}
+
+/* Keep all actual NEXORA content above the background */
+body > * {
+    position: relative;
+    z-index: 2;
+}
+
+body > .bolt {
+    z-index: 3 !important;
+}
