@@ -615,3 +615,114 @@ main,
   }
 }
 </style>
+
+<style id="NEXORA_FULL_WHITE_DOT_FIELD">
+/* WHITE DOT FIELD — visible across ALL dark/black platform areas */
+html,
+body{
+  background-color:#020711!important;
+}
+
+body::before{
+  content:""!important;
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100vh!important;
+  z-index:1!important;
+  pointer-events:none!important;
+  opacity:.92!important;
+
+  background-image:
+    radial-gradient(circle,rgba(255,255,255,.95) 1.35px,transparent 1.8px),
+    radial-gradient(circle,rgba(255,255,255,.75) 1.05px,transparent 1.7px),
+    radial-gradient(circle,rgba(255,255,255,.55) .8px,transparent 1.5px),
+    radial-gradient(circle,rgba(255,255,255,.38) .65px,transparent 1.4px);
+
+  background-size:
+    27px 27px,
+    43px 43px,
+    67px 67px,
+    91px 91px;
+
+  background-position:
+    0 0,
+    13px 19px,
+    31px 7px,
+    47px 53px;
+
+  animation:nexoraWhiteDotMotion 18s linear infinite;
+}
+
+@keyframes nexoraWhiteDotMotion{
+  0%{
+    background-position:
+      0 0,
+      13px 19px,
+      31px 7px,
+      47px 53px;
+  }
+  50%{
+    background-position:
+      13px 17px,
+      31px 3px,
+      7px 29px,
+      63px 19px;
+  }
+  100%{
+    background-position:
+      27px 27px,
+      43px 43px,
+      67px 67px,
+      91px 91px;
+  }
+}
+
+/* Keep every real interface element above the dot field */
+body > *{
+  position:relative;
+  z-index:2;
+}
+
+/* Keep the decorative waves visible above the dots */
+.nexora-global-background{
+  z-index:3!important;
+  pointer-events:none!important;
+}
+
+/* Cards remain readable while dots stay visible around them */
+.card,
+.cards,
+.panel,
+.container,
+.content,
+.form-card,
+.form-container,
+.auth-card,
+.register-card,
+.login-card,
+.dashboard-card,
+.withdraw-card,
+.invest-card,
+.product-card,
+.table-container,
+.table-card,
+.profile-card,
+.support-card,
+.manager-card,
+section{
+  background-color:rgba(2,7,17,.72)!important;
+  backdrop-filter:blur(3px)!important;
+  -webkit-backdrop-filter:blur(3px)!important;
+}
+
+/* Navigation stays above everything */
+.nx-nav{
+  z-index:9999!important;
+}
+
+/* Don't let the dot layer interfere with taps */
+body::before{
+  pointer-events:none!important;
+}
+</style>
