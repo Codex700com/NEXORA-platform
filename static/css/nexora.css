@@ -476,3 +476,150 @@ body > * {
 body > .bolt {
     z-index: 3 !important;
 }
+
+/* NEXORA GLOBAL FULL-PAGE BACKGROUND */
+html,
+body {
+  background: #020711 !important;
+  min-height: 100% !important;
+}
+
+body {
+  position: relative !important;
+  overflow-x: hidden !important;
+}
+
+/* Permanent background layer covering the entire viewport */
+.nexora-global-background {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  background-color: #020711 !important;
+
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.95) 1.25px, transparent 1.9px),
+    radial-gradient(circle, rgba(255,255,255,.68) 1px, transparent 1.7px),
+    radial-gradient(circle, rgba(255,255,255,.42) .8px, transparent 1.5px) !important;
+
+  background-size:
+    30px 30px,
+    57px 57px,
+    83px 83px !important;
+
+  background-position:
+    0 0,
+    17px 23px,
+    31px 11px !important;
+
+  animation: nexoraStarsMove 16s linear infinite !important;
+}
+
+/* Make normal page content stay above the background */
+body > *:not(.nexora-global-background) {
+  position: relative;
+  z-index: 2;
+}
+
+/* Red animated ocean waves */
+.nexora-red-wave {
+  position: absolute !important;
+  left: -20vw !important;
+  width: 140vw !important;
+  height: 180px !important;
+  border-top: 3px solid rgba(255,0,0,.90) !important;
+  border-radius: 50% !important;
+  filter: drop-shadow(0 0 5px rgba(255,0,0,.28)) !important;
+  transform-origin: center !important;
+}
+
+.wave-one {
+  bottom: 15vh !important;
+  box-shadow:
+    0 -18px 0 rgba(255,0,0,.20),
+    0 18px 0 rgba(255,0,0,.13) !important;
+  animation: nexoraWaveOne 6s ease-in-out infinite alternate !important;
+}
+
+.wave-two {
+  bottom: 32vh !important;
+  opacity: .48 !important;
+  border-top-width: 2px !important;
+  animation: nexoraWaveTwo 8s ease-in-out infinite alternate-reverse !important;
+}
+
+.wave-three {
+  bottom: 52vh !important;
+  opacity: .25 !important;
+  border-top-width: 2px !important;
+  animation: nexoraWaveThree 10s ease-in-out infinite alternate !important;
+}
+
+@keyframes nexoraStarsMove {
+  from {
+    background-position:
+      0 0,
+      17px 23px,
+      31px 11px;
+  }
+  to {
+    background-position:
+      30px 30px,
+      -40px 57px,
+      83px -83px;
+  }
+}
+
+@keyframes nexoraWaveOne {
+  0% {
+    transform: translateX(-3vw) translateY(0) rotate(-1deg) scaleY(.90);
+  }
+  50% {
+    transform: translateX(5vw) translateY(-22px) rotate(1deg) scaleY(1.15);
+  }
+  100% {
+    transform: translateX(-2vw) translateY(10px) rotate(-1deg) scaleY(.95);
+  }
+}
+
+@keyframes nexoraWaveTwo {
+  0% {
+    transform: translateX(4vw) translateY(15px) rotate(1deg);
+  }
+  100% {
+    transform: translateX(-6vw) translateY(-20px) rotate(-1deg);
+  }
+}
+
+@keyframes nexoraWaveThree {
+  0% {
+    transform: translateX(-5vw) translateY(-5px) rotate(-1deg);
+  }
+  100% {
+    transform: translateX(7vw) translateY(20px) rotate(1deg);
+  }
+}
+
+/* Keep the background behind all existing page components */
+.nexora-global-background,
+.nexora-global-background * {
+  pointer-events: none !important;
+}
+
+@media (max-width: 600px) {
+  .nexora-global-background {
+    background-size:
+      24px 24px,
+      47px 47px,
+      71px 71px !important;
+  }
+
+  .nexora-red-wave {
+    width: 170vw !important;
+    left: -35vw !important;
+  }
+}
