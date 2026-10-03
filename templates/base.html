@@ -726,3 +726,196 @@ body::before{
   pointer-events:none!important;
 }
 </style>
+
+<style id="NEXORA_BLUE_WAVES_GLASS">
+/* =========================================================
+   NEXORA GLASS + WHITE DOTS + BLUE OCEAN WAVES
+   ========================================================= */
+
+html,
+body{
+  background:#020711!important;
+}
+
+/* Transparent glass surfaces */
+.card,
+.cards,
+.panel,
+.container,
+.content,
+.form-card,
+.form-container,
+.auth-card,
+.register-card,
+.login-card,
+.dashboard-card,
+.withdraw-card,
+.invest-card,
+.product-card,
+.table-container,
+.table-card,
+.profile-card,
+.support-card,
+.manager-card,
+section,
+form{
+  background:rgba(3,12,27,.48)!important;
+  border:1px solid rgba(120,220,255,.18)!important;
+  backdrop-filter:blur(7px)!important;
+  -webkit-backdrop-filter:blur(7px)!important;
+  box-shadow:
+    0 12px 38px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 0 25px rgba(0,130,255,.035)!important;
+}
+
+/* White dots across the complete platform */
+body::before{
+  content:""!important;
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100vh!important;
+  z-index:1!important;
+  pointer-events:none!important;
+  opacity:.9!important;
+  background-image:
+    radial-gradient(circle,rgba(255,255,255,.95) 1.3px,transparent 1.8px),
+    radial-gradient(circle,rgba(255,255,255,.70) 1px,transparent 1.6px),
+    radial-gradient(circle,rgba(255,255,255,.42) .7px,transparent 1.4px);
+  background-size:
+    28px 28px,
+    51px 51px,
+    79px 79px;
+  background-position:
+    0 0,
+    17px 23px,
+    37px 11px;
+  animation:nxDotsMove 20s linear infinite;
+}
+
+@keyframes nxDotsMove{
+  from{
+    background-position:
+      0 0,
+      17px 23px,
+      37px 11px;
+  }
+  to{
+    background-position:
+      28px 28px,
+      68px 74px,
+      116px 58px;
+  }
+}
+
+/* BLUE OCEAN WAVE LAYER */
+body::after{
+  content:""!important;
+  position:fixed!important;
+  left:-15vw!important;
+  bottom:4vh!important;
+  width:130vw!important;
+  height:42vh!important;
+  z-index:1!important;
+  pointer-events:none!important;
+  border-top:2px solid rgba(0,174,255,.72)!important;
+  border-radius:50% 50% 0 0!important;
+  box-shadow:
+    0 -12px 35px rgba(0,150,255,.20),
+    0 -30px 65px rgba(0,90,255,.09)!important;
+  transform:rotate(-3deg)!important;
+  animation:nxBlueWave 9s ease-in-out infinite alternate!important;
+}
+
+@keyframes nxBlueWave{
+  0%{
+    transform:translateX(-4%) rotate(-3deg) scaleY(.82);
+  }
+  50%{
+    transform:translateX(2%) rotate(1deg) scaleY(1.08);
+  }
+  100%{
+    transform:translateX(5%) rotate(-2deg) scaleY(.9);
+  }
+}
+
+/* Second blue wave */
+.nexora-global-background::after{
+  content:""!important;
+  position:absolute!important;
+  left:-20vw!important;
+  bottom:14vh!important;
+  width:140vw!important;
+  height:25vh!important;
+  border-top:2px solid rgba(40,120,255,.50)!important;
+  border-radius:50%!important;
+  box-shadow:0 -10px 35px rgba(0,100,255,.14)!important;
+  animation:nxBlueWaveTwo 12s ease-in-out infinite alternate!important;
+  pointer-events:none!important;
+}
+
+@keyframes nxBlueWaveTwo{
+  from{
+    transform:translateX(4%) rotate(5deg) scaleY(.85);
+  }
+  to{
+    transform:translateX(-5%) rotate(1deg) scaleY(1.12);
+  }
+}
+
+/* Ensure interface remains above decorative layers */
+body > *{
+  position:relative;
+  z-index:2;
+}
+
+.nexora-global-background{
+  z-index:3!important;
+  pointer-events:none!important;
+}
+
+/* Keep navigation completely above waves/dots */
+.nx-nav{
+  z-index:9999!important;
+  background:rgba(2,7,17,.60)!important;
+  backdrop-filter:blur(16px)!important;
+  -webkit-backdrop-filter:blur(16px)!important;
+}
+
+/* Keep text readable while retaining transparency */
+.card *,
+.panel *,
+.dashboard-card *,
+.product-card *,
+.invest-card *,
+.withdraw-card *,
+.profile-card *,
+.support-card *,
+.manager-card *{
+  position:relative;
+}
+
+/* Never let decorative effects block buttons */
+body::before,
+body::after,
+.nexora-global-background,
+.nexora-red-wave,
+.nexora-global-background::before,
+.nexora-global-background::after{
+  pointer-events:none!important;
+}
+
+@media(max-width:600px){
+  .card,
+  .panel,
+  .dashboard-card,
+  .product-card,
+  .invest-card,
+  .withdraw-card{
+    background:rgba(3,12,27,.54)!important;
+    backdrop-filter:blur(6px)!important;
+    -webkit-backdrop-filter:blur(6px)!important;
+  }
+}
+</style>
