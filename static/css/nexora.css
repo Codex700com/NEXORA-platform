@@ -623,3 +623,138 @@ body > *:not(.nexora-global-background) {
     left: -35vw !important;
   }
 }
+
+/* ===== NEXORA DOTS EVERYWHERE ===== */
+
+html,
+body {
+    background: #020711 !important;
+    min-height: 100vh !important;
+}
+
+/* Full-screen permanent dot field */
+.nexora-global-background {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+
+    background-color: #020711 !important;
+
+    background-image:
+        radial-gradient(circle, rgba(255,255,255,1) 1.35px, transparent 2px),
+        radial-gradient(circle, rgba(255,255,255,.78) 1.15px, transparent 1.9px),
+        radial-gradient(circle, rgba(255,255,255,.48) .9px, transparent 1.7px) !important;
+
+    background-size:
+        28px 28px,
+        52px 52px,
+        78px 78px !important;
+
+    background-position:
+        0 0,
+        14px 19px,
+        31px 37px !important;
+
+    animation: nexoraDotsEverywhere 14s linear infinite !important;
+}
+
+/* Everything stays above the dot layer */
+body > *:not(.nexora-global-background) {
+    position: relative;
+    z-index: 2;
+}
+
+/* Let the dots remain visible through major UI surfaces */
+.card,
+.cards,
+.panel,
+.container,
+.content,
+.form-card,
+.form-container,
+.auth-card,
+.register-card,
+.login-card,
+.dashboard-card,
+.withdraw-card,
+.invest-card,
+.product-card,
+.table-container,
+.table-card,
+.profile-card,
+.support-card,
+.manager-card,
+section,
+form {
+    background-color: rgba(2, 7, 17, .78) !important;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+/* Registration/login areas specifically */
+.register,
+.registration,
+.register-page,
+.registration-page,
+.auth,
+.auth-page {
+    background: transparent !important;
+}
+
+/* Tables themselves remain readable but don't completely hide the dots */
+table {
+    background: rgba(2, 7, 17, .68) !important;
+}
+
+thead,
+tbody,
+tr,
+td,
+th {
+    background-color: transparent !important;
+}
+
+/* Stronger dots on small screens */
+@media (max-width: 600px) {
+    .nexora-global-background {
+        background-size:
+            23px 23px,
+            43px 43px,
+            67px 67px !important;
+    }
+}
+
+@keyframes nexoraDotsEverywhere {
+    0% {
+        background-position:
+            0 0,
+            14px 19px,
+            31px 37px;
+    }
+
+    50% {
+        background-position:
+            14px 14px,
+            -18px 26px,
+            39px -20px;
+    }
+
+    100% {
+        background-position:
+            28px 28px,
+            -38px 52px,
+            78px -78px;
+    }
+}
+
+/* Never allow the dot layer to interfere with controls */
+.nexora-global-background,
+.nexora-global-background * {
+    pointer-events: none !important;
+}
+
