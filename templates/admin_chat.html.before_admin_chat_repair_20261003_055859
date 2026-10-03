@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+body{background:#000!important}
+.chatpage{min-height:100vh;background:#000;color:#fff;padding-bottom:185px;font-family:Inter,system-ui,sans-serif}
+.head{position:sticky;top:0;z-index:20;background:rgba(0,0,0,.96);border-bottom:1px solid #173b24;padding:11px}
+.headin{max-width:850px;margin:auto;display:flex;align-items:center;gap:10px}
+.back{color:#39ff72;text-decoration:none;font-size:27px}.ava{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#092412;color:#39ff72;font-weight:900}
+.name{font-weight:900}.phone{font-size:11px;color:#718778}
+.messages{max-width:850px;margin:auto;padding:15px 10px 25px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:82%;padding:10px 12px;border-radius:17px;background:#060906;border:1px solid #14351f;overflow-wrap:anywhere}
+.msg.admin{align-self:flex-end;background:#092412;border-color:#39ff72}.msg.user{align-self:flex-start}
+.msg img,.msg video{display:block;max-width:100%;border-radius:12px;margin-top:7px}.msg audio{width:100%;margin-top:7px}
+.msg a{color:#39ff72;word-break:break-all}.time{font-size:9px;color:#668071;margin-top:4px}
+.composer{
+ position:fixed;
+ left:50%;
+ transform:translateX(-50%);
+ bottom:76px;
+ width:min(850px,calc(100% - 16px));
+ z-index:100;
+ background:#030603;
+ border:1px solid #39ff72;
+ border-radius:18px;
+ padding:10px;
+ box-shadow:0 12px 40px rgba(0,0,0,.85);
+}
+.formin{max-width:850px;margin:auto;display:flex;gap:7px;align-items:flex-end}
+textarea{
+ flex:1;
+ min-height:58px;
+ max-height:150px;
+ background:#050805;
+ color:#fff;
+ border:1px solid #214c2d;
+ border-radius:14px;
+ padding:12px;
+ resize:none;
+ outline:none;
+ font-size:14px;
+}
+textarea:focus{border-color:#39ff72}
+.btn{
+ width:45px;
+ height:45px;
+ flex:0 0 45px;
+ border-radius:12px;
+ background:#071009;
+ color:#39ff72;
+ border:1px solid #214c2d;
+ font-size:18px;
+}
+.send{background:#39ff72;color:#001507;border:0;font-weight:900}
+</style>
+
+<div class="chatpage">
+<div class="head"><div class="headin">
+<a class="back" href="{{ url_for('admin') }}">‹</a>
+<div class="ava">{{ ((user['display_name'] or user['phone'] or 'U')[0])|upper }}</div>
+<div><div class="name">{{ user['display_name'] or user['phone'] or ('User #'~uid) }}</div><div class="phone">{{ user['phone'] or ('User ID #'~uid) }}</div></div>
+</div></div>
+
+<div class="messages" id="messages">
+{% for m in messages %}
+<div class="msg {{ 'admin' if m['sender']=='ADMIN' else 'user' }}">
+{% if m['message'] %}<div>{{ m['message']|e|replace('\n','<br>')|safe }}</div>{% endif %}
+{% if m['media'] %}
+{% set x=m['media'] %}
+{% if x.lower().endswith(('.jpg','.jpeg','.png','.gif','.webp')) %}<img src="{{ x }}">
+{% elif x.lower().endswith(('.mp4','.mov','.m4v')) %}<video controls src="{{ x }}"></video>
+{% else %}<audio controls src="{{ x }}"></audio>{% endif %}
+{% endif %}
+<div class="time">{{ m['created_at'] }}</div>
+</div>
+{% endfor %}
+</div>
+
+<form class="composer" id="chatForm" method="post" action="{{ url_for('admin_support_send') }}" enctype="multipart/form-data">
+<input type="hidden" name="uid" value="{{ uid }}">
+<div class="formin">
+<button class="btn" type="button" id="voice">🎤</button>
+<label class="btn">📎<input id="media" name="media" type="file" accept="image/*,video/*,audio/*" hidden></label>
+<textarea id="message" name="message" placeholder="Write a message or paste a link..."></textarea>
+<button class="btn send" type="submit">➤</button>
+</div>
+</form>
+<style id="nexora-final-admin-chat-ui">
+html,body{
+  margin:0!important;padding:0!important;width:100%;height:100%;
+  overflow:hidden!important;background:#000!important;
+}
+.chatpage{
+  width:100%!important;height:100dvh!important;min-height:100dvh!important;
+  display:flex!important;flex-direction:column!important;
+  overflow:hidden!important;padding:0!important;
+}
+.head{
+  flex:0 0 auto!important;
+  z-index:20!important;
+}
+.messages{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:12px 10px 112px!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:7px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  scroll-behavior:smooth!important;
+}
+.messages .msg{
+  width:fit-content!important;
+  max-width:86%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  margin:3px 0!important;
+  padding:9px 11px!important;
+  border-radius:16px!important;
+  overflow:visible!important;
+  word-break:break-word!important;
+  overflow-wrap:anywhere!important;
+  white-space:normal!important;
+}
+.messages .msg.user{
+  align-self:flex-start!important;
+  margin-right:auto!important;
+}
+.messages .msg.admin{
+  align-self:flex-end!important;
+  margin-left:auto!important;
+}
+.messages .msg img,
+.messages .msg video{
+  display:block!important;
+  max-width:100%!important;
+  width:auto!important;
+  height:auto!important;
+  max-height:320px!important;
+  object-fit:contain!important;
+}
+.messages .msg audio{
+  display:block!important;
+  width:min(280px,100%)!important;
+  max-width:100%!important;
+}
+.composer{
+  position:relative!important;
+  flex:0 0 auto!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  padding:8px 8px calc(8px + env(safe-area-inset-bottom))!important;
+  background:#050505!important;
+  border-top:1px solid rgba(255,255,255,.12)!important;
+  z-index:50!important;
+}
+.formin{
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  display:flex!important;
+  align-items:flex-end!important;
+  gap:6px!important;
+}
+.formin textarea{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  min-height:42px!important;
+  max-height:110px!important;
+  resize:none!important;
+  overflow-y:auto!important;
+  box-sizing:border-box!important;
+  border-radius:22px!important;
+  padding:11px 14px!important;
+}
+.formin .btn{
+  flex:0 0 42px!important;
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  min-height:42px!important;
+  border-radius:50%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+.nexora-admin-wa{
+  display:none;
+  width:100%;
+  min-height:52px;
+  align-items:center;
+  gap:9px;
+  box-sizing:border-box;
+}
+.nexora-admin-wa.active{display:flex}
+.nexora-admin-wa-cancel{
+  width:40px;height:40px;border:0;border-radius:50%;
+  background:transparent;color:#aaa;font-size:25px;
+}
+.nexora-admin-wa-mic{
+  width:40px;height:40px;border-radius:50%;
+  background:#19d66b;color:#06110a;
+  display:flex;align-items:center;justify-content:center;
+  animation:nexoraAdminPulse 1.1s infinite;
+}
+.nexora-admin-wa-time{
+  width:40px;font-size:14px;font-variant-numeric:tabular-nums;
+}
+.nexora-admin-wa-wave{
+  flex:1;height:32px;display:flex;align-items:center;gap:3px;overflow:hidden;
+}
+.nexora-admin-wa-wave i{
+  width:3px;border-radius:3px;background:#19d66b;
+  animation:nexoraAdminWave .65s ease-in-out infinite alternate;
+}
+.nexora-admin-wa-wave i:nth-child(2n){animation-delay:.12s}
+.nexora-admin-wa-wave i:nth-child(3n){animation-delay:.24s}
+.nexora-admin-wa-send{
+  width:44px;height:44px;border:0;border-radius:50%;
+  background:#19d66b;color:#06110a;font-size:20px;
+}
+@keyframes nexoraAdminPulse{50%{box-shadow:0 0 0 7px rgba(25,214,107,.12)}}
+@keyframes nexoraAdminWave{from{height:6px}to{height:27px}}
+@media(max-width:600px){
+  .messages{padding-left:8px!important;padding-right:8px!important}
+  .messages .msg{max-width:88%!important}
+}
+</style>
+
+<script>
+(function(){
+  const form=document.getElementById("chatForm");
+  const box=document.getElementById("messages");
+  const voice=document.getElementById("voice");
+  const media=document.getElementById("media");
+  if(!form)return;
+
+  function bottom(){
+    if(box)requestAnimationFrame(()=>box.scrollTop=box.scrollHeight);
+  }
+  window.addEventListener("load",bottom);
+  setTimeout(bottom,150);
+  setTimeout(bottom,500);
+
+  if(voice){
+    const bar=document.createElement("div");
+    bar.className="nexora-admin-wa";
+    bar.innerHTML=
+      '<button type="button" class="nexora-admin-wa-cancel">×</button>'+
+      '<div class="nexora-admin-wa-mic">🎙</div>'+
+      '<div class="nexora-admin-wa-time">0:00</div>'+
+      '<div class="nexora-admin-wa-wave">'+
+      Array.from({length:22},(_,i)=>'<i style="height:'+(7+(i%6)*3)+'px"></i>').join("")+
+      '</div>'+
+      '<button type="button" class="nexora-admin-wa-send">➤</button>';
+
+    form.insertBefore(bar,form.firstChild);
+
+    const cancel=bar.querySelector(".nexora-admin-wa-cancel");
+    const send=bar.querySelector(".nexora-admin-wa-send");
+    const timer=bar.querySelector(".nexora-admin-wa-time");
+    let rec=null,stream=null,chunks=[],started=0,tick=null;
+
+    function cleanup(){
+      if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+      clearInterval(tick);
+    }
+    function reset(){
+      cleanup();rec=null;chunks=[];
+      bar.classList.remove("active");
+      voice.style.display="";
+      timer.textContent="0:00";
+    }
+
+    voice.onclick=async function(){
+      if(bar.classList.contains("active")){
+        if(rec && rec.state!=="inactive")rec.stop();
+        return;
+      }
+      try{
+        stream=await navigator.mediaDevices.getUserMedia({audio:true});
+        const opt={};
+        if(MediaRecorder.isTypeSupported("audio/webm;codecs=opus"))
+          opt.mimeType="audio/webm;codecs=opus";
+        else if(MediaRecorder.isTypeSupported("audio/webm"))
+          opt.mimeType="audio/webm";
+
+        rec=new MediaRecorder(stream,opt);
+        chunks=[];
+        rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+        rec.onstop=()=>{
+          cleanup();
+          if(!chunks.length){reset();return}
+          const blob=new Blob(chunks,{type:rec.mimeType||"audio/webm"});
+          const file=new File([blob],"admin_voice_"+Date.now()+".webm",{type:blob.type});
+          const dt=new DataTransfer();dt.items.add(file);
+          if(media)media.files=dt.files;
+          timer.textContent="✓";
+          bar.dataset.ready="1";
+        };
+        rec.start();
+        started=Date.now();
+        bar.dataset.ready="0";
+        bar.classList.add("active");
+        voice.style.display="none";
+        tick=setInterval(()=>{
+          const sec=Math.floor((Date.now()-started)/1000);
+          timer.textContent=Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");
+        },250);
+      }catch(e){
+        cleanup();
+        alert("Microphone permission is required for voice messages.");
+      }
+    };
+
+    cancel.onclick=function(){
+      if(rec && rec.state!=="inactive"){try{rec.stop()}catch(e){}}
+      reset();
+      if(media)media.value="";
+    };
+
+    send.onclick=function(){
+      if(rec && rec.state!=="inactive"){
+        rec.stop();
+        setTimeout(()=>{if(media && media.files.length)form.requestSubmit()},180);
+      }else if(media && media.files.length){
+        form.requestSubmit();
+      }
+    };
+  }
+
+  form.addEventListener("submit",function(){
+    setTimeout(bottom,100);
+  });
+})();
+</script>

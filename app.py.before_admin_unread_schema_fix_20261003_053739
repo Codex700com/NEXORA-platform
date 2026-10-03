@@ -3316,76 +3316,41 @@ def chat_popup_user_read():
 def chat_popup_admin():
     ensure_chat_popup_reads()
     con=db()
-
     rows=con.execute("""
         SELECT
             s.uid,
-            MAX(s.id) AS latest_id,
-            COUNT(*) AS unread_count
+            MAX(s.id) latest_id,
+            COUNT(*) unread_count
         FROM support_messages s
         LEFT JOIN chat_popup_reads r ON r.uid=s.uid
         WHERE s.id>COALESCE(r.admin_read_id,0)
-          AND LOWER(TRIM(s.sender)) NOT IN ('admin','manager')
+          AND UPPER(s.sender) NOT IN ('ADMIN','MANAGER')
         GROUP BY s.uid
         ORDER BY latest_id DESC
-        LIMIT 50
+        LIMIT 20
     """).fetchall()
 
     items=[]
-
-    # Detect the real users-table columns instead of assuming name/username exist.
-    user_cols=[
-        x["name"]
-        for x in con.execute("PRAGMA table_info(users)").fetchall()
-    ]
-
-    preferred=[]
-    for c in ("phone","username","full_name","display_name","email"):
-        if c in user_cols:
-            preferred.append(c)
-
     for r in rows:
         uid=int(r["uid"])
-
         latest=con.execute("""
-            SELECT message,created_at,sender
+            SELECT message,created_at
             FROM support_messages
             WHERE uid=? AND id=?
         """,(uid,int(r["latest_id"]))).fetchone()
-
         userrow=con.execute(
-            "SELECT * FROM users WHERE id=?",
+            "SELECT id,phone,name,username FROM users WHERE id=?",
             (uid,)
         ).fetchone()
-
-        display="User "+str(uid)
-
-        if userrow:
-            for c in preferred:
-                try:
-                    value=userrow[c]
-                    if value:
-                        display=str(value)
-                        break
-                except Exception:
-                    pass
-
         items.append({
             "uid":uid,
             "unread":int(r["unread_count"] or 0),
-            "message":str(latest["message"] or "")[:160] if latest else "New message",
+            "message":str(latest["message"] or "")[:120] if latest else "",
             "created_at":str(latest["created_at"] or "") if latest else "",
-            "name":display
+            "name":str((userrow["name"] or userrow["username"] or userrow["phone"] or "User")) if userrow else "User"
         })
-
-    total=sum(x["unread"] for x in items)
-
     con.close()
-
-    return jsonify({
-        "unread":total,
-        "items":items
-    })
+    return jsonify({"unread":sum(x["unread"] for x in items),"items":items})
 
 @app.route("/admin/chat-popup/read/<int:uid>", methods=["POST"])
 @admin_required

@@ -1,0 +1,135 @@
+<style>
+.nx-nav{
+position:fixed;
+left:10px;
+right:10px;
+bottom:10px;
+height:68px;
+z-index:500;
+display:flex;
+align-items:center;
+justify-content:space-around;
+padding:6px 5px;
+border:1px solid rgba(57,255,136,.22);
+border-radius:22px;
+background:rgba(0,8,12,.94);
+backdrop-filter:blur(18px);
+-webkit-backdrop-filter:blur(18px);
+box-shadow:0 0 30px rgba(0,255,120,.08),0 10px 35px rgba(0,0,0,.55);
+}
+
+.nx-nav:before{
+content:"NEXORA // SYSTEM NAVIGATION";
+position:absolute;
+top:-18px;
+left:14px;
+font-size:7px;
+letter-spacing:2px;
+color:rgba(57,255,136,.55);
+font-family:monospace;
+}
+
+.nx-link{
+position:relative;
+width:16%;
+height:56px;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+gap:3px;
+color:#718087;
+text-decoration:none;
+font-family:Arial,sans-serif;
+transition:.22s ease;
+}
+
+.nx-link .nx-icon{
+font-size:20px;
+line-height:20px;
+font-family:Arial,sans-serif;
+}
+
+.nx-link .nx-label{
+font-size:8px;
+font-weight:700;
+letter-spacing:1.2px;
+}
+
+.nx-link.active{
+color:#39ff88;
+}
+
+.nx-link.active:after{
+content:"";
+position:absolute;
+bottom:1px;
+width:24px;
+height:2px;
+border-radius:5px;
+background:#39ff88;
+box-shadow:0 0 9px #39ff88;
+}
+
+.nx-link:hover{
+color:#b9ffd2;
+transform:translateY(-2px);
+}
+
+.nx-status{
+position:absolute;
+right:13px;
+top:-18px;
+font:7px monospace;
+letter-spacing:1px;
+color:rgba(57,255,136,.45);
+}
+
+@media(max-width:360px){
+.nx-nav{left:5px;right:5px}
+.nx-link .nx-label{font-size:7px;letter-spacing:.7px}
+.nx-link .nx-icon{font-size:18px}
+}
+</style>
+
+<div class="nx-nav">
+
+  <a href="/home" class="nx-link {% if active=='Home' %}active{% endif %}">
+    <span class="nx-icon">⌂</span>
+    <span class="nx-label">CORE</span>
+  </a>
+
+  <a href="/raffle" class="nx-link {% if active=='Raffle' %}active{% endif %}">
+    <span class="nx-icon">◇</span>
+    <span class="nx-label">MATRIX</span>
+  </a>
+
+  <a href="/support" class="nx-link {% if active=='chats' %}active{% endif %}">
+    <span class="nx-icon">⌁</span>
+    <span class="nx-label">COMM</span>
+  </a>
+
+  <a href="/invest" class="nx-link {% if active=='AI' %}active{% endif %}">
+    <span class="nx-icon">⌬</span>
+    <span class="nx-label">LAB</span>
+  </a>
+
+  <a href="/income" class="nx-link {% if active=='Income' %}active{% endif %}">
+    <span class="nx-icon">∿</span>
+    <span class="nx-label">YIELD</span>
+  </a>
+
+  <a href="/my" class="nx-link {% if active=='My' %}active{% endif %}">
+    <span class="nx-icon">◎</span>
+    <span class="nx-label">IDENTITY</span>
+  </a>
+
+  {% if user is defined and user and user["is_admin"] %}
+  <a href="/admin" class="nx-link {% if active=='Admin' %}active{% endif %}">
+    <span class="nx-icon">⚙</span>
+    <span class="nx-label">ADMIN</span>
+  </a>
+  {% endif %}
+
+  <span class="nx-status">● ONLINE</span>
+</div>

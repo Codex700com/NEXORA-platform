@@ -9,7 +9,7 @@
   background:#07110b;
   color:#fff;
   overflow:hidden;
-;padding-bottom:calc(90px + env(safe-area-inset-bottom))}
+}
 .nx-head{
   flex:0 0 auto;
   display:flex;
@@ -105,7 +105,7 @@
   padding:8px 8px max(8px,env(safe-area-inset-bottom));
   background:#0b1710;
   border-top:1px solid rgba(57,255,136,.15);
-;flex-shrink:0}
+}
 .nx-file,.nx-icon,.nx-send{
   width:43px;height:43px;min-width:43px;
   border:0;border-radius:50%;
@@ -322,64 +322,4 @@
   });
 })();
 </script>
-
-<style id="nexora-final-chat-nav-fix">
-/* FINAL CUSTOMER-SERVICE NAVIGATION CLEARANCE */
-html,body{
-  overflow-x:hidden!important;
-}
-
-.nx-chat{
-  min-height:100vh!important;
-  padding-bottom:180px!important;
-}
-
-/* Keep the message area above the composer */
-.nx-messages{
-  padding-bottom:190px!important;
-  overflow-y:auto!important;
-}
-
-/* Composer gets its own layer above the bottom navigation */
-.nx-composer,
-.chat-composer,
-#nexora-admin-composer{
-  position:fixed!important;
-  left:10px!important;
-  right:10px!important;
-  bottom:125px!important;
-  margin:0!important;
-  transform:none!important;
-  z-index:99999!important;
-  width:auto!important;
-}
-
-/* Extra separation from the navigation */
-.nx-composer::after,
-.chat-composer::after{
-  content:"";
-  display:block;
-  height:0;
-}
-
-/* Make sure controls remain tappable */
-.nx-composer button,
-.nx-composer textarea,
-.nx-composer input,
-.chat-composer button,
-.chat-composer textarea,
-.chat-composer input{
-  position:relative!important;
-  z-index:100000!important;
-}
-
-/* Mobile safe-area support */
-@supports(padding-bottom:env(safe-area-inset-bottom)){
-  .nx-composer,
-  .chat-composer{
-    bottom:calc(125px + env(safe-area-inset-bottom))!important;
-  }
-}
-</style>
-
 {% endblock %}

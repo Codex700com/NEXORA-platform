@@ -1,129 +1,257 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block content %}
 <style>
-body{background:#000!important}
-.chatpage{min-height:100vh;background:#000;color:#fff;padding-bottom:185px;font-family:Inter,system-ui,sans-serif}
-.head{position:sticky;top:0;z-index:20;background:rgba(0,0,0,.96);border-bottom:1px solid #173b24;padding:11px}
-.headin{max-width:850px;margin:auto;display:flex;align-items:center;gap:10px}
-.back{color:#39ff72;text-decoration:none;font-size:27px}.ava{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#092412;color:#39ff72;font-weight:900}
-.name{font-weight:900}.phone{font-size:11px;color:#718778}
-.messages{max-width:850px;margin:auto;padding:15px 10px 25px;display:flex;flex-direction:column;gap:8px}
-.msg{max-width:82%;padding:10px 12px;border-radius:17px;background:#060906;border:1px solid #14351f;overflow-wrap:anywhere}
-.msg.admin{align-self:flex-end;background:#092412;border-color:#39ff72}.msg.user{align-self:flex-start}
-.msg img,.msg video{display:block;max-width:100%;border-radius:12px;margin-top:7px}.msg audio{width:100%;margin-top:7px}
-.msg a{color:#39ff72;word-break:break-all}.time{font-size:9px;color:#668071;margin-top:4px}
-.composer{
- position:fixed;
- left:50%;
- transform:translateX(-50%);
- bottom:76px;
- width:min(850px,calc(100% - 16px));
- z-index:100;
- background:#030603;
- border:1px solid #39ff72;
- border-radius:18px;
- padding:10px;
- box-shadow:0 12px 40px rgba(0,0,0,.85);
+.nxa-chat{
+  display:flex;
+  flex-direction:column;
+  height:calc(100vh - 70px);
+  min-height:0;
+  background:#07110b;
+  color:#fff;
+  overflow:hidden;
 }
-.formin{max-width:850px;margin:auto;display:flex;gap:7px;align-items:flex-end}
-textarea{
- flex:1;
- min-height:58px;
- max-height:150px;
- background:#050805;
- color:#fff;
- border:1px solid #214c2d;
- border-radius:14px;
- padding:12px;
- resize:none;
- outline:none;
- font-size:14px;
+.nxa-head{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 12px;
+  background:#0b1710;
+  border-bottom:1px solid rgba(57,255,136,.16);
 }
-textarea:focus{border-color:#39ff72}
-.btn{
- width:45px;
- height:45px;
- flex:0 0 45px;
- border-radius:12px;
- background:#071009;
- color:#39ff72;
- border:1px solid #214c2d;
- font-size:18px;
+.nxa-back{
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;text-decoration:none;font-size:28px;
 }
-.send{background:#39ff72;color:#001507;border:0;font-weight:900}
+.nxa-avatar{
+  width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:#173b26;color:#39ff88;font-weight:900;
+}
+.nxa-name{font-size:16px;font-weight:800}
+.nxa-phone{font-size:11px;color:#829a8a;margin-top:2px}
+.nxa-messages{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:12px 9px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+.nxa-row{display:flex;width:100%}
+.nxa-row.admin{justify-content:flex-end}
+.nxa-row.user{justify-content:flex-start}
+.nxa-bubble{
+  max-width:min(82%,420px);
+  padding:7px 9px 5px;
+  border-radius:12px;
+  background:#14231a;
+  overflow:hidden;
+  word-break:break-word;
+}
+.nxa-row.admin .nxa-bubble{
+  background:#123d25;
+  border-top-right-radius:4px;
+}
+.nxa-row.user .nxa-bubble{
+  border-top-left-radius:4px;
+}
+.nxa-text{
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  font-size:15px;
+  line-height:1.38;
+}
+.nxa-media{
+  display:block;
+  max-width:100%;
+  width:auto;
+  max-height:300px;
+  border-radius:9px;
+  margin-top:3px;
+  object-fit:contain;
+}
+.nxa-audio{
+  display:block;
+  width:245px;
+  max-width:100%;
+  height:40px;
+  margin-top:2px;
+}
+.nxa-time{
+  text-align:right;
+  color:#8fa797;
+  font-size:10px;
+  margin-top:3px;
+}
+.nxa-composer{
+  flex:0 0 auto;
+  display:flex;
+  align-items:flex-end;
+  gap:6px;
+  padding:8px 8px max(8px,env(safe-area-inset-bottom));
+  background:#0b1710;
+  border-top:1px solid rgba(57,255,136,.15);
+}
+.nxa-file,.nxa-icon,.nxa-send{
+  width:43px;height:43px;min-width:43px;
+  border:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+  cursor:pointer;
+}
+.nxa-file,.nxa-icon{background:#17261c;color:#b9cdbf}
+.nxa-send{background:#20d765;color:#06120a;font-weight:900}
+.nxa-file input{display:none}
+.nxa-input{
+  flex:1;min-width:0;min-height:43px;max-height:110px;
+  resize:none;border:0;outline:0;border-radius:22px;
+  padding:11px 15px;background:#18271d;color:#fff;
+  font:15px/21px Arial,sans-serif;
+}
+.nxa-input::placeholder{color:#789080}
+@media(max-width:600px){
+  .nxa-chat{height:calc(100vh - 60px)}
+  .nxa-bubble{max-width:88%}
+}
 </style>
 
-<div class="chatpage">
-<div class="head"><div class="headin">
-<a class="back" href="{{ url_for('admin') }}">‹</a>
-<div class="ava">{{ ((user['display_name'] or user['phone'] or 'U')[0])|upper }}</div>
-<div><div class="name">{{ user['display_name'] or user['phone'] or ('User #'~uid) }}</div><div class="phone">{{ user['phone'] or ('User ID #'~uid) }}</div></div>
-</div></div>
+<div class="nxa-chat">
+  <div class="nxa-head">
+    <a class="nxa-back" href="{{ url_for('admin') }}">‹</a>
+    <div class="nxa-avatar">{{ ((user['display_name'] or user['phone'] or 'U')[0])|upper }}</div>
+    <div>
+      <div class="nxa-name">{{ user['display_name'] or user['phone'] or ('User #'~uid) }}</div>
+      <div class="nxa-phone">{{ user['phone'] or ('User ID #'~uid) }}</div>
+    </div>
+  </div>
 
-<div class="messages" id="messages">
-{% for m in messages %}
-<div class="msg {{ 'admin' if m['sender']=='ADMIN' else 'user' }}">
-{% if m['message'] %}<div>{{ m['message']|e|replace('\n','<br>')|safe }}</div>{% endif %}
-{% if m['media'] %}
-{% set x=m['media'] %}
-{% if x.lower().endswith(('.jpg','.jpeg','.png','.gif','.webp')) %}<img src="{{ x }}">
-{% elif x.lower().endswith(('.mp4','.mov','.m4v')) %}<video controls src="{{ x }}"></video>
-{% else %}<audio controls src="{{ x }}"></audio>{% endif %}
-{% endif %}
-<div class="time">{{ m['created_at'] }}</div>
-</div>
-{% endfor %}
-</div>
+  <div class="nxa-messages" id="nxaMessages">
+    {% if messages %}
+      {% for m in messages %}
+        <div class="nxa-row {{ 'admin' if (m.sender|string|upper)=='ADMIN' else 'user' }}">
+          <div class="nxa-bubble">
+            {% if m.message %}
+              <div class="nxa-text">{{ m.message|e }}</div>
+            {% endif %}
+            {% if m.media %}
+              {% set x=m.media|string|lower %}
+              {% if 'voice' in x or x.endswith(('.mp3','.wav','.ogg','.m4a','.aac')) %}
+                <audio class="nxa-audio" controls src="{{ m.media }}"></audio>
+              {% elif x.endswith(('.mp4','.webm','.mov','.m4v')) and 'voice' not in x %}
+                <video class="nxa-media" controls playsinline src="{{ m.media }}"></video>
+              {% else %}
+                <img class="nxa-media" src="{{ m.media }}" alt="Image" loading="lazy">
+              {% endif %}
+            {% endif %}
+            <div class="nxa-time">{{ m.created_at if m.created_at is defined else '' }}</div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
 
-<form class="composer" id="chatForm" method="post" action="{{ url_for('admin_support_send') }}" enctype="multipart/form-data">
-<input type="hidden" name="uid" value="{{ uid }}">
-<div class="formin">
-<button class="btn" type="button" id="voice">🎤</button>
-<label class="btn">📎<input id="media" name="media" type="file" accept="image/*,video/*,audio/*" hidden></label>
-<textarea id="message" name="message" placeholder="Write a message or paste a link..."></textarea>
-<button class="btn send" type="submit">➤</button>
-</div>
-</form>
+  <form class="nxa-composer" id="nxaForm" method="post" enctype="multipart/form-data" action="{{ url_for('admin_support_send') }}">
+    <input type="hidden" name="uid" value="{{ uid }}">
+    <label class="nxa-file" title="Attach">
+      📎
+      <input id="nxaMedia" name="media" type="file" accept="image/*,video/*,audio/*">
+    </label>
+    <textarea class="nxa-input" id="nxaInput" name="message" rows="1" placeholder="Message"></textarea>
+    <button class="nxa-icon" id="nxaVoice" type="button" title="Voice message">🎙️</button>
+    <button class="nxa-send" type="submit" title="Send">➤</button>
+  </form>
 </div>
 
 <script>
-const form=document.getElementById("chatForm");
-const box=document.getElementById("messages");
-const media=document.getElementById("media");
-const msg=document.getElementById("message");
-const voice=document.getElementById("voice");
+(function(){
+  const form=document.getElementById("nxaForm");
+  const box=document.getElementById("nxaMessages");
+  const input=document.getElementById("nxaInput");
+  const media=document.getElementById("nxaMedia");
+  const voice=document.getElementById("nxaVoice");
 
-function bottom(){window.scrollTo(0,document.body.scrollHeight)}
-window.addEventListener("load",bottom);
+  let recorder=null,stream=null,chunks=[],voiceFile=null;
 
-let rec,chunks=[];
-voice.onclick=async()=>{
- if(rec&&rec.state==="recording"){rec.stop();return}
- try{
-  const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-  rec=new MediaRecorder(stream);chunks=[];
-  rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)}
-  rec.onstop=()=>{
-   const blob=new Blob(chunks,{type:rec.mimeType||"audio/webm"});
-   const f=new File([blob],"admin_voice.webm",{type:blob.type});
-   const dt=new DataTransfer();dt.items.add(f);media.files=dt.files;
-   stream.getTracks().forEach(t=>t.stop());voice.textContent="✓";
-  };
-  rec.start();voice.textContent="⏹";
- }catch(e){alert("Microphone permission is required.")}
-};
+  function bottom(){ if(box) box.scrollTop=box.scrollHeight; }
+  window.addEventListener("load",()=>setTimeout(bottom,50));
 
-form.addEventListener("submit",async e=>{
- e.preventDefault();
- const fd=new FormData(form);fd.append("ajax","1");
- const buttons=form.querySelectorAll("button");
- buttons.forEach(b=>b.disabled=true);
- try{
-  const r=await fetch(form.action,{method:"POST",body:fd,headers:{"X-Requested-With":"XMLHttpRequest"}});
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok || data.ok===false)throw Error(data.error||"Message could not be sent");
-  location.reload();
- }catch(e){alert(e.message||"Message could not be sent.")}
-});
+  input.addEventListener("input",function(){
+    this.style.height="43px";
+    this.style.height=Math.min(this.scrollHeight,110)+"px";
+  });
+
+  input.addEventListener("keydown",function(e){
+    if(e.key==="Enter" && !e.shiftKey){
+      e.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
+  function stopStream(){
+    if(stream){
+      stream.getTracks().forEach(t=>t.stop());
+      stream=null;
+    }
+  }
+
+  voice.addEventListener("click",async function(){
+    if(recorder && recorder.state==="recording"){
+      recorder.stop();
+      return;
+    }
+
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      chunks=[];
+      const options=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? {mimeType:"audio/webm;codecs=opus"} : {};
+      recorder=new MediaRecorder(stream,options);
+
+      recorder.ondataavailable=e=>{
+        if(e.data && e.data.size) chunks.push(e.data);
+      };
+
+      recorder.onstop=()=>{
+        const blob=new Blob(chunks,{type:recorder.mimeType||"audio/webm"});
+        if(blob.size){
+          voiceFile=new File([blob],"voice_message_"+Date.now()+".webm",{type:"audio/webm"});
+          input.placeholder="Voice message ready — tap Send";
+        }
+        stopStream();
+        voice.textContent="🎙️";
+        recorder=null;
+      };
+
+      recorder.start();
+      voice.textContent="⏹";
+    }catch(e){
+      alert("Microphone permission is required for voice messages.");
+    }
+  });
+
+  form.addEventListener("submit",function(e){
+    if(recorder && recorder.state==="recording"){
+      e.preventDefault();
+      recorder.stop();
+      return;
+    }
+
+    if(voiceFile && media){
+      const dt=new DataTransfer();
+      dt.items.add(voiceFile);
+      media.files=dt.files;
+    }
+  });
+
+  media.addEventListener("change",function(){
+    if(this.files.length) input.placeholder="Attachment ready — tap Send";
+  });
+
+  setTimeout(bottom,100);
+})();
 </script>
 {% endblock %}

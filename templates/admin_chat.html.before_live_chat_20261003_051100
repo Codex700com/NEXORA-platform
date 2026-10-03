@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+body{background:#000!important}
+.chatpage{min-height:100vh;background:#000;color:#fff;padding-bottom:185px;font-family:Inter,system-ui,sans-serif}
+.head{position:sticky;top:0;z-index:20;background:rgba(0,0,0,.96);border-bottom:1px solid #173b24;padding:11px}
+.headin{max-width:850px;margin:auto;display:flex;align-items:center;gap:10px}
+.back{color:#39ff72;text-decoration:none;font-size:27px}.ava{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#092412;color:#39ff72;font-weight:900}
+.name{font-weight:900}.phone{font-size:11px;color:#718778}
+.messages{max-width:850px;margin:auto;padding:15px 10px 25px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:82%;padding:10px 12px;border-radius:17px;background:#060906;border:1px solid #14351f;overflow-wrap:anywhere}
+.msg.admin{align-self:flex-end;background:#092412;border-color:#39ff72}.msg.user{align-self:flex-start}
+.msg img,.msg video{display:block;max-width:100%;border-radius:12px;margin-top:7px}.msg audio{width:100%;margin-top:7px}
+.msg a{color:#39ff72;word-break:break-all}.time{font-size:9px;color:#668071;margin-top:4px}
+.composer{
+ position:fixed;
+ left:50%;
+ transform:translateX(-50%);
+ bottom:76px;
+ width:min(850px,calc(100% - 16px));
+ z-index:100;
+ background:#030603;
+ border:1px solid #39ff72;
+ border-radius:18px;
+ padding:10px;
+ box-shadow:0 12px 40px rgba(0,0,0,.85);
+}
+.formin{max-width:850px;margin:auto;display:flex;gap:7px;align-items:flex-end}
+textarea{
+ flex:1;
+ min-height:58px;
+ max-height:150px;
+ background:#050805;
+ color:#fff;
+ border:1px solid #214c2d;
+ border-radius:14px;
+ padding:12px;
+ resize:none;
+ outline:none;
+ font-size:14px;
+}
+textarea:focus{border-color:#39ff72}
+.btn{
+ width:45px;
+ height:45px;
+ flex:0 0 45px;
+ border-radius:12px;
+ background:#071009;
+ color:#39ff72;
+ border:1px solid #214c2d;
+ font-size:18px;
+}
+.send{background:#39ff72;color:#001507;border:0;font-weight:900}
+</style>
+
+<div class="chatpage">
+<div class="head"><div class="headin">
+<a class="back" href="{{ url_for('admin') }}">‹</a>
+<div class="ava">{{ ((user['display_name'] or user['phone'] or 'U')[0])|upper }}</div>
+<div><div class="name">{{ user['display_name'] or user['phone'] or ('User #'~uid) }}</div><div class="phone">{{ user['phone'] or ('User ID #'~uid) }}</div></div>
+</div></div>
+
+<div class="messages" id="messages">
+{% for m in messages %}
+<div class="msg {{ 'admin' if m['sender']=='ADMIN' else 'user' }}">
+{% if m['message'] %}<div>{{ m['message']|e|replace('\n','<br>')|safe }}</div>{% endif %}
+{% if m['media'] %}
+{% set x=m['media'] %}
+{% if x.lower().endswith(('.jpg','.jpeg','.png','.gif','.webp')) %}<img src="{{ x }}">
+{% elif x.lower().endswith(('.mp4','.mov','.m4v')) %}<video controls src="{{ x }}"></video>
+{% else %}<audio controls src="{{ x }}"></audio>{% endif %}
+{% endif %}
+<div class="time">{{ m['created_at'] }}</div>
+</div>
+{% endfor %}
+</div>
+
+<form class="composer" id="chatForm" method="post" action="{{ url_for('admin_support_send') }}" enctype="multipart/form-data">
+<input type="hidden" name="uid" value="{{ uid }}">
+<div class="formin">
+<button class="btn" type="button" id="voice">🎤</button>
+<label class="btn">📎<input id="media" name="media" type="file" accept="image/*,video/*,audio/*" hidden></label>
+<textarea id="message" name="message" placeholder="Write a message or paste a link..."></textarea>
+<button class="btn send" type="submit">➤</button>
+</div>
+</form>
+</div>
+
+<script>
+const form=document.getElementById("chatForm");
+const box=document.getElementById("messages");
+const media=document.getElementById("media");
+const msg=document.getElementById("message");
+const voice=document.getElementById("voice");
+
+function bottom(){
+  window.scrollTo({
+    top:document.body.scrollHeight,
+    behavior:"instant"
+  });
+}
+
+window.addEventListener("load",()=>{
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(bottom);
+  });
+});
+
+let rec,chunks=[];
+voice.onclick=async()=>{
+ if(rec&&rec.state==="recording"){rec.stop();return}
+ try{
+  const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  rec=new MediaRecorder(stream);chunks=[];
+  rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)}
+  rec.onstop=()=>{
+   const blob=new Blob(chunks,{type:rec.mimeType||"audio/webm"});
+   const f=new File([blob],"admin_voice.webm",{type:blob.type});
+   const dt=new DataTransfer();dt.items.add(f);media.files=dt.files;
+   stream.getTracks().forEach(t=>t.stop());voice.textContent="✓";
+  };
+  rec.start();voice.textContent="⏹";
+ }catch(e){alert("Microphone permission is required.")}
+};
+
+form.addEventListener("submit",async e=>{
+ e.preventDefault();
+
+ const fd=new FormData(form);
+ fd.append("ajax","1");
+
+ const buttons=form.querySelectorAll("button");
+ buttons.forEach(b=>b.disabled=true);
+
+ try{
+  const r=await fetch(form.action,{
+    method:"POST",
+    body:fd,
+    headers:{
+      "X-Requested-With":"XMLHttpRequest",
+      "Accept":"application/json"
+    }
+  });
+
+  const data=await r.json().catch(()=>({}));
+
+  if(!r.ok || data.ok===false){
+    throw Error(data.error||"Message could not be sent");
+  }
+
+  msg.value="";
+  media.value="";
+  voice.textContent="🎤";
+
+  /* Stay inside the same conversation and keep the newest
+     message visible at the bottom instead of jumping to the top. */
+  const oldHeight=document.body.scrollHeight;
+
+  location.reload();
+
+  setTimeout(()=>{
+    window.scrollTo({
+      top:document.body.scrollHeight,
+      behavior:"smooth"
+    });
+  },100);
+
+ }catch(e){
+  buttons.forEach(b=>b.disabled=false);
+  alert(e.message||"Message could not be sent.");
+ }
+});
+</script>
+
+<style id="NEXORA_REALTIME_CHAT">
+.chat-unread-badge{
+display:inline-flex;align-items:center;justify-content:center;
+min-width:22px;height:22px;padding:0 7px;border-radius:999px;
+background:#39ff88;color:#03130a;font-size:12px;font-weight:900;
+box-shadow:0 0 14px rgba(57,255,136,.55);margin-left:7px
+}
+.chat-live-dot{
+display:inline-block;width:8px;height:8px;border-radius:50%;
+background:#39ff88;box-shadow:0 0 10px #39ff88;margin-right:6px;
+animation:nexoraPulse 1.2s infinite
+}
+@keyframes nexoraPulse{50%{opacity:.35;transform:scale(.75)}}
+</style>
+<script id="NEXORA_REALTIME_CHAT">
+(function(){
+const form=document.querySelector(".chat-form");
+const msg=document.querySelector('textarea[name="message"]');
+const media=document.querySelector('input[name="media"]');
+let sending=false;
+
+async function refreshChat(){
+  if(sending)return;
+  try{
+    const r=await fetch(location.href,{headers:{"X-Requested-With":"XMLHttpRequest"}});
+    if(!r.ok)return;
+    const html=await r.text();
+    const doc=new DOMParser().parseFromString(html,"text/html");
+    const current=document.querySelector(".messages,.chat-messages,.conversation");
+    const fresh=doc.querySelector(".messages,.chat-messages,.conversation");
+    if(current && fresh && current.innerHTML!==fresh.innerHTML){
+      const atBottom=window.innerHeight+window.scrollY>=document.body.scrollHeight-180;
+      current.innerHTML=fresh.innerHTML;
+      if(atBottom) window.scrollTo({top:document.body.scrollHeight,behavior:"instant"});
+    }
+  }catch(e){}
+}
+
+if(form){
+ form.addEventListener("submit",async function(e){
+   e.preventDefault();
+   if(sending)return;
+   if(!msg || (!msg.value.trim() && !(media&&media.files.length)))return;
+   sending=true;
+   const fd=new FormData(form);
+   fd.append("ajax","1");
+   try{
+     const r=await fetch(form.action,{method:"POST",body:fd,headers:{"Accept":"application/json","X-Requested-With":"XMLHttpRequest"}});
+     if(r.ok){
+       if(msg)msg.value="";
+       if(media)media.value="";
+       await refreshChat();
+       window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+     }else{
+       form.submit();
+     }
+   }catch(e){
+     form.submit();
+   }finally{sending=false;}
+ });
+}
+
+setInterval(refreshChat,3000);
+})();
+</script>
+
+{% endblock %}

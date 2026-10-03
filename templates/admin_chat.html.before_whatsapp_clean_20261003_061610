@@ -1,0 +1,1242 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+body{background:#000!important}
+.chatpage{min-height:100vh;background:#000;color:#fff;padding-bottom:185px;font-family:Inter,system-ui,sans-serif}
+.head{position:sticky;top:0;z-index:20;background:rgba(0,0,0,.96);border-bottom:1px solid #173b24;padding:11px}
+.headin{max-width:850px;margin:auto;display:flex;align-items:center;gap:10px}
+.back{color:#39ff72;text-decoration:none;font-size:27px}.ava{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#092412;color:#39ff72;font-weight:900}
+.name{font-weight:900}.phone{font-size:11px;color:#718778}
+.messages{max-width:850px;margin:auto;padding:15px 10px 25px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:82%;padding:10px 12px;border-radius:17px;background:#060906;border:1px solid #14351f;overflow-wrap:anywhere}
+.msg.admin{align-self:flex-end;background:#092412;border-color:#39ff72}.msg.user{align-self:flex-start}
+.msg img,.msg video{display:block;max-width:100%;border-radius:12px;margin-top:7px}.msg audio{width:100%;margin-top:7px}
+.msg a{color:#39ff72;word-break:break-all}.time{font-size:9px;color:#668071;margin-top:4px}
+.composer{
+ position:fixed;
+ left:50%;
+ transform:translateX(-50%);
+ bottom:76px;
+ width:min(850px,calc(100% - 16px));
+ z-index:100;
+ background:#030603;
+ border:1px solid #39ff72;
+ border-radius:18px;
+ padding:10px;
+ box-shadow:0 12px 40px rgba(0,0,0,.85);
+}
+.formin{max-width:850px;margin:auto;display:flex;gap:7px;align-items:flex-end}
+textarea{
+ flex:1;
+ min-height:58px;
+ max-height:150px;
+ background:#050805;
+ color:#fff;
+ border:1px solid #214c2d;
+ border-radius:14px;
+ padding:12px;
+ resize:none;
+ outline:none;
+ font-size:14px;
+}
+textarea:focus{border-color:#39ff72}
+.btn{
+ width:45px;
+ height:45px;
+ flex:0 0 45px;
+ border-radius:12px;
+ background:#071009;
+ color:#39ff72;
+ border:1px solid #214c2d;
+ font-size:18px;
+}
+.send{background:#39ff72;color:#001507;border:0;font-weight:900}
+</style>
+
+<div class="chatpage">
+<div class="head"><div class="headin">
+<a class="back" href="{{ url_for('admin') }}">‹</a>
+<div class="ava">{{ ((user['display_name'] or user['phone'] or 'U')[0])|upper }}</div>
+<div><div class="name">{{ user['display_name'] or user['phone'] or ('User #'~uid) }}</div><div class="phone">{{ user['phone'] or ('User ID #'~uid) }}</div></div>
+</div></div>
+
+<div class="messages" id="messages">
+{% for m in messages %}
+<div class="msg {{ 'admin' if m['sender']=='ADMIN' else 'user' }}">
+{% if m['message'] %}<div>{{ m['message']|e|replace('\n','<br>')|safe }}</div>{% endif %}
+{% if m['media'] %}
+{% set x=m['media'] %}
+{% if x.lower().endswith(('.jpg','.jpeg','.png','.gif','.webp')) %}<img src="{{ x }}">
+{% elif x.lower().endswith(('.mp4','.mov','.m4v')) %}<video controls src="{{ x }}"></video>
+{% else %}<audio controls src="{{ x }}"></audio>{% endif %}
+{% endif %}
+<div class="time">{{ m['created_at'] }}</div>
+</div>
+{% endfor %}
+</div>
+
+<form class="composer" id="chatForm" method="post" action="{{ url_for('admin_support_send') }}" enctype="multipart/form-data">
+<input type="hidden" name="uid" value="{{ uid }}">
+<div class="formin">
+<button class="btn" type="button" id="voice">🎤</button>
+<label class="btn">📎<input id="media" name="media" type="file" accept="image/*,video/*,audio/*" hidden></label>
+<textarea id="message" name="message" placeholder="Write a message or paste a link..."></textarea>
+<button class="btn send" type="submit">➤</button>
+</div>
+</form>
+</div>
+
+<script>
+const form=document.getElementById("chatForm");
+const box=document.getElementById("messages");
+const media=document.getElementById("media");
+const msg=document.getElementById("message");
+const voice=document.getElementById("voice");
+
+function bottom(){
+  window.scrollTo({
+    top:document.body.scrollHeight,
+    behavior:"instant"
+  });
+}
+
+window.addEventListener("load",()=>{
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(bottom);
+  });
+});
+
+let rec,chunks=[];
+voice.onclick=async()=>{
+ if(rec&&rec.state==="recording"){rec.stop();return}
+ try{
+  const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  rec=new MediaRecorder(stream);chunks=[];
+  rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)}
+  rec.onstop=()=>{
+   const blob=new Blob(chunks,{type:rec.mimeType||"audio/webm"});
+   const f=new File([blob],"admin_voice.webm",{type:blob.type});
+   const dt=new DataTransfer();dt.items.add(f);media.files=dt.files;
+   stream.getTracks().forEach(t=>t.stop());voice.textContent="✓";
+  };
+  rec.start();voice.textContent="⏹";
+ }catch(e){alert("Microphone permission is required.")}
+};
+
+form.addEventListener("submit",async e=>{
+ e.preventDefault();
+
+ const fd=new FormData(form);
+ fd.append("ajax","1");
+
+ const buttons=form.querySelectorAll("button");
+ buttons.forEach(b=>b.disabled=true);
+
+ try{
+  const r=await fetch(form.action,{
+    method:"POST",
+    body:fd,
+    headers:{
+      "X-Requested-With":"XMLHttpRequest",
+      "Accept":"application/json"
+    }
+  });
+
+  const data=await r.json().catch(()=>({}));
+
+  if(!r.ok || data.ok===false){
+    throw Error(data.error||"Message could not be sent");
+  }
+
+  msg.value="";
+  media.value="";
+  voice.textContent="🎤";
+
+  /* Stay inside the same conversation and keep the newest
+     message visible at the bottom instead of jumping to the top. */
+  const oldHeight=document.body.scrollHeight;
+
+  location.reload();
+
+  setTimeout(()=>{
+    window.scrollTo({
+      top:document.body.scrollHeight,
+      behavior:"smooth"
+    });
+  },100);
+
+ }catch(e){
+  buttons.forEach(b=>b.disabled=false);
+  alert(e.message||"Message could not be sent.");
+ }
+});
+</script>
+
+<style id="NEXORA_REALTIME_CHAT">
+.chat-unread-badge{
+display:inline-flex;align-items:center;justify-content:center;
+min-width:22px;height:22px;padding:0 7px;border-radius:999px;
+background:#39ff88;color:#03130a;font-size:12px;font-weight:900;
+box-shadow:0 0 14px rgba(57,255,136,.55);margin-left:7px
+}
+.chat-live-dot{
+display:inline-block;width:8px;height:8px;border-radius:50%;
+background:#39ff88;box-shadow:0 0 10px #39ff88;margin-right:6px;
+animation:nexoraPulse 1.2s infinite
+}
+@keyframes nexoraPulse{50%{opacity:.35;transform:scale(.75)}}
+</style>
+<script id="NEXORA_REALTIME_CHAT">
+(function(){
+const form=document.querySelector(".chat-form");
+const msg=document.querySelector('textarea[name="message"]');
+const media=document.querySelector('input[name="media"]');
+let sending=false;
+
+async function refreshChat(){
+  if(sending)return;
+  try{
+    const r=await fetch(location.href,{headers:{"X-Requested-With":"XMLHttpRequest"}});
+    if(!r.ok)return;
+    const html=await r.text();
+    const doc=new DOMParser().parseFromString(html,"text/html");
+    const current=document.querySelector(".messages,.chat-messages,.conversation");
+    const fresh=doc.querySelector(".messages,.chat-messages,.conversation");
+    if(current && fresh && current.innerHTML!==fresh.innerHTML){
+      const atBottom=window.innerHeight+window.scrollY>=document.body.scrollHeight-180;
+      current.innerHTML=fresh.innerHTML;
+      if(atBottom) window.scrollTo({top:document.body.scrollHeight,behavior:"instant"});
+    }
+  }catch(e){}
+}
+
+if(form){
+ form.addEventListener("submit",async function(e){
+   e.preventDefault();
+   if(sending)return;
+   if(!msg || (!msg.value.trim() && !(media&&media.files.length)))return;
+   sending=true;
+   const fd=new FormData(form);
+   fd.append("ajax","1");
+   try{
+     const r=await fetch(form.action,{method:"POST",body:fd,headers:{"Accept":"application/json","X-Requested-With":"XMLHttpRequest"}});
+     if(r.ok){
+       if(msg)msg.value="";
+       if(media)media.value="";
+       await refreshChat();
+       window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+     }else{
+       form.submit();
+     }
+   }catch(e){
+     form.submit();
+   }finally{sending=false;}
+ });
+}
+
+setInterval(refreshChat,3000);
+})();
+</script>
+
+<style id="nexora-chat-layout">.comm-page,.chatpage{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}.comm-messages,.messages{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden}.chat-box,.composer{flex:0 0 auto}.audio-player,.msg audio{width:210px;max-width:78%;height:40px}.audio-player+.link-row,.msg audio+.link-row{display:none}.msg-media,.msg-video,.msg img,.msg video{max-width:78%;max-height:240px;border-radius:14px}</style>
+{% endblock %}
+
+<!-- NEXORA_ADMIN_CURRENT_CHAT_READ -->
+<script>
+(function(){
+ const m=location.pathname.match(/\/admin\/support\/(\d+)/);
+ if(!m)return;
+ const uid=m[1];
+ fetch("/admin/chat-popup/read/"+uid,{
+   method:"POST",
+   headers:{"Content-Type":"application/json"}
+ }).catch(()=>{});
+})();
+</script>
+
+<!-- NEXORA_WHATSAPP_CHAT_UI -->
+<style id="NEXORA_WHATSAPP_CHAT_UI">
+/* Full WhatsApp-style conversation layout */
+.chat-page,.support-page,.admin-chat-page{
+    box-sizing:border-box;
+    width:100%;
+    max-width:100%;
+    padding-bottom:125px !important;
+    overflow-x:hidden !important;
+}
+
+/* Never clip the actual messages */
+.chat-page *, .support-page *, .admin-chat-page *{
+    box-sizing:border-box;
+}
+
+.chat-messages,
+.messages,
+.chat-list,
+.message-list{
+    width:100% !important;
+    max-width:100% !important;
+    overflow:visible !important;
+    padding:12px 10px 145px !important;
+}
+
+/* Message bubbles */
+.chat-message,
+.message,
+.msg,
+.message-row{
+    max-width:100% !important;
+    width:auto;
+    overflow:visible !important;
+    word-break:break-word !important;
+    overflow-wrap:anywhere !important;
+    white-space:pre-wrap !important;
+    min-height:fit-content !important;
+}
+
+.chat-message *,
+.message *,
+.msg *,
+.message-row *{
+    max-width:100% !important;
+    overflow:visible !important;
+    word-break:break-word !important;
+}
+
+/* Sent / received bubbles */
+.sent,
+.message.sent,
+.msg.sent,
+.chat-message.sent{
+    margin-left:auto !important;
+    margin-right:5px !important;
+    max-width:min(82%,520px) !important;
+    border-radius:18px 18px 4px 18px !important;
+    padding:10px 13px !important;
+}
+
+.received,
+.message.received,
+.msg.received,
+.chat-message.received{
+    margin-left:5px !important;
+    margin-right:auto !important;
+    max-width:min(82%,520px) !important;
+    border-radius:18px 18px 18px 4px !important;
+    padding:10px 13px !important;
+}
+
+/* Images and videos must never get cropped */
+.chat-message img,
+.chat-message video,
+.message img,
+.message video,
+.msg img,
+.msg video,
+.message-row img,
+.message-row video{
+    display:block !important;
+    max-width:100% !important;
+    width:auto !important;
+    height:auto !important;
+    max-height:360px !important;
+    object-fit:contain !important;
+    border-radius:12px !important;
+}
+
+/* Audio */
+.chat-message audio,
+.message audio,
+.msg audio,
+.message-row audio{
+    display:block !important;
+    width:min(100%,320px) !important;
+    max-width:100% !important;
+}
+
+/* Bottom WhatsApp-style composer */
+.chat-form,
+.chat-composer,
+.message-form,
+form.chat-form{
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    z-index:99990 !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-height:82px !important;
+    padding:10px 10px calc(10px + env(safe-area-inset-bottom)) !important;
+    background:rgba(5,12,8,.98) !important;
+    border-top:1px solid rgba(80,255,130,.18) !important;
+    box-shadow:0 -8px 28px rgba(0,0,0,.45) !important;
+    display:flex !important;
+    align-items:flex-end !important;
+    gap:7px !important;
+}
+
+/* The typing rectangle is fully visible */
+.chat-form textarea,
+.chat-composer textarea,
+.message-form textarea,
+form.chat-form textarea{
+    flex:1 1 auto !important;
+    width:auto !important;
+    min-width:0 !important;
+    min-height:48px !important;
+    max-height:125px !important;
+    height:48px !important;
+    resize:none !important;
+    overflow-y:auto !important;
+    border-radius:25px !important;
+    padding:13px 16px !important;
+    line-height:21px !important;
+    font-size:15px !important;
+    display:block !important;
+    visibility:visible !important;
+    opacity:1 !important;
+}
+
+/* File / microphone / send buttons */
+.chat-form button,
+.chat-form label,
+.chat-composer button,
+.chat-composer label,
+.message-form button,
+.message-form label{
+    flex:none !important;
+    min-width:44px !important;
+    min-height:44px !important;
+    border-radius:50% !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+}
+
+/* WhatsApp-style voice recorder */
+.nexora-voice-recorder{
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    z-index:999999 !important;
+    min-height:78px !important;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom)) !important;
+    background:#08110b !important;
+    border-top:1px solid rgba(80,255,130,.25) !important;
+    display:none;
+    align-items:center !important;
+    gap:12px !important;
+}
+
+.nexora-voice-recorder.active{
+    display:flex !important;
+}
+
+.nexora-record-cancel{
+    width:42px !important;
+    height:42px !important;
+    border-radius:50% !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    background:#241010 !important;
+    color:#ff4b4b !important;
+    flex:none !important;
+}
+
+.nexora-record-dot{
+    width:12px !important;
+    height:12px !important;
+    border-radius:50% !important;
+    background:#ff2020 !important;
+    animation:nexoraRecordPulse 1s infinite !important;
+}
+
+.nexora-record-time{
+    color:#fff !important;
+    font-weight:800 !important;
+    min-width:48px !important;
+}
+
+.nexora-record-wave{
+    flex:1 !important;
+    height:34px !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:3px !important;
+    overflow:hidden !important;
+}
+
+.nexora-record-wave i{
+    display:block !important;
+    width:3px !important;
+    height:10px !important;
+    border-radius:4px !important;
+    background:#35ff75 !important;
+    animation:nexoraWave .65s ease-in-out infinite alternate !important;
+}
+
+.nexora-record-wave i:nth-child(2n){animation-delay:.1s}
+.nexora-record-wave i:nth-child(3n){animation-delay:.2s}
+.nexora-record-wave i:nth-child(4n){animation-delay:.3s}
+
+.nexora-record-send{
+    width:46px !important;
+    height:46px !important;
+    border:0 !important;
+    border-radius:50% !important;
+    background:#16c65b !important;
+    color:#fff !important;
+    font-size:20px !important;
+    flex:none !important;
+}
+
+@keyframes nexoraRecordPulse{
+    0%,100%{transform:scale(1);opacity:1}
+    50%{transform:scale(1.35);opacity:.55}
+}
+
+@keyframes nexoraWave{
+    from{height:7px}
+    to{height:29px}
+}
+
+@media(max-width:600px){
+    .sent,.received,
+    .message.sent,.message.received,
+    .msg.sent,.msg.received{
+        max-width:88% !important;
+    }
+
+    .chat-messages,
+    .messages,
+    .chat-list,
+    .message-list{
+        padding-left:7px !important;
+        padding-right:7px !important;
+    }
+}
+</style>
+
+<script id="NEXORA_WHATSAPP_VOICE">
+(function(){
+    if(window.__NEXORA_WHATSAPP_VOICE__) return;
+    window.__NEXORA_WHATSAPP_VOICE__=true;
+
+    const form=document.querySelector(
+        "form.chat-form,form.chat-composer,form.message-form"
+    );
+    if(!form) return;
+
+    const originalVoice=form.querySelector(
+        '[data-voice],#voiceBtn,#voice,button[title*="voice" i],button[aria-label*="voice" i]'
+    );
+
+    /* Create WhatsApp-style recorder */
+    const rec=document.createElement("div");
+    rec.className="nexora-voice-recorder";
+    rec.innerHTML=`
+      <button type="button" class="nexora-record-cancel">✕</button>
+      <span class="nexora-record-dot"></span>
+      <span class="nexora-record-time">0:00</span>
+      <div class="nexora-record-wave">
+        ${Array.from({length:32},()=>"<i></i>").join("")}
+      </div>
+      <button type="button" class="nexora-record-send">➤</button>
+    `;
+    document.body.appendChild(rec);
+
+    const cancel=rec.querySelector(".nexora-record-cancel");
+    const send=rec.querySelector(".nexora-record-send");
+    const time=rec.querySelector(".nexora-record-time");
+
+    let stream=null;
+    let mediaRecorder=null;
+    let chunks=[];
+    let timer=null;
+    let startedAt=0;
+
+    function stopTracks(){
+        if(stream){
+            stream.getTracks().forEach(t=>t.stop());
+            stream=null;
+        }
+    }
+
+    function closeRecorder(){
+        rec.classList.remove("active");
+        clearInterval(timer);
+        timer=null;
+        stopTracks();
+        if(mediaRecorder && mediaRecorder.state!=="inactive"){
+            try{mediaRecorder.stop()}catch(e){}
+        }
+        mediaRecorder=null;
+        chunks=[];
+    }
+
+    async function startRecorder(){
+        if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+            alert("Voice recording is not supported by this browser.");
+            return;
+        }
+
+        try{
+            stream=await navigator.mediaDevices.getUserMedia({audio:true});
+            const type=MediaRecorder.isTypeSupported("audio/webm")
+                ?"audio/webm":"audio/ogg";
+
+            mediaRecorder=new MediaRecorder(stream,{mimeType:type});
+            chunks=[];
+
+            mediaRecorder.ondataavailable=e=>{
+                if(e.data && e.data.size) chunks.push(e.data);
+            };
+
+            mediaRecorder.onstop=()=>{
+                stopTracks();
+            };
+
+            mediaRecorder.start();
+            rec.classList.add("active");
+            startedAt=Date.now();
+
+            timer=setInterval(()=>{
+                const sec=Math.floor((Date.now()-startedAt)/1000);
+                time.textContent=Math.floor(sec/60)+":"+
+                    String(sec%60).padStart(2,"0");
+            },250);
+
+        }catch(e){
+            alert("Microphone permission is required.");
+            stopTracks();
+        }
+    }
+
+    cancel.onclick=function(){
+        closeRecorder();
+    };
+
+    send.onclick=function(){
+        if(!mediaRecorder || mediaRecorder.state==="inactive"){
+            closeRecorder();
+            return;
+        }
+
+        mediaRecorder.onstop=async function(){
+            stopTracks();
+
+            if(!chunks.length){
+                closeRecorder();
+                return;
+            }
+
+            const blob=new Blob(chunks,{type:mediaRecorder.mimeType||"audio/webm"});
+            const file=new File(
+                [blob],
+                "voice_"+Date.now()+".webm",
+                {type:blob.type}
+            );
+
+            let input=form.querySelector('input[type="file"][name="media"]');
+
+            if(input){
+                try{
+                    const dt=new DataTransfer();
+                    dt.items.add(file);
+                    input.files=dt.files;
+                    rec.classList.remove("active");
+                    form.requestSubmit();
+                    return;
+                }catch(e){}
+            }
+
+            rec.classList.remove("active");
+            alert("Voice recording is ready, but this chat form does not expose a media upload field.");
+        };
+
+        mediaRecorder.stop();
+        clearInterval(timer);
+        timer=null;
+    };
+
+    /*
+     * Replace an existing microphone button while keeping
+     * the existing form/upload system intact.
+     */
+    if(originalVoice){
+        originalVoice.addEventListener("click",function(e){
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            if(rec.classList.contains("active")){
+                closeRecorder();
+            }else{
+                startRecorder();
+            }
+        },true);
+    }else{
+        const buttons=form.querySelectorAll("button");
+        for(const b of buttons){
+            const txt=(b.textContent||"").toLowerCase();
+            const aria=(b.getAttribute("aria-label")||"").toLowerCase();
+            const title=(b.getAttribute("title")||"").toLowerCase();
+
+            if(
+                txt.includes("mic") ||
+                txt.includes("voice") ||
+                txt.includes("🎤") ||
+                aria.includes("voice") ||
+                aria.includes("microphone") ||
+                title.includes("voice") ||
+                title.includes("microphone")
+            ){
+                b.addEventListener("click",function(e){
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    startRecorder();
+                },true);
+                break;
+            }
+        }
+    }
+
+    /* Keep the latest message visible after opening/sending. */
+    function bottom(){
+        const boxes=document.querySelectorAll(
+            ".chat-messages,.messages,.chat-list,.message-list"
+        );
+        boxes.forEach(x=>x.scrollTop=x.scrollHeight);
+        window.scrollTo(0,document.body.scrollHeight);
+    }
+
+    setTimeout(bottom,150);
+    setTimeout(bottom,500);
+})();
+</script>
+
+<style id="NEXORA_FINAL_WHATSAPP_CHAT">
+/* ===== NEXORA FULL-SCREEN WHATSAPP CHAT ===== */
+html,body{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden!important;
+}
+
+body{
+    padding-bottom:100px!important;
+}
+
+/* Stop old cards/panels from squeezing the conversation */
+.chat-page,
+.support-page,
+.admin-chat-page,
+.chat-container,
+.support-container,
+.admin-chat-container,
+.chat-wrapper,
+.support-wrapper{
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    overflow:visible!important;
+}
+
+/* Conversation itself */
+.chat-messages,
+.messages,
+.message-list,
+.chat-list,
+.support-messages,
+.support-chat,
+.chat-body,
+.conversation,
+.conversation-list{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    padding:15px 10px 125px!important;
+    margin:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+}
+
+/* Every message row gets its own full-width line */
+.chat-messages > *,
+.messages > *,
+.message-list > *,
+.chat-list > *,
+.support-messages > *,
+.support-chat > *,
+.chat-body > *,
+.conversation > *,
+.conversation-list > *{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    display:flex!important;
+    margin-top:7px!important;
+    margin-bottom:7px!important;
+    overflow:visible!important;
+}
+
+/* Detect common outgoing classes */
+.sent,
+.outgoing,
+.mine,
+.me,
+.from-me,
+.message.sent,
+.msg.sent,
+.chat-message.sent{
+    justify-content:flex-end!important;
+    text-align:left!important;
+}
+
+/* Detect common incoming classes */
+.received,
+.incoming,
+.theirs,
+.from-them,
+.message.received,
+.msg.received,
+.chat-message.received{
+    justify-content:flex-start!important;
+    text-align:left!important;
+}
+
+/* Bubble itself */
+.sent > *,
+.outgoing > *,
+.mine > *,
+.me > *,
+.from-me > *,
+.received > *,
+.incoming > *,
+.theirs > *,
+.from-them > *,
+.message.sent > *,
+.message.received > *,
+.msg.sent > *,
+.msg.received > *,
+.chat-message.sent > *,
+.chat-message.received > *{
+    max-width:calc(100vw - 55px)!important;
+    width:auto!important;
+    min-width:0!important;
+    overflow:visible!important;
+    white-space:pre-wrap!important;
+    overflow-wrap:anywhere!important;
+    word-break:break-word!important;
+}
+
+/* If the row IS the bubble */
+.sent,
+.outgoing,
+.mine,
+.me,
+.from-me,
+.received,
+.incoming,
+.theirs,
+.from-them{
+    width:auto!important;
+    max-width:min(86%,520px)!important;
+}
+
+/* Generic message bubbles */
+.message,
+.msg,
+.chat-message{
+    max-width:min(86%,520px)!important;
+    width:auto!important;
+    min-width:0!important;
+    white-space:pre-wrap!important;
+    overflow-wrap:anywhere!important;
+    word-break:break-word!important;
+    overflow:visible!important;
+}
+
+/* Media must be completely visible */
+.message img,
+.message video,
+.message audio,
+.msg img,
+.msg video,
+.msg audio,
+.chat-message img,
+.chat-message video,
+.chat-message audio{
+    max-width:100%!important;
+    width:auto!important;
+    height:auto!important;
+    max-height:420px!important;
+    object-fit:contain!important;
+    display:block!important;
+}
+
+/* Audio player */
+.message audio,
+.msg audio,
+.chat-message audio{
+    width:min(78vw,330px)!important;
+    max-width:100%!important;
+}
+
+/* ===== BOTTOM COMPOSER ===== */
+.chat-form,
+.chat-composer,
+.message-form,
+form.chat-form,
+form.chat-composer,
+form.message-form{
+    position:fixed!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    width:100%!important;
+    max-width:none!important;
+    min-height:72px!important;
+    z-index:100000!important;
+    display:flex!important;
+    align-items:flex-end!important;
+    gap:6px!important;
+    padding:8px 9px calc(8px + env(safe-area-inset-bottom))!important;
+    background:#07100a!important;
+    border-top:1px solid #203d29!important;
+    box-shadow:0 -5px 25px rgba(0,0,0,.55)!important;
+}
+
+/* Fully visible typing rectangle */
+.chat-form textarea,
+.chat-composer textarea,
+.message-form textarea,
+form.chat-form textarea,
+form.chat-composer textarea,
+form.message-form textarea{
+    flex:1 1 auto!important;
+    min-width:0!important;
+    width:auto!important;
+    height:46px!important;
+    min-height:46px!important;
+    max-height:120px!important;
+    margin:0!important;
+    padding:12px 16px!important;
+    border-radius:24px!important;
+    resize:none!important;
+    overflow-y:auto!important;
+    display:block!important;
+    visibility:visible!important;
+    opacity:1!important;
+    line-height:21px!important;
+    font-size:15px!important;
+}
+
+/* Circular composer buttons */
+.chat-form button,
+.chat-form label,
+.chat-composer button,
+.chat-composer label,
+.message-form button,
+.message-form label{
+    flex:0 0 44px!important;
+    width:44px!important;
+    height:44px!important;
+    min-width:44px!important;
+    min-height:44px!important;
+    max-width:44px!important;
+    border-radius:50%!important;
+    padding:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+}
+
+/* ===== REAL WHATSAPP-LIKE VOICE RECORDING ===== */
+.nexora-wa-recording{
+    position:fixed!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    height:64px!important;
+    z-index:100001!important;
+    display:none;
+    align-items:center!important;
+    gap:9px!important;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom))!important;
+    background:#07100a!important;
+    border-top:1px solid #203d29!important;
+}
+
+.nexora-wa-recording.active{
+    display:flex!important;
+}
+
+.nexora-wa-cancel{
+    border:0!important;
+    background:transparent!important;
+    color:#9aa89e!important;
+    font-size:22px!important;
+    width:38px!important;
+    height:42px!important;
+    flex:none!important;
+}
+
+.nexora-wa-mic{
+    width:38px!important;
+    height:38px!important;
+    border-radius:50%!important;
+    background:#19301f!important;
+    color:#35e875!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex:none!important;
+    font-size:18px!important;
+}
+
+.nexora-wa-time{
+    color:#fff!important;
+    font-size:14px!important;
+    font-weight:600!important;
+    min-width:38px!important;
+    flex:none!important;
+}
+
+.nexora-wa-wave{
+    flex:1!important;
+    height:34px!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:2px!important;
+    overflow:hidden!important;
+}
+
+.nexora-wa-wave span{
+    width:2px!important;
+    height:6px!important;
+    background:#7d8d83!important;
+    border-radius:3px!important;
+    animation:nexoraWAWave .7s ease-in-out infinite alternate!important;
+}
+
+.nexora-wa-wave span:nth-child(2n){animation-delay:.12s}
+.nexora-wa-wave span:nth-child(3n){animation-delay:.22s}
+.nexora-wa-wave span:nth-child(4n){animation-delay:.32s}
+.nexora-wa-wave span:nth-child(5n){animation-delay:.42s}
+
+.nexora-wa-send{
+    width:45px!important;
+    height:45px!important;
+    min-width:45px!important;
+    border:0!important;
+    border-radius:50%!important;
+    background:#20d463!important;
+    color:#fff!important;
+    font-size:20px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+}
+
+@keyframes nexoraWAWave{
+    from{height:5px}
+    to{height:28px}
+}
+
+@media(max-width:600px){
+    .chat-messages,
+    .messages,
+    .message-list,
+    .chat-list,
+    .support-messages,
+    .support-chat,
+    .chat-body,
+    .conversation,
+    .conversation-list{
+        padding-left:7px!important;
+        padding-right:7px!important;
+    }
+
+    .message,
+    .msg,
+    .chat-message{
+        max-width:89%!important;
+    }
+}
+</style>
+
+<script id="NEXORA_FINAL_WHATSAPP_VOICE">
+(function(){
+    if(window.__NEXORA_FINAL_WA__)return;
+    window.__NEXORA_FINAL_WA__=true;
+
+    const form=document.querySelector(
+        'form.chat-form,form.chat-composer,form.message-form'
+    );
+    if(!form)return;
+
+    /* Find the existing microphone control */
+    let mic=null;
+
+    form.querySelectorAll("button,label").forEach(function(el){
+        const a=(el.getAttribute("aria-label")||"").toLowerCase();
+        const t=(el.getAttribute("title")||"").toLowerCase();
+        const x=(el.textContent||"").toLowerCase();
+
+        if(
+            a.includes("microphone") ||
+            a.includes("voice") ||
+            t.includes("microphone") ||
+            t.includes("voice") ||
+            x.includes("🎤") ||
+            x.includes("mic")
+        ){
+            mic=el;
+        }
+    });
+
+    if(!mic)return;
+
+    const bar=document.createElement("div");
+    bar.className="nexora-wa-recording";
+    bar.innerHTML=`
+        <button class="nexora-wa-cancel" type="button">×</button>
+        <div class="nexora-wa-mic">🎙</div>
+        <div class="nexora-wa-time">0:00</div>
+        <div class="nexora-wa-wave">
+          ${Array.from({length:45},()=>"<span></span>").join("")}
+        </div>
+        <button class="nexora-wa-send" type="button">➤</button>
+    `;
+
+    document.body.appendChild(bar);
+
+    const cancel=bar.querySelector(".nexora-wa-cancel");
+    const send=bar.querySelector(".nexora-wa-send");
+    const time=bar.querySelector(".nexora-wa-time");
+
+    let recorder=null;
+    let stream=null;
+    let chunks=[];
+    let timer=null;
+    let started=0;
+
+    function cleanup(){
+        clearInterval(timer);
+        timer=null;
+        if(stream){
+            stream.getTracks().forEach(function(t){t.stop()});
+            stream=null;
+        }
+        recorder=null;
+        chunks=[];
+        bar.classList.remove("active");
+        time.textContent="0:00";
+    }
+
+    async function start(){
+        try{
+            stream=await navigator.mediaDevices.getUserMedia({audio:true});
+
+            let type="audio/webm";
+            if(!MediaRecorder.isTypeSupported(type)){
+                type="";
+            }
+
+            recorder=type
+                ?new MediaRecorder(stream,{mimeType:type})
+                :new MediaRecorder(stream);
+
+            chunks=[];
+
+            recorder.ondataavailable=function(e){
+                if(e.data&&e.data.size)chunks.push(e.data);
+            };
+
+            recorder.start();
+            started=Date.now();
+            bar.classList.add("active");
+
+            timer=setInterval(function(){
+                let sec=Math.floor((Date.now()-started)/1000);
+                time.textContent=Math.floor(sec/60)+":"+
+                    String(sec%60).padStart(2,"0");
+            },250);
+
+        }catch(e){
+            alert("Please allow microphone access.");
+        }
+    }
+
+    mic.addEventListener("click",function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        if(bar.classList.contains("active")){
+            cleanup();
+        }else{
+            start();
+        }
+    },true);
+
+    cancel.onclick=function(){
+        if(recorder&&recorder.state!=="inactive"){
+            try{recorder.stop()}catch(e){}
+        }
+        cleanup();
+    };
+
+    send.onclick=function(){
+        if(!recorder||recorder.state==="inactive"){
+            cleanup();
+            return;
+        }
+
+        recorder.onstop=function(){
+            if(!chunks.length){
+                cleanup();
+                return;
+            }
+
+            const blob=new Blob(
+                chunks,
+                {type:recorder.mimeType||"audio/webm"}
+            );
+
+            const file=new File(
+                [blob],
+                "voice_"+Date.now()+".webm",
+                {type:blob.type}
+            );
+
+            const input=form.querySelector(
+                'input[type="file"][name="media"]'
+            );
+
+            if(input){
+                try{
+                    const dt=new DataTransfer();
+                    dt.items.add(file);
+                    input.files=dt.files;
+                    cleanup();
+
+                    if(form.requestSubmit){
+                        form.requestSubmit();
+                    }else{
+                        form.submit();
+                    }
+                    return;
+                }catch(e){}
+            }
+
+            cleanup();
+        };
+
+        recorder.stop();
+    };
+})();
+</script>

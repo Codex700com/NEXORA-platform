@@ -703,7 +703,7 @@ Existing purchase logic has not been replaced or duplicated here.
 #nexora-admin-composer{
   margin:12px 0 120px;
   position:relative;
-  transform:translateY(-117px);
+  transform:translateY(-42px);
   z-index:1000;
   background:#071008;
   border:1px solid #24452d;

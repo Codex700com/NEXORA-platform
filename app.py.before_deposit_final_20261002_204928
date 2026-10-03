@@ -1,4 +1,3 @@
-import re
 import os, sqlite3, secrets, string, hashlib, hmac
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
@@ -6,7 +5,7 @@ from functools import wraps
 PAYMENT_DESTINATION = '0757837051'
 PAYMENT_RECIPIENT = 'Mary Namara'
 
-from flask import Flask, request, redirect, session, render_template, flash, url_for, send_from_directory, jsonify
+from flask import Flask, request, redirect, session, render_template, flash, url_for, send_from_directory
 from mtn_momo import request_to_pay, payment_status
 from payment_gateway import (
     normalize_provider_event,
@@ -182,11 +181,7 @@ def admin_required(fn):
         u=current_user()
         if not u:
             return redirect(url_for("login"))
-        if str(u["phone"]).strip()=="0758878297":
-            return fn(*a,**k)
-        if "is_admin" in u.keys() and u["is_admin"]:
-            return fn(*a,**k)
-        return ("Forbidden",403)
+        return fn(*a,**k) if u["is_admin"] else ("Forbidden",403)
     return w
 
 def invite_counts(uid):
@@ -664,18 +659,13 @@ def active_income(uid):
 
 MATRIX_REWARDS=[
     ("CASH",3000,""),
-    ("CASH",3000,""),
-    ("CASH",3000,""),
-    ("CASH",3000,""),
-    ("CASH",3000,""),
-    ("CASH",3000,""),
     ("CASH",1000,""),
     ("CASH",5000,""),
-    ("CASH",7000,""),
     ("CASH",24000,""),
     ("CASH",123800,""),
-    ("CASH",100000,""),
     ("CASH",500000,""),
+    ("CASH",100000,""),
+    ("CASH",7000,""),
     ("IPHONE",0,"IPHONE"),
 ]
 
@@ -930,7 +920,7 @@ def home():
         con2.commit()
         con2.close()
 
-    return render_template("home.html",user=current_user(),products=products,ai_income=ai_income,today=today,invite_count=invite_count,team_count=team_count,team_income=team_income,announcement=announcement,pending_withdrawal=pending_withdrawal,latest_deposit=latest_deposit,show_announcement=show_announcement,announcement_popup=popup,home_settings=get_admin_page_setting('home'),page_settings=get_admin_page_setting('home'))
+    return render_template("home.html",user=current_user(),products=products,ai_income=ai_income,today=today,invite_count=invite_count,team_count=team_count,team_income=team_income,announcement=announcement,pending_withdrawal=pending_withdrawal,latest_deposit=latest_deposit,show_announcement=show_announcement,announcement_popup=popup)
 
 @app.route("/my")
 @required
@@ -1404,6 +1394,7 @@ def deposit():
     u=current_user()
     con=db()
 
+    # Keep older databases compatible.
     cols=[r["name"] for r in con.execute(
         "PRAGMA table_info(deposit_sessions)"
     ).fetchall()]
@@ -1414,8 +1405,7 @@ def deposit():
         )
         con.commit()
 
-    # Close expired sessions on the server. Reloading the page never
-    # resets the five-minute countdown.
+    # Only one unfinished deposit attempt is allowed at a time.
     active=con.execute("""
         SELECT * FROM deposit_sessions
         WHERE uid=? AND status='WAITING_VERIFICATION'
@@ -1425,11 +1415,12 @@ def deposit():
     if active:
         try:
             expiry=datetime.fromisoformat(active["expires_at"])
-        except Exception:
+            if expiry.tzinfo is None:
+                expiry=expiry.replace(tzinfo=timezone.utc)
+        except:
             expiry=datetime.now(timezone.utc)
 
-        # The database expiry is authoritative. Logging out, closing
-        # the browser, refreshing, or reopening the app does not reset it.
+        # Server-side expiry. Reloading or leaving the page cannot reset it.
         if datetime.now(timezone.utc)>=expiry:
             con.execute("""
                 UPDATE deposit_sessions
@@ -1440,62 +1431,47 @@ def deposit():
             active=None
 
     if request.method=="POST":
-        action=request.form.get("action","").strip()
+        action=(request.form.get("action") or "").strip()
 
-        # Fresh deposit: amount + Airtel/MTN are selected together.
+        # STEP 1 — amount
         if action=="start":
             try:
                 amount=float(request.form.get("amount") or 0)
-            except Exception:
+            except:
                 amount=0
-
-            method=request.form.get("method","").strip()
 
             if amount < 20000:
                 con.close()
                 return render_template(
                     "deposit.html",
                     user=u,
-                    stage="start",
+                    stage="amount",
                     error="Minimum deposit is UGX 20,000."
                 )
 
-            if method not in ("Airtel","MTN"):
-                con.close()
-                return render_template(
-                    "deposit.html",
-                    user=u,
-                    stage="start",
-                    error="Choose Airtel or MTN."
-                )
-
-            # Do not create another unfinished deposit.
             if active:
-                try:
-                    expiry=datetime.fromisoformat(active["expires_at"])
-                except Exception:
-                    expiry=datetime.now(timezone.utc)
-
-                stage="payment" if active["payment_method"] else "start"
-
                 con.close()
                 return render_template(
                     "deposit.html",
                     user=u,
-                    stage=stage,
+                    stage="method",
                     deposit=active
                 )
 
-            # Alternate payment agent on every fresh session.
-            count=con.execute("""
-                SELECT COUNT(*) FROM deposit_sessions WHERE uid=?
+            # Alternate payment agents for new sessions:
+            # first = Mary Namara, next = Collins Monday,
+            # then alternate again.
+            total_sessions=con.execute("""
+                SELECT COUNT(*) FROM deposit_sessions
+                WHERE uid=?
             """,(u["id"],)).fetchone()[0]
 
-            if count % 2 == 0:
+            if total_sessions % 2 == 0:
                 agent="0757837051 (Mary Namara)"
             else:
                 agent="0731199883 (Collins Monday)"
 
+            # EXACTLY 5 MINUTES.
             expires=(
                 datetime.now(timezone.utc)+timedelta(minutes=5)
             ).isoformat(timespec="seconds")
@@ -1503,11 +1479,10 @@ def deposit():
             con.execute("""
                 INSERT INTO deposit_sessions
                 (uid,amount,payment_method,agent,expires_at,status,created_at)
-                VALUES(?,?,?,?,?,'WAITING_VERIFICATION',?)
+                VALUES(?,?,NULL,?,?,'WAITING_VERIFICATION',?)
             """,(
                 u["id"],
                 amount,
-                method,
                 agent,
                 expires,
                 now()
@@ -1525,21 +1500,80 @@ def deposit():
             return render_template(
                 "deposit.html",
                 user=u,
-                stage="payment",
+                stage="method",
                 deposit=deposit
             )
 
-        # Submit transaction ID before the five-minute deadline.
-        if action=="submit":
+        # STEP 2 — choose Airtel or MTN
+        if action=="method":
+            method=(request.form.get("method") or "").strip()
+
+            if method not in ("Airtel","MTN"):
+                con.close()
+                return render_template(
+                    "deposit.html",
+                    user=u,
+                    stage="method",
+                    deposit=active,
+                    error="Choose either Airtel or MTN."
+                )
+
             if not active:
                 con.close()
                 return redirect(url_for("deposit"))
 
             try:
                 expiry=datetime.fromisoformat(active["expires_at"])
-            except Exception:
+                if expiry.tzinfo is None:
+                    expiry=expiry.replace(tzinfo=timezone.utc)
+            except:
                 expiry=datetime.now(timezone.utc)
 
+            if datetime.now(timezone.utc)>=expiry:
+                con.execute("""
+                    UPDATE deposit_sessions
+                    SET status='EXPIRED'
+                    WHERE id=? AND uid=?
+                """,(active["id"],u["id"]))
+                con.commit()
+                con.close()
+                return redirect(url_for("deposit"))
+
+            con.execute("""
+                UPDATE deposit_sessions
+                SET payment_method=?
+                WHERE id=? AND uid=? AND status='WAITING_VERIFICATION'
+            """,(method,active["id"],u["id"]))
+            con.commit()
+
+            deposit=con.execute("""
+                SELECT * FROM deposit_sessions
+                WHERE id=? AND uid=?
+            """,(active["id"],u["id"])).fetchone()
+
+            con.close()
+
+            return render_template(
+                "deposit.html",
+                user=u,
+                stage="agent",
+                deposit=deposit
+            )
+
+        # STEP 3 — transaction ID / submit for approval
+        if action=="proof":
+            if not active:
+                con.close()
+                return redirect(url_for("deposit"))
+
+            try:
+                expiry=datetime.fromisoformat(active["expires_at"])
+                if expiry.tzinfo is None:
+                    expiry=expiry.replace(tzinfo=timezone.utc)
+            except:
+                expiry=datetime.now(timezone.utc)
+
+            # The server is authoritative for the 5-minute window.
             if datetime.now(timezone.utc)>=expiry:
                 con.execute("""
                     UPDATE deposit_sessions
@@ -1550,18 +1584,25 @@ def deposit():
                 con.close()
                 return redirect(url_for("deposit"))
 
-            transaction_id=(
-                request.form.get("transaction_id") or ""
+            proof=(
+                request.form.get("transaction_id")
+                or request.form.get("proof")
+                or ""
             ).strip()
 
-            if not transaction_id:
+            payer=(
+                request.form.get("payer_number")
+                or ""
+            ).strip()
+
+            if not proof:
                 con.close()
                 return render_template(
                     "deposit.html",
                     user=u,
-                    stage="payment",
+                    stage="agent",
                     deposit=active,
-                    error="Provide the transaction ID before the timer expires."
+                    error="Enter the Transaction ID before submitting."
                 )
 
             ref="DEP-"+secrets.token_hex(4).upper()+"-S"+str(active["id"])
@@ -1581,10 +1622,11 @@ def deposit():
 
             con.execute("""
                 UPDATE deposit_sessions
-                SET proof=?,payer_number='',status='SUBMITTED'
+                SET proof=?,payer_number=?,status='SUBMITTED'
                 WHERE id=? AND uid=? AND status='WAITING_VERIFICATION'
             """,(
-                transaction_id,
+                proof,
+                payer,
                 active["id"],
                 u["id"]
             ))
@@ -1601,25 +1643,12 @@ def deposit():
             return render_template(
                 "deposit.html",
                 user=u,
-                stage="pending",
+                stage="review",
                 deposit=submitted,
                 success=True
             )
 
-    # IMPORTANT:
-    # If the user returns after logout/app exit while the five-minute
-    # payment session is still active, restore the SAME payment screen.
-    if active:
-        stage="payment" if active["payment_method"] else "start"
-        con.close()
-        return render_template(
-            "deposit.html",
-            user=u,
-            stage=stage,
-            deposit=active
-        )
-
-    # Already submitted deposit: show pending status.
+    # Existing submitted deposit — keep showing its review state.
     review=con.execute("""
         SELECT * FROM deposit_sessions
         WHERE uid=? AND status='SUBMITTED'
@@ -1627,20 +1656,27 @@ def deposit():
     """,(u["id"],)).fetchone()
 
     if review:
-        con.close()
-        return render_template(
-            "deposit.html",
-            user=u,
-            stage="pending",
-            deposit=review
-        )
+        pending=con.execute("""
+            SELECT * FROM transactions
+            WHERE uid=? AND kind='DEPOSIT' AND status='PENDING'
+            ORDER BY id DESC LIMIT 1
+        """,(u["id"],)).fetchone()
+
+        if pending:
+            con.close()
+            return render_template(
+                "deposit.html",
+                user=u,
+                stage="review",
+                deposit=review
+            )
 
     con.close()
 
     return render_template(
         "deposit.html",
         user=u,
-        stage="start"
+        stage="amount"
     )
 
 @app.route("/withdraw",methods=["GET","POST"])
@@ -1921,30 +1957,14 @@ def buy_mining_tool(idx):
 
 @app.route("/invest")
 @required
-def invest(): return render_template("invest.html",plans=get_effective_plans(),active="AI")
+def invest(): return render_template("invest.html",plans=PLANS,active="AI")
 
 @app.route("/product",methods=["GET","POST"])
 @required
 def product():
     code=request.values.get("p","").upper()
     if code not in PLANS:return "Product not found",404
-
-    plan=dict(PLANS[code])
-    try:
-        con=db()
-        custom=con.execute(
-            "SELECT * FROM admin_machine_settings WHERE code=? AND enabled=1",
-            (code,)
-        ).fetchone()
-        con.close()
-        if custom:
-            plan["price"]=float(custom["price"])
-            plan["daily"]=float(custom["daily"])
-            plan["days"]=int(custom["days"])
-            plan["total"]=float(custom["total"])
-            plan["name"]=custom["name"]
-    except Exception:
-        pass
+    plan=PLANS[code]
     if request.method=="POST":
         con=db(); u=con.execute("SELECT wallet FROM users WHERE id=?",(session["uid"],)).fetchone()
         if u["wallet"]<plan["price"]: con.close(); flash("Purchase failed due to insufficient wallet balance.","error")
@@ -2239,461 +2259,7 @@ def reveal_promo(chance_id,box_id):
     return redirect(url_for("raffle"))
 
 
-
-
-# ============================================================
-# REAL ADMIN CHAT + PLATFORM EDITOR SUPPORT
-import os, uuid, mimetypes
-from werkzeug.utils import secure_filename
-
-ADMIN_CHAT_UPLOAD_DIR=os.path.join(BASE,"static","uploads","admin_chat")
-os.makedirs(ADMIN_CHAT_UPLOAD_DIR,exist_ok=True)
-
-ADMIN_CHAT_ALLOWED_EXT={
-    "jpg","jpeg","png","gif","webp",
-    "mp4","webm","mov","m4v",
-    "mp3","wav","ogg","m4a","aac","webm"
-}
-
-def admin_chat_save_upload(upload):
-    if not upload or not getattr(upload,"filename",""):
-        return None
-
-    original=secure_filename(upload.filename or "")
-    ext=os.path.splitext(original)[1].lower().lstrip(".")
-    if ext not in ADMIN_CHAT_ALLOWED_EXT:
-        return None
-
-    filename=f"admin_{uuid.uuid4().hex}.{ext}"
-    path=os.path.join(ADMIN_CHAT_UPLOAD_DIR,filename)
-    upload.save(path)
-    return "/static/uploads/admin_chat/"+filename
-
-def ensure_admin_platform_tables():
-    con=db()
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS admin_platform_settings(
-            key TEXT PRIMARY KEY,
-            value TEXT,
-            updated_at TEXT
-        )
-    """)
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS admin_machine_settings(
-            code TEXT PRIMARY KEY,
-            name TEXT,
-            price REAL,
-            daily REAL,
-            days INTEGER,
-            total REAL,
-            enabled INTEGER DEFAULT 1,
-            updated_at TEXT
-        )
-    """)
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS admin_page_settings(
-            page TEXT PRIMARY KEY,
-            title TEXT,
-            subtitle TEXT,
-            content TEXT,
-            enabled INTEGER DEFAULT 1,
-            updated_at TEXT
-        )
-    """)
-    try:
-        cols=[r["name"] for r in con.execute("PRAGMA table_info(support_messages)").fetchall()]
-        if "media" not in cols:
-            con.execute("ALTER TABLE support_messages ADD COLUMN media TEXT")
-    except Exception:
-        pass
-    con.commit()
-    con.close()
-
-def get_admin_page_setting(page):
-    defaults={
-        "title":"",
-        "subtitle":"",
-        "content":"",
-        "enabled":1
-    }
-    try:
-        con=db()
-        row=con.execute(
-            "SELECT title,subtitle,content,enabled FROM admin_page_settings WHERE page=?",
-            (page,)
-        ).fetchone()
-        con.close()
-        if row:
-            return {
-                "title":row["title"] or "",
-                "subtitle":row["subtitle"] or "",
-                "content":row["content"] or "",
-                "enabled":int(row["enabled"] if row["enabled"] is not None else 1)
-            }
-    except Exception:
-        pass
-    return defaults
-
-def get_effective_plans():
-    result={k:dict(v) for k,v in PLANS.items()}
-    try:
-        con=db()
-        rows=con.execute("SELECT * FROM admin_machine_settings").fetchall()
-        con.close()
-        for r in rows:
-            code=str(r["code"]).upper()
-            if code in result:
-                result[code]["name"]=r["name"] or result[code].get("name",code)
-                result[code]["price"]=float(r["price"])
-                result[code]["daily"]=float(r["daily"])
-                result[code]["days"]=int(r["days"])
-                result[code]["total"]=float(r["total"])
-    except Exception:
-        pass
-    return result
-
-# ADMIN PLATFORM EDITOR
-# ============================================================
-def ensure_admin_editor_tables():
-    con=db()
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS admin_platform_settings(
-            key TEXT PRIMARY KEY,
-            value TEXT NOT NULL DEFAULT '',
-            updated_at TEXT NOT NULL
-        )
-    """)
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS admin_machine_settings(
-            code TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            price REAL NOT NULL DEFAULT 0,
-            daily REAL NOT NULL DEFAULT 0,
-            days INTEGER NOT NULL DEFAULT 0,
-            total REAL NOT NULL DEFAULT 0,
-            enabled INTEGER NOT NULL DEFAULT 1,
-            updated_at TEXT NOT NULL
-        )
-    """)
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS admin_page_settings(
-            page TEXT PRIMARY KEY,
-            title TEXT NOT NULL DEFAULT '',
-            subtitle TEXT NOT NULL DEFAULT '',
-            content TEXT NOT NULL DEFAULT '',
-            enabled INTEGER NOT NULL DEFAULT 1,
-            updated_at TEXT NOT NULL
-        )
-    """)
-    for code,plan in PLANS.items():
-        con.execute("""
-            INSERT OR IGNORE INTO admin_machine_settings
-            (code,name,price,daily,days,total,enabled,updated_at)
-            VALUES(?,?,?,?,?,?,1,?)
-        """,(
-            code,
-            str(code)+" AI Machine",
-            float(plan["price"]),
-            float(plan["daily"]),
-            int(plan["days"]),
-            float(plan["total"]),
-            now()
-        ))
-    con.commit()
-    con.close()
-
-
-def get_platform_setting(key, default=""):
-    try:
-        con=db()
-        row=con.execute(
-            "SELECT value FROM admin_platform_settings WHERE key=?",
-            (key,)
-        ).fetchone()
-        con.close()
-        return row["value"] if row and row["value"] is not None else default
-    except Exception:
-        return default
-
-def save_platform_setting(key,value):
-    con=db()
-    con.execute("""
-        INSERT INTO admin_platform_settings(key,value,updated_at)
-        VALUES(?,?,?)
-        ON CONFLICT(key) DO UPDATE SET
-        value=excluded.value,
-        updated_at=excluded.updated_at
-    """,(key,str(value),now()))
-    con.commit()
-    con.close()
-
-@app.context_processor
-def platform_editor_context():
-    return {
-        "platform_name":get_platform_setting("platform_name","NEXORA"),
-        "platform_accent":get_platform_setting("accent_color","#39ff72"),
-        "platform_bg":get_platform_setting("background_color","#000000"),
-        "platform_card":get_platform_setting("card_color","#071009"),
-        "platform_text":get_platform_setting("text_color","#ffffff"),
-        "platform_radius":get_platform_setting("card_radius","16")
-    }
-
-ensure_admin_editor_tables()
-
-@app.route("/admin/editor")
-@admin_required
-def admin_editor():
-    ensure_admin_editor_tables()
-    con=db()
-
-    machines=con.execute(
-        "SELECT * FROM admin_machine_settings ORDER BY code"
-    ).fetchall()
-
-    pages=con.execute(
-        "SELECT * FROM admin_page_settings ORDER BY page"
-    ).fetchall()
-
-    settings=con.execute(
-        "SELECT * FROM admin_platform_settings ORDER BY key"
-    ).fetchall()
-
-    managers=con.execute(
-        "SELECT * FROM managers ORDER BY id"
-    ).fetchall()
-
-    con.close()
-
-    return render_template(
-        "admin_editor.html",
-        machines=machines,
-        pages=pages,
-        settings=settings,
-        managers=managers
-    )
-
-@app.route("/admin/editor/machine/<code>",methods=["POST"])
-@admin_required
-def admin_editor_machine(code):
-    try:
-        price=float(request.form.get("price") or 0)
-        daily=float(request.form.get("daily") or 0)
-        days=int(request.form.get("days") or 0)
-        total=float(request.form.get("total") or 0)
-    except:
-        flash("Invalid machine values.","error")
-        return redirect(url_for("admin_editor"))
-
-    name=request.form.get("name","").strip() or code+" AI Machine"
-    enabled=1 if request.form.get("enabled")=="1" else 0
-
-    con=db()
-    con.execute("""
-        UPDATE admin_machine_settings
-        SET name=?,price=?,daily=?,days=?,total=?,enabled=?,updated_at=?
-        WHERE code=?
-    """,(name,price,daily,days,total,enabled,now(),code))
-    con.execute("""
-        INSERT INTO admin_activity(admin_uid,action,details,created_at)
-        VALUES(?,?,?,?)
-    """,(
-        current_user()["id"],
-        "MACHINE_EDIT",
-        f"{code} price={price} daily={daily} days={days} total={total} enabled={enabled}",
-        now()
-    ))
-    con.commit()
-    con.close()
-    flash("Machine settings saved.","success")
-    return redirect(url_for("admin_editor"))
-
-@app.route("/admin/editor/page/<page>",methods=["POST"])
-@admin_required
-def admin_editor_page(page):
-    title=request.form.get("title","").strip()
-    subtitle=request.form.get("subtitle","").strip()
-    content=request.form.get("content","").strip()
-    enabled=1 if request.form.get("enabled")=="1" else 0
-
-    con=db()
-    con.execute("""
-        INSERT INTO admin_page_settings(page,title,subtitle,content,enabled,updated_at)
-        VALUES(?,?,?,?,?,?)
-        ON CONFLICT(page) DO UPDATE SET
-          title=excluded.title,
-          subtitle=excluded.subtitle,
-          content=excluded.content,
-          enabled=excluded.enabled,
-          updated_at=excluded.updated_at
-    """,(page,title,subtitle,content,enabled,now()))
-    con.execute("""
-        INSERT INTO admin_activity(admin_uid,action,details,created_at)
-        VALUES(?,?,?,?)
-    """,(current_user()["id"],"PAGE_EDIT",f"Edited {page}",now()))
-    con.commit()
-    con.close()
-    flash("Page settings saved.","success")
-    return redirect(url_for("admin_editor"))
-
-@app.route("/admin/editor/setting/<key>",methods=["POST"])
-@admin_required
-def admin_editor_setting(key):
-    value=request.form.get("value","")
-    con=db()
-    con.execute("""
-        INSERT INTO admin_platform_settings(key,value,updated_at)
-        VALUES(?,?,?)
-        ON CONFLICT(key) DO UPDATE SET
-          value=excluded.value,
-          updated_at=excluded.updated_at
-    """,(key,value,now()))
-    con.execute("""
-        INSERT INTO admin_activity(admin_uid,action,details,created_at)
-        VALUES(?,?,?,?)
-    """,(current_user()["id"],"SETTING_EDIT",f"Edited {key}",now()))
-    con.commit()
-    con.close()
-    flash("Setting saved.","success")
-    return redirect(url_for("admin_editor"))
-
-
-@app.route("/admin/editor/design",methods=["POST"])
-@admin_required
-def admin_editor_design():
-    values={
-        "platform_name":request.form.get("platform_name","NEXORA").strip()[:80],
-        "accent_color":request.form.get("accent_color","#39ff72").strip(),
-        "background_color":request.form.get("background_color","#000000").strip(),
-        "card_color":request.form.get("card_color","#071009").strip(),
-        "text_color":request.form.get("text_color","#ffffff").strip(),
-        "card_radius":request.form.get("card_radius","16").strip()
-    }
-
-    color_re=re.compile(r"^#[0-9a-fA-F]{6}$")
-
-    for key in ("accent_color","background_color","card_color","text_color"):
-        if not color_re.fullmatch(values[key]):
-            flash("Invalid colour value.","error")
-            return redirect(url_for("admin_editor"))
-
-    try:
-        radius=max(0,min(40,int(values["card_radius"])))
-    except Exception:
-        radius=16
-
-    values["card_radius"]=str(radius)
-
-    for key,value in values.items():
-        save_platform_setting(key,value)
-
-    flash("Platform design updated.","success")
-    return redirect(url_for("admin_editor"))
-
-@app.route("/admin/editor/manager/<mid>",methods=["POST"])
-@admin_required
-def admin_editor_manager(mid):
-    name=request.form.get("name","").strip()
-    phone=request.form.get("phone","").strip()
-    role=request.form.get("role","NEXORA Manager").strip()
-    avatar=request.form.get("avatar","👤").strip() or "👤"
-
-    if not name or not phone:
-        flash("Manager name and phone are required.","error")
-        return redirect(url_for("admin_editor"))
-
-    con=db()
-
-    old=con.execute(
-        "SELECT phone FROM managers WHERE id=?",(mid,)
-    ).fetchone()
-
-    if not old:
-        con.close()
-        flash("Manager not found.","error")
-        return redirect(url_for("admin_editor"))
-
-    con.execute(
-        "UPDATE managers SET name=?,phone=?,role=?,avatar=? WHERE id=?",
-        (name,phone,role,avatar,mid)
-    )
-
-    if old["phone"] and old["phone"]!=phone:
-        con.execute(
-            "UPDATE users SET manager_phone=? WHERE manager_phone=?",
-            (phone,old["phone"])
-        )
-
-    con.commit()
-    con.close()
-
-    flash("Manager updated.","success")
-    return redirect(url_for("admin_editor"))
-
-@app.route("/admin/editor/manager/create",methods=["POST"])
-@admin_required
-def admin_editor_manager_create():
-    name=request.form.get("name","").strip()
-    phone=request.form.get("phone","").strip()
-    role=request.form.get("role","NEXORA Manager").strip()
-    avatar=request.form.get("avatar","👤").strip() or "👤"
-
-    if not name or not phone:
-        flash("Manager name and phone are required.","error")
-        return redirect(url_for("admin_editor"))
-
-    con=db()
-
-    cols=[x["name"] for x in con.execute(
-        "PRAGMA table_info(managers)"
-    ).fetchall()]
-
-    if "role" in cols and "avatar" in cols:
-        con.execute(
-            "INSERT INTO managers(name,phone,role,avatar,enabled) VALUES(?,?,?,?,1)",
-            (name,phone,role,avatar)
-        )
-    else:
-        con.execute(
-            "INSERT INTO managers(name,phone,enabled) VALUES(?,?,1)",
-            (name,phone)
-        )
-
-    con.commit()
-    con.close()
-
-    flash("Manager created.","success")
-    return redirect(url_for("admin_editor"))
-
-@app.route("/admin/editor/manager/<mid>/disable",methods=["POST"])
-@admin_required
-def admin_editor_manager_disable(mid):
-    con=db()
-    con.execute(
-        "UPDATE managers SET enabled=0 WHERE id=?",
-        (mid,)
-    )
-    con.commit()
-    con.close()
-
-    flash("Manager disabled.","success")
-    return redirect(url_for("admin_editor"))
-
-@app.route("/admin/control-center")
-@admin_required
-def admin_control_center():
-    con=db()
-    users=con.execute("SELECT * FROM users ORDER BY id DESC LIMIT 500").fetchall()
-    transactions=con.execute("SELECT * FROM transactions ORDER BY id DESC LIMIT 500").fetchall()
-    messages=con.execute("SELECT * FROM support_messages ORDER BY id DESC LIMIT 500").fetchall()
-    con.close()
-    return render_template(
-        "admin_control_center.html",
-        users=users,
-        transactions=transactions,
-        messages=messages,
-        user=current_user()
-    )
-
+@app.route("/admin")
 @app.route("/admin/")
 @admin_required
 def admin():
@@ -2750,7 +2316,7 @@ def admin():
     activity=con.execute("SELECT a.*,u.phone FROM admin_activity a LEFT JOIN users u ON u.id=a.admin_uid ORDER BY a.id DESC LIMIT 100").fetchall()
     announcements=con.execute("SELECT * FROM announcements ORDER BY id DESC LIMIT 20").fetchall()
     con.close()
-    return render_template("admin.html",users=users,tx=tx,withdrawals=withdrawals,deposits=deposits,requests=requests,messages=messages,gifts=gifts,managers=managers,activity=activity,announcements=announcements,plans=PLANS)
+    return render_template("admin.html",users=users,tx=tx,withdrawals=withdrawals,deposits=deposits,requests=requests,messages=messages,gifts=gifts,managers=managers,activity=activity,announcements=announcements)
 
 @app.route("/admin/transaction/<int:tid>/<action>",methods=["POST"])
 @admin_required
@@ -2784,71 +2350,9 @@ def admin_transaction(tid,action):
         award_referral_points(t["uid"])
     return redirect(url_for("admin"))
 
-
-@app.route("/admin/broadcast",methods=["POST"])
-@admin_required
-def admin_broadcast():
-    import os, uuid
-    from werkzeug.utils import secure_filename
-
-    msg=request.form.get("message","").strip()
-    uploaded=request.files.get("media")
-    media_url=""
-
-    if uploaded and uploaded.filename:
-        ext=os.path.splitext(secure_filename(uploaded.filename))[1].lower()
-        allowed={".jpg",".jpeg",".png",".gif",".webp",".mp4",".webm",".mov",".m4v",".mp3",".wav",".ogg",".m4a"}
-
-        if ext not in allowed:
-            flash("Unsupported media type.","error")
-            return redirect(url_for("admin"))
-
-        folder=os.path.join(app.root_path,"static","chat_media")
-        os.makedirs(folder,exist_ok=True)
-        name="broadcast_"+uuid.uuid4().hex+ext
-        uploaded.save(os.path.join(folder,name))
-        media_url=url_for("static",filename="chat_media/"+name)
-
-    if not msg and not media_url:
-        flash("Write a message or attach media.","error")
-        return redirect(url_for("admin"))
-
-    con=db()
-    users=con.execute("SELECT id FROM users ORDER BY id").fetchall()
-
-    cols=[r[1] for r in con.execute("PRAGMA table_info(support_messages)").fetchall()]
-    if "media" not in cols:
-        con.execute("ALTER TABLE support_messages ADD COLUMN media TEXT")
-
-    for u in users:
-        con.execute(
-            "INSERT INTO support_messages(uid,sender,message,created_at,media) VALUES(?,?,?,?,?)",
-            (u["id"],"ADMIN",msg,now(),media_url)
-        )
-
-    con.commit()
-    con.close()
-
-    flash(f"Message sent to {len(users)} users.","success")
-    return redirect(url_for("admin"))
-
-@app.route("/admin/support/<int:uid>",methods=["GET","POST"])
+@app.route("/admin/support/<int:uid>",methods=["POST"])
 @admin_required
 def admin_support(uid):
-    if request.method=="GET":
-        con=db()
-        messages=con.execute(
-            "SELECT * FROM support_messages WHERE uid=? ORDER BY id",
-            (uid,)
-        ).fetchall()
-        con.close()
-        return render_template(
-            "admin_chat.html",
-            messages=messages,
-            uid=uid,
-            user=current_user()
-        )
-
     msg=request.form.get("message","").strip()
     if msg:
         con=db(); con.execute("INSERT INTO support_messages(uid,sender,message,created_at) VALUES(?,?,?,?)",(uid,"MANAGER",msg,now())); con.commit(); con.close()
@@ -2876,54 +2380,23 @@ def admin_announcement():
 @admin_required
 def admin_support_send():
     try:
-        ensure_admin_platform_tables()
-
-        uid=int(request.form.get("uid","0") or 0)
-        msg=(request.form.get("message") or "").strip()
-        upload=request.files.get("media")
-
-        if not uid:
-            if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
-                return jsonify({"ok":False,"error":"Invalid user"}),400
-            flash("Invalid user.","error")
-            return redirect(url_for("admin"))
-
-        media_url=None
-        if upload and upload.filename:
-            media_url=admin_chat_save_upload(upload)
-            if not media_url:
-                if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
-                    return jsonify({"ok":False,"error":"Unsupported media file"}),400
-                flash("Unsupported media file.","error")
-                return redirect(url_for("admin_support",uid=uid))
-
-        if not msg and not media_url:
-            if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
-                return jsonify({"ok":False,"error":"Write a message or attach media"}),400
-            flash("Write a message or attach media.","error")
-            return redirect(url_for("admin_support",uid=uid))
-
-        con=db()
+        uid=int(request.form.get("uid") or 0)
+    except:
+        uid=0
+    message=(request.form.get("message") or "").strip()
+    if not uid or not message:
+        flash("Select a user and enter a message.","error")
+        return redirect(url_for("admin"))
+    con=db()
+    if con.execute("SELECT 1 FROM users WHERE id=?",(uid,)).fetchone():
         con.execute(
-            "INSERT INTO support_messages(uid,sender,message,created_at,media) VALUES(?,?,?,?,?)",
-            (uid,"ADMIN",msg,now(),media_url)
+            "INSERT INTO support_messages(uid,sender,message,created_at) VALUES(?,?,?,?)",
+            (uid,"MANAGER",message,now())
         )
         con.commit()
-        con.close()
-
-        if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
-            return jsonify({"ok":True})
-
-        return redirect(url_for("admin_support",uid=uid))
-
-    except Exception as e:
-        try:
-            if request.headers.get("X-Requested-With")=="XMLHttpRequest" or request.form.get("ajax")=="1":
-                return jsonify({"ok":False,"error":"Message could not be sent"}),500
-        except Exception:
-            pass
-        flash("Message could not be sent.","error")
-        return redirect(url_for("admin"))
+        flash("Message sent to user.","success")
+    con.close()
+    return redirect(url_for("admin"))
 
 @app.route("/admin/gift",methods=["POST"])
 @admin_required
@@ -3113,304 +2586,7 @@ def admin_create():
     else: con.execute("UPDATE users SET is_admin=1,password=? WHERE phone=?",(pw_hash(password),phone))
     con.commit(); con.close(); return "Admin account ready."
 
-
-# ===== NEXORA LIVE CHAT UNREAD TRACKING =====
-def ensure_nexora_chat_reads():
-    con=db()
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS chat_reads(
-            uid INTEGER PRIMARY KEY,
-            admin_last_read_id INTEGER NOT NULL DEFAULT 0,
-            user_last_read_id INTEGER NOT NULL DEFAULT 0
-        )
-    """)
-    rows=con.execute("SELECT DISTINCT uid FROM support_messages WHERE uid IS NOT NULL").fetchall()
-    for row in rows:
-        uid=int(row["uid"])
-        exists=con.execute("SELECT 1 FROM chat_reads WHERE uid=?",(uid,)).fetchone()
-        if not exists:
-            mx=con.execute(
-                "SELECT COALESCE(MAX(id),0) n FROM support_messages WHERE uid=?",
-                (uid,)
-            ).fetchone()["n"]
-            con.execute(
-                "INSERT INTO chat_reads(uid,admin_last_read_id,user_last_read_id) VALUES(?,?,?)",
-                (uid,mx,mx)
-            )
-    con.commit()
-    con.close()
-
-def ensure_chat_read_uid(con,uid):
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS chat_reads(
-            uid INTEGER PRIMARY KEY,
-            admin_last_read_id INTEGER NOT NULL DEFAULT 0,
-            user_last_read_id INTEGER NOT NULL DEFAULT 0
-        )
-    """)
-    row=con.execute("SELECT * FROM chat_reads WHERE uid=?",(uid,)).fetchone()
-    if not row:
-        mx=con.execute(
-            "SELECT COALESCE(MAX(id),0) n FROM support_messages WHERE uid=?",
-            (uid,)
-        ).fetchone()["n"]
-        con.execute(
-            "INSERT INTO chat_reads(uid,admin_last_read_id,user_last_read_id) VALUES(?,?,?)",
-            (uid,mx,mx)
-        )
-        con.commit()
-    return con.execute("SELECT * FROM chat_reads WHERE uid=?",(uid,)).fetchone()
-
-@app.route("/chat/unread")
-@required
-def nexora_chat_unread():
-    u=current_user()
-    con=db()
-    row=ensure_chat_read_uid(con,u["id"])
-    n=con.execute("""
-        SELECT COUNT(*) n
-        FROM support_messages
-        WHERE uid=? AND UPPER(COALESCE(sender,''))='ADMIN'
-        AND id>?
-    """,(u["id"],row["user_last_read_id"])).fetchone()["n"]
-    con.close()
-    return jsonify({"unread":int(n)})
-
-@app.route("/chat/read",methods=["POST"])
-@required
-def nexora_chat_read():
-    u=current_user()
-    con=db()
-    ensure_chat_read_uid(con,u["id"])
-    mx=con.execute("""
-        SELECT COALESCE(MAX(id),0) n
-        FROM support_messages
-        WHERE uid=? AND UPPER(COALESCE(sender,''))='ADMIN'
-    """,(u["id"],)).fetchone()["n"]
-    con.execute(
-        "UPDATE chat_reads SET user_last_read_id=? WHERE uid=?",
-        (mx,u["id"])
-    )
-    con.commit()
-    con.close()
-    return jsonify({"ok":True})
-
-@app.route("/admin/chat/unread")
-@admin_required
-def nexora_admin_chat_unread():
-    con=db()
-    ensure_chat_read_uid(con,0)
-    rows=con.execute(
-        "SELECT DISTINCT uid FROM support_messages WHERE uid IS NOT NULL"
-    ).fetchall()
-    total=0
-    by_uid={}
-    for row in rows:
-        uid=int(row["uid"])
-        state=ensure_chat_read_uid(con,uid)
-        n=con.execute("""
-            SELECT COUNT(*) n
-            FROM support_messages
-            WHERE uid=?
-            AND UPPER(COALESCE(sender,'')) NOT IN ('ADMIN','MANAGER')
-            AND id>?
-        """,(uid,state["admin_last_read_id"])).fetchone()["n"]
-        n=int(n)
-        if n:
-            by_uid[str(uid)]=n
-            total+=n
-    con.close()
-    return jsonify({"unread":total,"by_uid":by_uid})
-
-@app.route("/admin/chat/read/<int:uid>",methods=["POST"])
-@admin_required
-def nexora_admin_chat_read(uid):
-    con=db()
-    ensure_chat_read_uid(con,uid)
-    mx=con.execute("""
-        SELECT COALESCE(MAX(id),0) n
-        FROM support_messages
-        WHERE uid=?
-        AND UPPER(COALESCE(sender,'')) NOT IN ('ADMIN','MANAGER')
-    """,(uid,)).fetchone()["n"]
-    con.execute(
-        "UPDATE chat_reads SET admin_last_read_id=? WHERE uid=?",
-        (mx,uid)
-    )
-    con.commit()
-    con.close()
-    return jsonify({"ok":True})
-# ===== END NEXORA LIVE CHAT UNREAD TRACKING =====
-
-
-# ================= REAL CHAT POPUP NOTIFICATIONS =================
-
-def ensure_chat_popup_reads():
-    con=db()
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS chat_popup_reads(
-            uid INTEGER PRIMARY KEY,
-            admin_read_id INTEGER NOT NULL DEFAULT 0,
-            user_read_id INTEGER NOT NULL DEFAULT 0
-        )
-    """)
-    con.commit()
-    con.close()
-
-@app.route("/chat-popup/user", methods=["GET"])
-@required
-def chat_popup_user():
-    ensure_chat_popup_reads()
-    u=current_user()
-    con=db()
-    con.execute(
-        "INSERT OR IGNORE INTO chat_popup_reads(uid,admin_read_id,user_read_id) VALUES(?,?,?)",
-        (u["id"],0,0)
-    )
-    r=con.execute(
-        "SELECT user_read_id FROM chat_popup_reads WHERE uid=?",
-        (u["id"],)
-    ).fetchone()
-    last=int(r["user_read_id"] or 0) if r else 0
-    row=con.execute("""
-        SELECT id,uid,sender,message,created_at
-        FROM support_messages
-        WHERE uid=? AND id>? AND UPPER(sender) IN ('ADMIN','MANAGER')
-        ORDER BY id DESC LIMIT 1
-    """,(u["id"],last)).fetchone()
-    count=con.execute("""
-        SELECT COUNT(*) n
-        FROM support_messages
-        WHERE uid=? AND id>? AND UPPER(sender) IN ('ADMIN','MANAGER')
-    """,(u["id"],last)).fetchone()["n"]
-    con.close()
-    return jsonify({
-        "unread":int(count or 0),
-        "id":int(row["id"]) if row else 0,
-        "message":str(row["message"] or "")[:120] if row else "",
-        "sender":str(row["sender"] or "") if row else ""
-    })
-
-@app.route("/chat-popup/user/read", methods=["POST"])
-@required
-def chat_popup_user_read():
-    ensure_chat_popup_reads()
-    u=current_user()
-    con=db()
-    row=con.execute(
-        "SELECT MAX(id) n FROM support_messages WHERE uid=? AND UPPER(sender) IN ('ADMIN','MANAGER')",
-        (u["id"],)
-    ).fetchone()
-    last=int(row["n"] or 0) if row else 0
-    con.execute("""
-        INSERT INTO chat_popup_reads(uid,admin_read_id,user_read_id)
-        VALUES(?,?,?)
-        ON CONFLICT(uid) DO UPDATE SET user_read_id=excluded.user_read_id
-    """,(u["id"],0,last))
-    con.commit()
-    con.close()
-    return jsonify({"ok":True})
-
-@app.route("/admin/chat-popup", methods=["GET"])
-@admin_required
-def chat_popup_admin():
-    ensure_chat_popup_reads()
-    con=db()
-
-    rows=con.execute("""
-        SELECT
-            s.uid,
-            MAX(s.id) AS latest_id,
-            COUNT(*) AS unread_count
-        FROM support_messages s
-        LEFT JOIN chat_popup_reads r ON r.uid=s.uid
-        WHERE s.id>COALESCE(r.admin_read_id,0)
-          AND LOWER(TRIM(s.sender)) NOT IN ('admin','manager')
-        GROUP BY s.uid
-        ORDER BY latest_id DESC
-        LIMIT 50
-    """).fetchall()
-
-    items=[]
-
-    # Detect the real users-table columns instead of assuming name/username exist.
-    user_cols=[
-        x["name"]
-        for x in con.execute("PRAGMA table_info(users)").fetchall()
-    ]
-
-    preferred=[]
-    for c in ("phone","username","full_name","display_name","email"):
-        if c in user_cols:
-            preferred.append(c)
-
-    for r in rows:
-        uid=int(r["uid"])
-
-        latest=con.execute("""
-            SELECT message,created_at,sender
-            FROM support_messages
-            WHERE uid=? AND id=?
-        """,(uid,int(r["latest_id"]))).fetchone()
-
-        userrow=con.execute(
-            "SELECT * FROM users WHERE id=?",
-            (uid,)
-        ).fetchone()
-
-        display="User "+str(uid)
-
-        if userrow:
-            for c in preferred:
-                try:
-                    value=userrow[c]
-                    if value:
-                        display=str(value)
-                        break
-                except Exception:
-                    pass
-
-        items.append({
-            "uid":uid,
-            "unread":int(r["unread_count"] or 0),
-            "message":str(latest["message"] or "")[:160] if latest else "New message",
-            "created_at":str(latest["created_at"] or "") if latest else "",
-            "name":display
-        })
-
-    total=sum(x["unread"] for x in items)
-
-    con.close()
-
-    return jsonify({
-        "unread":total,
-        "items":items
-    })
-
-@app.route("/admin/chat-popup/read/<int:uid>", methods=["POST"])
-@admin_required
-def chat_popup_admin_read(uid):
-    ensure_chat_popup_reads()
-    con=db()
-    row=con.execute(
-        "SELECT MAX(id) n FROM support_messages WHERE uid=? AND UPPER(sender) NOT IN ('ADMIN','MANAGER')",
-        (uid,)
-    ).fetchone()
-    last=int(row["n"] or 0) if row else 0
-    con.execute("""
-        INSERT INTO chat_popup_reads(uid,admin_read_id,user_read_id)
-        VALUES(?,?,?)
-        ON CONFLICT(uid) DO UPDATE SET admin_read_id=excluded.admin_read_id
-    """,(uid,last,0))
-    con.commit()
-    con.close()
-    return jsonify({"ok":True})
-
-# ================================================================
-
 init_db()
-ensure_chat_popup_reads()
-ensure_nexora_chat_reads()
 if __name__=="__main__": app.run(host="0.0.0.0",port=int(os.environ.get("PORT",5000)),debug=False)
 
 # MANAGER_PAGE_REDIRECT_TO_COMM
