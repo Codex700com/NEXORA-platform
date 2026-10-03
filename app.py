@@ -983,6 +983,101 @@ def ping():
 @app.route("/")
 def index(): return redirect(url_for("home") if current_user() else url_for("login"))
 
+
+def process_electricity_referral_bonus(con, referred_uid, inviter_uid):
+    """
+    Electricity referral welcome bonus.
+
+    Inviter qualification is based on the inviter's electricity purchases:
+      5,000  -> referred user 1,000
+      10,000 -> referred user 3,000
+      20,000 -> referred user 5,000
+      50,000+ -> referred user 10,000
+
+    The inviter always receives 1,000.
+
+    Bonuses are protected by transaction references so the same
+    referred registration cannot be rewarded twice.
+    """
+    purchase=con.execute(
+        """SELECT amount
+           FROM transactions
+           WHERE uid=?
+             AND kind='ELECTRICITY_PURCHASE'
+             AND status='APPROVED'
+             AND amount>=5000
+           ORDER BY amount DESC,id DESC
+           LIMIT 1""",
+        (inviter_uid,)
+    ).fetchone()
+
+    if not purchase:
+        return False
+
+    purchase_amount=float(purchase["amount"] or 0)
+
+    if purchase_amount >= 50000:
+        welcome=10000
+    elif purchase_amount >= 20000:
+        welcome=5000
+    elif purchase_amount >= 10000:
+        welcome=3000
+    else:
+        welcome=1000
+
+    welcome_ref=f"ELECTRIC-WELCOME-{referred_uid}"
+    inviter_ref=f"ELECTRIC-INVITER-{referred_uid}"
+
+    already=con.execute(
+        "SELECT 1 FROM transactions WHERE reference=? LIMIT 1",
+        (welcome_ref,)
+    ).fetchone()
+
+    if already:
+        return False
+
+    # Welcome bonus goes to the newly registered user.
+    con.execute(
+        "UPDATE users SET balance=COALESCE(balance,0)+? WHERE id=?",
+        (welcome,referred_uid)
+    )
+
+    con.execute(
+        """INSERT INTO transactions
+           (uid,kind,amount,status,reference,created_at)
+           VALUES(?,?,?,?,?,?)""",
+        (
+            referred_uid,
+            "ELECTRICITY_WELCOME",
+            welcome,
+            "APPROVED",
+            welcome_ref,
+            now()
+        )
+    )
+
+    # Inviter always receives UGX 1,000.
+    con.execute(
+        "UPDATE users SET balance=COALESCE(balance,0)+1000 WHERE id=?",
+        (inviter_uid,)
+    )
+
+    con.execute(
+        """INSERT INTO transactions
+           (uid,kind,amount,status,reference,created_at)
+           VALUES(?,?,?,?,?,?)""",
+        (
+            inviter_uid,
+            "ELECTRICITY_REFERRAL",
+            1000,
+            "APPROVED",
+            inviter_ref,
+            now()
+        )
+    )
+
+    return True
+
 @app.route("/register",methods=["GET","POST"])
 def register():
     if request.method=="POST":
@@ -995,7 +1090,10 @@ def register():
             if con.execute("SELECT 1 FROM users WHERE phone=?",(phone,)).fetchone(): flash("Phone already registered.","error")
             else:
                 inviter=con.execute("SELECT id FROM users WHERE invite_code=?",(invite,)).fetchone() if invite else None
-                con.execute("INSERT INTO users(phone,password,invite_code,invited_by,created_at) VALUES(?,?,?,?,?)",(phone,pw_hash(password),make_code(con),inviter["id"] if inviter else None,now())); con.commit(); con.close(); flash("Registration successful. You can now login.","success"); return redirect(url_for("login"))
+                new_user_id=con.execute("SELECT last_insert_rowid()").fetchone()[0]
+                if inviter:
+                    process_electricity_referral_bonus(con,new_user_id,inviter["id"])
+                con.commit(); con.close(); flash("Registration successful. You can now login.","success"); return redirect(url_for("login"))
             con.close()
     real=''.join(secrets.choice(string.digits) for _ in range(4))
     return render_template("register.html",real_captcha=real,invite=request.args.get("ref",request.form.get("invite","")))
