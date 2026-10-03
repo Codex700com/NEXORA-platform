@@ -67,6 +67,18 @@ def make_code(con):
         code=''.join(secrets.choice(chars) for _ in range(8))
         if not con.execute("SELECT 1 FROM users WHERE invite_code=?",(code,)).fetchone(): return code
 
+def _ensure_ai_machines_table(con):
+    con.execute('''
+        CREATE TABLE IF NOT EXISTS ai_machines (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uid INTEGER NOT NULL,
+            name TEXT,
+            started_at TEXT,
+            status TEXT DEFAULT 'ACTIVE'
+        )
+    ''')
+    con.commit()
+
 def init_db():
     con=db()
     con.executescript("""
