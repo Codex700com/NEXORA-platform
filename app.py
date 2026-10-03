@@ -985,29 +985,13 @@ def index(): return redirect(url_for("home") if current_user() else url_for("log
 
 
 def process_electricity_referral_bonus(con, referred_uid, inviter_uid):
-    """
-    Electricity referral welcome bonus.
-
-    Inviter qualification is based on the inviter's electricity purchases:
-      5,000  -> referred user 1,000
-      10,000 -> referred user 3,000
-      20,000 -> referred user 5,000
-      50,000+ -> referred user 10,000
-
-    The inviter always receives 1,000.
-
-    Bonuses are protected by transaction references so the same
-    referred registration cannot be rewarded twice.
-    """
     purchase=con.execute(
-        """SELECT amount
-           FROM transactions
+        """SELECT amount FROM transactions
            WHERE uid=?
-             AND kind='ELECTRICITY_PURCHASE'
-             AND status='APPROVED'
-             AND amount>=5000
-           ORDER BY amount DESC,id DESC
-           LIMIT 1""",
+           AND kind='ELECTRICITY_PURCHASE'
+           AND status='APPROVED'
+           AND amount>=5000
+           ORDER BY amount DESC,id DESC LIMIT 1""",
         (inviter_uid,)
     ).fetchone()
 
@@ -1028,15 +1012,12 @@ def process_electricity_referral_bonus(con, referred_uid, inviter_uid):
     welcome_ref=f"ELECTRIC-WELCOME-{referred_uid}"
     inviter_ref=f"ELECTRIC-INVITER-{referred_uid}"
 
-    already=con.execute(
+    if con.execute(
         "SELECT 1 FROM transactions WHERE reference=? LIMIT 1",
         (welcome_ref,)
-    ).fetchone()
-
-    if already:
+    ).fetchone():
         return False
 
-    # Welcome bonus goes to the newly registered user.
     con.execute(
         "UPDATE users SET balance=COALESCE(balance,0)+? WHERE id=?",
         (welcome,referred_uid)
@@ -1044,19 +1025,12 @@ def process_electricity_referral_bonus(con, referred_uid, inviter_uid):
 
     con.execute(
         """INSERT INTO transactions
-           (uid,kind,amount,status,reference,created_at)
-           VALUES(?,?,?,?,?,?)""",
-        (
-            referred_uid,
-            "ELECTRICITY_WELCOME",
-            welcome,
-            "APPROVED",
-            welcome_ref,
-            now()
-        )
+        (uid,kind,amount,status,reference,created_at)
+        VALUES(?,?,?,?,?,?)""",
+        (referred_uid,"ELECTRICITY_WELCOME",welcome,
+         "APPROVED",welcome_ref,now())
     )
 
-    # Inviter always receives UGX 1,000.
     con.execute(
         "UPDATE users SET balance=COALESCE(balance,0)+1000 WHERE id=?",
         (inviter_uid,)
@@ -1064,19 +1038,36 @@ def process_electricity_referral_bonus(con, referred_uid, inviter_uid):
 
     con.execute(
         """INSERT INTO transactions
-           (uid,kind,amount,status,reference,created_at)
-           VALUES(?,?,?,?,?,?)""",
-        (
-            inviter_uid,
-            "ELECTRICITY_REFERRAL",
-            1000,
-            "APPROVED",
-            inviter_ref,
-            now()
-        )
+        (uid,kind,amount,status,reference,created_at)
+        VALUES(?,?,?,?,?,?)""",
+        (inviter_uid,"ELECTRICITY_REFERRAL",1000,
+         "APPROVED",inviter_ref,now())
     )
 
     return True
+
+
+def repair_existing_electricity_referrals():
+    con=db()
+    repaired=0
+
+    rows=con.execute(
+        """SELECT id,invited_by FROM users
+           WHERE invited_by IS NOT NULL
+           ORDER BY id"""
+    ).fetchall()
+
+    for row in rows:
+        if process_electricity_referral_bonus(
+            con,row["id"],row["invited_by"]
+        ):
+            repaired += 1
+
+    con.commit()
+    con.close()
+    print(f"Electricity referral repair: {repaired} bonus(es) added")
+    return repaired
+
 
 @app.route("/register",methods=["GET","POST"])
 def register():
