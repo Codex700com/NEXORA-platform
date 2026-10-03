@@ -1777,8 +1777,8 @@ def withdraw():
                 con.close()
             except Exception:
                 pass
-            print("WITHDRAW ERROR:",repr(e))
-            flash("Withdrawal could not be completed. Please try again.","error")
+            print("WITHDRAW ERROR:", repr(e), flush=True)
+            flash(f"Withdrawal error: {type(e).__name__}: {e}","error")
             return redirect(url_for("withdraw"))
 
     con=db()
