@@ -1663,7 +1663,7 @@ def withdraw():
     if request.method=="POST":
         try:
             amount=float(request.form.get("amount","0") or 0)
-        except:
+        except Exception:
             amount=0
 
         method=request.form.get("method","").strip()
@@ -1671,7 +1671,6 @@ def withdraw():
             "MTN UG":"mtn_number",
             "Airtel UG":"airtel_number"
         }
-
         column=allowed.get(method)
 
         if amount < 1000:
@@ -1684,53 +1683,59 @@ def withdraw():
 
         con=db()
 
-        fresh=con.execute(
-            "SELECT * FROM users WHERE id=?",
-            (u["id"],)
-        ).fetchone()
-
-        destination=(fresh[column] or "").strip() if fresh else ""
-
-        if not destination:
-            con.close()
-            flash("Save your payout details on the Card page before withdrawing.","error")
-            return redirect(url_for("withdraw"))
-
-        balance=float(fresh["balance"] or 0)
-
-        if amount > balance:
-            con.close()
-            flash("Insufficient balance for this withdrawal.","error")
-            return redirect(url_for("withdraw"))
-
-        fee=round(amount*0.10,2)
-        receive=round(amount-fee,2)
-        ref="WD-"+__import__("uuid").uuid4().hex[:12].upper()
-
         try:
-            current=con.execute(
-                "SELECT balance FROM users WHERE id=?",
+            con.execute("BEGIN IMMEDIATE")
+
+            fresh=con.execute(
+                "SELECT * FROM users WHERE id=?",
                 (u["id"],)
             ).fetchone()
 
-            if not current:
+            if not fresh:
                 con.rollback()
                 con.close()
                 flash("User account could not be found.","error")
                 return redirect(url_for("withdraw"))
 
-            current_balance=float(current["balance"] or 0)
+            destination=(fresh[column] or "").strip()
 
-            if amount > current_balance:
+            if not destination:
+                con.rollback()
+                con.close()
+                flash("Save your payout details on the Card page before withdrawing.","error")
+                return redirect(url_for("withdraw"))
+
+            # Prevent multiple unresolved withdrawal requests.
+            existing=con.execute("""
+                SELECT id FROM transactions
+                WHERE uid=? AND kind='WITHDRAW' AND status='PENDING'
+                LIMIT 1
+            """,(u["id"],)).fetchone()
+
+            if existing:
+                con.rollback()
+                con.close()
+                flash("You already have a withdrawal under review. Please wait for admin approval or cancel it.","error")
+                return redirect(url_for("withdraw"))
+
+            balance=float(fresh["balance"] or 0)
+
+            if amount > balance:
                 con.rollback()
                 con.close()
                 flash("Insufficient balance for this withdrawal.","error")
                 return redirect(url_for("withdraw"))
 
-            changed=con.execute(
-                "UPDATE users SET balance=COALESCE(balance,0)-? WHERE id=?",
-                (amount,u["id"])
-            ).rowcount
+            fee=round(amount*0.10,2)
+            receive=round(amount-fee,2)
+            ref="WD-"+__import__("uuid").uuid4().hex[:12].upper()
+
+            # Hold the FULL requested amount immediately.
+            changed=con.execute("""
+                UPDATE users
+                SET balance=COALESCE(balance,0)-?
+                WHERE id=? AND COALESCE(balance,0)>=?
+            """,(amount,u["id"],amount)).rowcount
 
             if changed != 1:
                 con.rollback()
@@ -1738,9 +1743,11 @@ def withdraw():
                 flash("Withdrawal could not be completed. Please try again.","error")
                 return redirect(url_for("withdraw"))
 
+            # Create the withdrawal transaction in UNDER REVIEW state.
             con.execute("""
                 INSERT INTO transactions
-                (uid,kind,amount,status,reference,created_at,withdraw_method,withdraw_destination)
+                (uid,kind,amount,status,reference,created_at,
+                 withdraw_method,withdraw_destination)
                 VALUES(?,?,?,?,?,?,?,?)
             """,(
                 u["id"],
@@ -1757,20 +1764,24 @@ def withdraw():
             con.close()
 
             flash(
-                f"Withdrawal request submitted to {method} number {destination}. "
-                f"Fee: UGX {fee:,.2f}. You receive: UGX {receive:,.2f}.",
+                f"Withdrawal request submitted successfully. "
+                f"UGX {amount:,.2f} is now under review by admin. "
+                f"You will receive UGX {receive:,.2f} after the 10% withdrawal fee.",
                 "success"
             )
             return redirect(url_for("withdraw"))
 
-        except Exception:
-            con.rollback()
-            con.close()
+        except Exception as e:
+            try:
+                con.rollback()
+                con.close()
+            except Exception:
+                pass
+            print("WITHDRAW ERROR:",repr(e))
             flash("Withdrawal could not be completed. Please try again.","error")
             return redirect(url_for("withdraw"))
 
     con=db()
-
     pending=con.execute("""
         SELECT *
         FROM transactions
@@ -1778,15 +1789,92 @@ def withdraw():
         ORDER BY id DESC
     """,(u["id"],)).fetchall()
 
+    history=con.execute("""
+        SELECT *
+        FROM transactions
+        WHERE uid=? AND kind='WITHDRAW'
+        ORDER BY id DESC
+        LIMIT 50
+    """,(u["id"],)).fetchall()
+
     con.close()
 
     return render_template(
         "withdraw.html",
         title="Withdraw",
-        user=current_user(),
         pending=pending,
-        active="My"
+        history=history
     )
+
+
+@app.route("/withdraw/cancel/<int:transaction_id>",methods=["POST"])
+@required
+def cancel_withdrawal(transaction_id):
+    u=current_user()
+    con=db()
+
+    try:
+        con.execute("BEGIN IMMEDIATE")
+
+        tx=con.execute("""
+            SELECT *
+            FROM transactions
+            WHERE id=? AND uid=? AND kind='WITHDRAW'
+            LIMIT 1
+        """,(transaction_id,u["id"])).fetchone()
+
+        if not tx:
+            con.rollback()
+            con.close()
+            flash("Withdrawal request was not found.","error")
+            return redirect(url_for("withdraw"))
+
+        if str(tx["status"]).upper() != "PENDING":
+            con.rollback()
+            con.close()
+            flash("This withdrawal can no longer be cancelled.","error")
+            return redirect(url_for("withdraw"))
+
+        amount=float(tx["amount"] or 0)
+
+        # Return the held withdrawal amount to the user's balance.
+        changed=con.execute("""
+            UPDATE users
+            SET balance=COALESCE(balance,0)+?
+            WHERE id=?
+        """,(amount,u["id"])).rowcount
+
+        if changed != 1:
+            con.rollback()
+            con.close()
+            flash("The withdrawal could not be cancelled. Please try again.","error")
+            return redirect(url_for("withdraw"))
+
+        con.execute("""
+            UPDATE transactions
+            SET status='CANCELLED'
+            WHERE id=? AND uid=? AND kind='WITHDRAW' AND status='PENDING'
+        """,(transaction_id,u["id"]))
+
+        con.commit()
+        con.close()
+
+        flash(
+            f"Withdrawal cancelled. UGX {amount:,.2f} has been returned to your balance.",
+            "success"
+        )
+        return redirect(url_for("withdraw"))
+
+    except Exception as e:
+        try:
+            con.rollback()
+            con.close()
+        except Exception:
+            pass
+        print("CANCEL WITHDRAW ERROR:",repr(e))
+        flash("The withdrawal could not be cancelled. Please try again.","error")
+        return redirect(url_for("withdraw"))
+
 
 @app.route("/download")
 @required
